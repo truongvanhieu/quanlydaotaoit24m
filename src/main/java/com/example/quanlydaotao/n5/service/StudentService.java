@@ -1,12 +1,12 @@
-package com.example.quanlydaotao.n2.service;
+package com.example.quanlydaotao.n5.service;
 
 import java.util.List;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
-import com.example.quanlydaotao.n2.entity.Student;
-import com.example.quanlydaotao.n2.repository.StudentRepository;
+import com.example.quanlydaotao.n5.entity.Student;
+import com.example.quanlydaotao.n5.repository.StudentRepository;
 
 @Service
 public class StudentService {
