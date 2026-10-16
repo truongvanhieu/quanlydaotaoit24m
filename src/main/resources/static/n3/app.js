@@ -1,837 +1,1194 @@
 
-// =========================================
-// QUẢN LÝ GIẢNG VIÊN - N3
-// Spring Boot REST API + SQL Server
-// =========================================
+/*
+ * N3 - Quan ly giang vien va nhan su
+ * Spring Boot + SQL Server it24m
+ *
+ * Dung cho:
+ * /n3/index.html
+ * /index.html?module=n3&tab=...
+ */
 
-const API = "/api/n3/";
+(() => {
+    "use strict";
 
-const $ = (id) => document.getElementById(id);
+    const BASE = "/api/n3/";
+    const $ = id => document.getElementById(id);
 
-// Đọc tab từ đường dẫn
-const params = new URLSearchParams(window.location.search);
+    const types = [
+        "lecturers",
+        "departments",
+        "positions",
+        "employees",
+        "employee-positions"
+    ];
 
-const allowedTabs = [
-    "lecturers",
-    "departments",
-    "positions"
-];
+    const F = (
+        name,
+        label,
+        type = "text",
+        options = {}
+    ) => ({
+        name,
+        label,
+        type,
+        ...options
+    });
 
-let currentTab = allowedTabs.includes(params.get("tab"))
-    ? params.get("tab")
-    : "lecturers";
+    // ===================================
+    // 1. CAU HINH CAC CHUC NANG
+    // ===================================
 
-let editingId = null;
-let currentMode = "add";
+    const C = {
 
-// Lưu dữ liệu từ API
-const dataStore = {
-    lecturers: [],
-    departments: [],
-    positions: []
-};
+        // QUAN LY GIANG VIEN
+        lecturers: {
+            title: "Quản lý giảng viên",
+            description: "Quản lý hồ sơ giảng viên",
 
-// =========================================
-// 1. CẤU HÌNH
-// =========================================
+            columns: [
+                "lecturerCode",
+                "fullName",
+                "gender",
+                "email",
+                "phone",
+                "departmentId",
+                "positionId",
+                "isActive"
+            ],
 
-const configs = {
+            fields: [
+                F("lecturerCode", "Mã giảng viên", "text", {
+                    required: true,
+                    maxlength: 20
+                }),
 
-    lecturers: {
-        title: "Quản lý giảng viên",
-        description: "Quản lý thông tin giảng viên và nhân sự",
+                F("fullName", "Họ tên", "text", {
+                    required: true,
+                    maxlength: 100
+                }),
 
-        columns: [
-            "lecturerCode",
-            "fullName",
-            "gender",
-            "email",
-            "phone",
-            "departmentId",
-            "positionId"
-        ],
+                F("gender", "Giới tính", "gender"),
 
-        fields: [
-            {
-                name: "lecturerCode",
-                label: "Mã giảng viên",
-                required: true
-            },
-            {
-                name: "fullName",
-                label: "Họ và tên",
-                required: true
-            },
-            {
-                name: "gender",
-                label: "Giới tính",
-                type: "gender"
-            },
-            {
-                name: "dateOfBirth",
-                label: "Ngày sinh",
-                type: "date"
-            },
-            {
-                name: "email",
-                label: "Email",
-                type: "email"
-            },
-            {
-                name: "phone",
-                label: "Số điện thoại"
-            },
-            {
-                name: "departmentId",
-                label: "Khoa / Viện",
-                type: "department",
-                required: true
-            },
-            {
-                name: "positionId",
-                label: "Chức danh",
-                type: "position"
-            },
-            {
-                name: "hireDate",
-                label: "Ngày vào làm",
-                type: "date"
-            }
-        ]
-    },
+                F("dateOfBirth", "Ngày sinh", "date"),
 
-    departments: {
-        title: "Quản lý khoa / viện",
-        description: "Quản lý các khoa và viện đào tạo",
+                F("email", "Email", "email"),
 
-        columns: [
-            "code",
-            "name",
-            "description"
-        ],
+                F("phone", "Số điện thoại"),
 
-        fields: [
-            {
-                name: "code",
-                label: "Mã khoa",
-                required: true
-            },
-            {
-                name: "name",
-                label: "Tên khoa / viện",
-                required: true
-            },
-            {
-                name: "description",
-                label: "Mô tả"
-            },
-            {
-                name: "establishedYear",
-                label: "Ngày thành lập",
-                type: "date"
-            }
-        ]
-    },
+                F("departmentId", "Khoa / viện", "department", {
+                    required: true
+                }),
 
-    positions: {
-        title: "Quản lý chức danh",
-        description: "Quản lý chức danh và chức vụ giảng viên",
+                F("positionId", "Chức danh", "position"),
 
-        columns: [
-            "code",
-            "name",
-            "level",
-            "departmentId"
-        ],
+                F("hireDate", "Ngày vào làm", "date"),
 
-        fields: [
-            {
-                name: "code",
-                label: "Mã chức danh",
-                required: true
-            },
-            {
-                name: "name",
-                label: "Tên chức danh",
-                required: true
-            },
-            {
-                name: "description",
-                label: "Mô tả"
-            },
-            {
-                name: "level",
-                label: "Cấp bậc"
-            },
-            {
-                name: "departmentId",
-                label: "Khoa / Viện",
-                type: "department"
-            }
-        ]
-    }
-};
+                F("isActive", "Trạng thái", "status")
+            ]
+        },
 
-// =========================================
-// 2. KHỞI TẠO MODAL
-// =========================================
+        // QUAN LY KHOA / VIEN
+        departments: {
+            title: "Quản lý khoa / viện",
+            description: "Danh mục khoa, viện, phòng ban",
 
-const modalElement = $("formModal");
+            columns: [
+                "code",
+                "name",
+                "description",
+                "establishedYear",
+                "isActive"
+            ],
 
-const modal = new bootstrap.Modal(modalElement);
+            fields: [
+                F("code", "Mã khoa", "text", {
+                    required: true,
+                    maxlength: 100
+                }),
 
-// =========================================
-// 3. HÀM BẢO VỆ HTML
-// =========================================
+                F("name", "Tên khoa / viện", "text", {
+                    required: true,
+                    maxlength: 255
+                }),
 
-function escapeHtml(value) {
+                F("description", "Mô tả", "textarea", {
+                    maxlength: 255
+                }),
 
-    return String(value ?? "").replace(
+                F("establishedYear", "Ngày thành lập", "date"),
+
+                F("isActive", "Trạng thái", "status")
+            ]
+        },
+
+        // QUAN LY CHUC DANH
+        positions: {
+            title: "Quản lý chức danh",
+            description: "Danh mục chức vụ và vị trí",
+
+            columns: [
+                "code",
+                "name",
+                "level",
+                "departmentId",
+                "isActive"
+            ],
+
+            fields: [
+                F("code", "Mã chức danh", "text", {
+                    required: true,
+                    maxlength: 100
+                }),
+
+                F("name", "Tên chức danh", "text", {
+                    required: true,
+                    maxlength: 255
+                }),
+
+                F("description", "Mô tả", "textarea", {
+                    maxlength: 255
+                }),
+
+                F("level", "Cấp bậc", "text", {
+                    maxlength: 100
+                }),
+
+                F("departmentId", "Khoa / viện", "department"),
+
+                F("isActive", "Trạng thái", "status")
+            ]
+        },
+
+        // QUAN LY NHAN VIEN
+        employees: {
+            title: "Quản lý nhân viên",
+
+            description:
+                "Giảng viên, giáo vụ, nhân viên và thông tin công tác",
+
+            columns: [
+                "code",
+                "fullName",
+                "gender",
+                "email",
+                "departmentId",
+                "positionId",
+                "academicDegree",
+                "isActive"
+            ],
+
+            fields: [
+                F("code", "Mã nhân viên", "text", {
+                    required: true,
+                    maxlength: 100
+                }),
+
+                F("fullName", "Họ tên", "text", {
+                    required: true,
+                    maxlength: 255
+                }),
+
+                F("dateOfBirth", "Ngày sinh", "date"),
+
+                F("gender", "Giới tính", "gender"),
+
+                F("email", "Email", "email", {
+                    maxlength: 100
+                }),
+
+                F("phone", "Số điện thoại", "tel", {
+                    maxlength: 50
+                }),
+
+                F("address", "Địa chỉ", "text", {
+                    maxlength: 255,
+                    wide: true
+                }),
+
+                F("departmentId", "Khoa / viện", "department"),
+
+                // SQL employees.position_id = NVARCHAR(100)
+                // Vi du: GV
+                F("positionId", "Mã vị trí hiện tại (ví dụ: GV)", "text", {
+                    maxlength: 100
+                }),
+
+                F("hireDate", "Ngày tuyển dụng", "datetime-local"),
+
+                F("contractType", "Loại hợp đồng", "text", {
+                    maxlength: 255
+                }),
+
+                F("salaryCoefficient", "Hệ số lương", "number", {
+                    min: 0,
+                    max: 99.99,
+                    step: 0.01
+                }),
+
+                F("academicDegree", "Học vị", "text", {
+                    maxlength: 50
+                }),
+
+                F("academicTitle", "Học hàm", "text", {
+                    maxlength: 50
+                }),
+
+                F("specialization", "Chuyên môn", "text", {
+                    maxlength: 255,
+                    wide: true
+                }),
+
+                F("isActive", "Trạng thái", "status")
+            ]
+        },
+
+        // LICH SU VI TRI CONG TAC
+        "employee-positions": {
+            title: "Vị trí công tác",
+
+            description:
+                "Phân công và lịch sử vị trí của nhân viên",
+
+            columns: [
+                "employeeId",
+                "positionId",
+                "startDate",
+                "endDate",
+                "note",
+                "isActive"
+            ],
+
+            fields: [
+                F("employeeId", "Nhân viên", "employee", {
+                    required: true
+                }),
+
+                F("positionId", "Chức vụ", "position", {
+                    required: true
+                }),
+
+                F("startDate", "Ngày bắt đầu", "datetime-local", {
+                    required: true
+                }),
+
+                F("endDate", "Ngày kết thúc", "datetime-local"),
+
+                F("description", "Mô tả", "textarea", {
+                    maxlength: 255,
+                    wide: true
+                }),
+
+                F("note", "Ghi chú", "textarea", {
+                    maxlength: 255,
+                    wide: true
+                }),
+
+                F("isActive", "Trạng thái", "status")
+            ]
+        }
+    };
+
+    // ===================================
+    // 2. BIEN TRANG THAI
+    // ===================================
+
+    const params = new URLSearchParams(location.search);
+
+    let tab = types.includes(params.get("tab"))
+        ? params.get("tab")
+        : "lecturers";
+
+    const data = Object.fromEntries(
+        types.map(kind => [kind, []])
+    );
+
+    const errors = {};
+
+    let editId = null;
+    let mode = "add";
+    let busy = false;
+
+    const modal = bootstrap.Modal.getOrCreateInstance(
+        $("formModal")
+    );
+
+    // ===================================
+    // 3. HAM HO TRO
+    // ===================================
+
+    const escapeHTML = value => String(
+        value ?? ""
+    ).replace(
         /[&<>"']/g,
-        (char) => ({
+        character => ({
             "&": "&amp;",
             "<": "&lt;",
             ">": "&gt;",
             '"': "&quot;",
             "'": "&#39;"
-        }[char])
+        }[character])
     );
-}
 
-// =========================================
-// 4. GỌI API
-// =========================================
+    const text = (id, value) => {
+        const element = $(id);
 
-async function request(path, options = {}) {
-
-    const response = await fetch(API + path, {
-
-        ...options,
-
-        headers: {
-            "Content-Type": "application/json",
-            ...(options.headers || {})
+        if (element) {
+            element.textContent = value;
         }
-
-    });
-
-    if (!response.ok) {
-
-        let message = "Lỗi HTTP " + response.status;
-
-        try {
-
-            const error = await response.json();
-
-            message = error.detail ||
-                      error.message ||
-                      error.error ||
-                      message;
-
-        } catch (error) {
-            console.error(error);
-        }
-
-        throw new Error(message);
-    }
-
-    if (response.status === 204) {
-        return null;
-    }
-
-    const text = await response.text();
-
-    if (!text.trim()) {
-        throw new Error("API trả về dữ liệu rỗng");
-    }
-
-    return JSON.parse(text);
-}
-
-// =========================================
-// 5. TẢI DỮ LIỆU
-// =========================================
-
-async function loadAll() {
-
-    $("pageMessage").textContent = "";
-
-    try {
-
-        const [
-            lecturers,
-            departments,
-            positions
-        ] = await Promise.all([
-
-            request("lecturers"),
-            request("departments"),
-            request("positions")
-
-        ]);
-
-        dataStore.lecturers = lecturers;
-        dataStore.departments = departments;
-        dataStore.positions = positions;
-
-        updateStatistics();
-
-        renderTable();
-
-    } catch (error) {
-
-        console.error(error);
-
-        $("pageMessage").textContent =
-            "Không tải được dữ liệu: " + error.message;
-
-        $("tableBody").innerHTML = `
-            <tr>
-                <td colspan="10"
-                    class="text-danger text-center py-4">
-
-                    Không thể tải dữ liệu từ API
-
-                </td>
-            </tr>
-        `;
-    }
-}
-
-// =========================================
-// 6. THỐNG KÊ
-// =========================================
-
-function updateStatistics() {
-
-    $("totalLecturers").textContent =
-        dataStore.lecturers.length;
-
-    $("totalDepartments").textContent =
-        dataStore.departments.length;
-
-    $("totalPositions").textContent =
-        dataStore.positions.length;
-}
-
-// =========================================
-// 7. HIỂN THỊ TÊN KHOA / CHỨC DANH
-// =========================================
-
-function displayValue(key, value) {
-
-    if (
-        value === null ||
-        value === undefined ||
-        value === ""
-    ) {
-        return "—";
-    }
-
-    if (key === "departmentId") {
-
-        const department = dataStore.departments.find(
-            item => item.id === value
-        );
-
-        return department
-            ? department.name
-            : String(value);
-    }
-
-    if (key === "positionId") {
-
-        const position = dataStore.positions.find(
-            item => item.id === value
-        );
-
-        return position
-            ? position.name
-            : String(value);
-    }
-
-    return String(value);
-}
-
-// =========================================
-// 8. HIỂN THỊ BẢNG
-// =========================================
-
-function renderTable() {
-
-    const config = configs[currentTab];
-
-    // Tiêu đề trang
-    document.title = config.title + " | AdminLTE 4";
-
-    const heading = $("n3Heading") || $("pageTitle");
-
-    if (heading) {
-        heading.textContent = config.title;
-    }
-
-    $("pageDescription").textContent =
-        config.description;
-
-    $("tableTitle").textContent =
-        config.title.replace("Quản lý", "Danh sách");
-
-    const keyword = $("searchInput")
-        .value
-        .trim()
-        .toLowerCase();
-
-    // Tìm kiếm
-    const records = dataStore[currentTab].filter(item => {
-
-        const text = configs[currentTab].columns
-            .map(key => displayValue(key, item[key]))
-            .join(" ")
-            .toLowerCase();
-
-        return text.includes(keyword);
-    });
-
-    $("recordCount").textContent =
-        records.length + " bản ghi";
-
-    // Tạo header
-    const headers = config.columns.map(column => {
-
-        const field = config.fields.find(
-            f => f.name === column
-        );
-
-        const label = field ? field.label : column;
-
-        return `<th>${escapeHtml(label)}</th>`;
-
-    }).join("");
-
-    $("tableHead").innerHTML = `
-        <tr>
-            ${headers}
-            <th>Hành động</th>
-        </tr>
-    `;
-
-    // Bảng trống
-    if (records.length === 0) {
-
-        $("tableBody").innerHTML = `
-            <tr>
-                <td colspan="10" class="empty-message">
-                    <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-                    Không có dữ liệu phù hợp
-                </td>
-            </tr>
-        `;
-
-        return;
-    }
-
-    // Tạo danh sách
-    $("tableBody").innerHTML = records.map(item => {
-
-        const cells = config.columns.map(column => `
-            <td>
-                ${escapeHtml(displayValue(
-                    column,
-                    item[column]
-                ))}
-            </td>
-        `).join("");
-
-        return `
-            <tr>
-
-                ${cells}
-
-                <td>
-
-                    <div class="action-buttons">
-
-                        <button
-                            type="button"
-                            class="btn btn-sm btn-outline-info"
-                            data-action="view"
-                            data-id="${item.id}"
-                            title="Xem chi tiết">
-
-                            <i class="bi bi-eye"></i>
-
-                        </button>
-
-                        <button
-                            type="button"
-                            class="btn btn-sm btn-outline-primary"
-                            data-action="edit"
-                            data-id="${item.id}"
-                            title="Chỉnh sửa">
-
-                            <i class="bi bi-pencil-square"></i>
-
-                        </button>
-
-                        <button
-                            type="button"
-                            class="btn btn-sm btn-outline-danger"
-                            data-action="delete"
-                            data-id="${item.id}"
-                            title="Xóa">
-
-                            <i class="bi bi-trash"></i>
-
-                        </button>
-
-                    </div>
-
-                </td>
-
-            </tr>
-        `;
-
-    }).join("");
-}
-
-// =========================================
-// 9. TẠO DANH SÁCH SELECT
-// =========================================
-
-function selectOptions(type, selected, departmentId) {
-
-    let items = type === "department"
-        ? dataStore.departments
-        : dataStore.positions;
-
-    if (type === "position" && departmentId) {
-
-        items = items.filter(item =>
-            !item.departmentId ||
-            item.departmentId === departmentId
-        );
-    }
-
-    return `
-        <option value="">-- Chọn --</option>
-    ` + items.map(item => `
-        <option
-            value="${escapeHtml(item.id)}"
-            ${item.id === selected ? "selected" : ""}>
-
-            ${escapeHtml(item.name)}
-
-        </option>
-    `).join("");
-}
-
-// =========================================
-// 10. TẠO INPUT CHO FORM
-// =========================================
-
-function createField(field, value, departmentId) {
-
-    const name = field.name;
-
-    const type = field.type || "text";
-
-    const required = field.required
-        ? "required"
-        : "";
-
-    let control = "";
-
-    // Chọn khoa / chức danh
-    if (
-        type === "department" ||
-        type === "position"
-    ) {
-
-        control = `
-            <select class="form-select"
-                    name="${name}"
-                    ${required}>
-
-                ${selectOptions(
-                    type,
-                    value,
-                    departmentId
-                )}
-
-            </select>
-        `;
-    }
-
-    // Giới tính
-    else if (type === "gender") {
-
-        control = `
-            <select class="form-select" name="${name}">
-
-                <option value="">-- Chọn --</option>
-
-                ${["Nam", "Nữ", "Khác"].map(v => `
-                    <option value="${v}"
-                            ${v === value ? "selected" : ""}>
-                        ${v}
-                    </option>
-                `).join("")}
-
-            </select>
-        `;
-    }
-
-    // Input thông thường
-    else {
-
-        control = `
-            <input
-                type="${type}"
-                name="${name}"
-                class="form-control"
-                value="${escapeHtml(value ?? "")}"
-                ${required}>
-        `;
-    }
-
-    return `
-        <div class="col-md-6">
-
-            <label class="form-label">
-                ${escapeHtml(field.label)}
-
-                ${field.required
-                    ? '<span class="text-danger">*</span>'
-                    : ""}
-            </label>
-
-            ${control}
-
-        </div>
-    `;
-}
-
-// =========================================
-// 11. MỞ FORM
-// =========================================
-
-function openForm(mode, item = null) {
-
-    currentMode = mode;
-
-    editingId = item ? item.id : null;
-
-    const config = configs[currentTab];
-
-    const actions = {
-        add: "Thêm",
-        edit: "Cập nhật",
-        view: "Chi tiết"
     };
 
-    $("modalTitle").textContent =
-        actions[mode] + " - " + config.title;
+    function notice(message = "", success = false) {
+        const box = $("pageMessage");
 
-    const departmentId = item?.departmentId || "";
+        if (!box) return;
 
-    $("formFields").innerHTML = config.fields.map(field =>
-        createField(
-            field,
-            item?.[field.name] ?? "",
-            departmentId
-        )
-    ).join("");
+        box.className = success
+            ? "mt-2 text-success"
+            : "mt-2 text-danger";
 
-    // Chế độ xem chi tiết
-    const viewOnly = mode === "view";
+        box.textContent = message;
+    }
 
-    $("formFields")
-        .querySelectorAll("input, select")
-        .forEach(element => {
+    // ===================================
+    // 4. GOI REST API
+    // ===================================
 
-            element.disabled = viewOnly;
+    async function api(path, method = "GET", body) {
 
+        const response = await fetch(BASE + path, {
+            method,
+
+            headers: {
+                Accept: "application/json",
+
+                ...(body === undefined
+                    ? {}
+                    : {
+                        "Content-Type": "application/json"
+                    })
+            },
+
+            ...(body === undefined
+                ? {}
+                : {
+                    body: JSON.stringify(body)
+                })
         });
 
-    $("saveBtn").style.display =
-        viewOnly ? "none" : "";
+        if (!response.ok) {
+            let error = `HTTP ${response.status}`;
 
-    // Thay khoa thì cập nhật chức danh
-    const departmentSelect = $("dataForm").querySelector(
-        '[name="departmentId"]'
-    );
+            try {
+                const detail = await response.json();
 
-    const positionSelect = $("dataForm").querySelector(
-        '[name="positionId"]'
-    );
+                error += ": " + (
+                    detail.detail ||
+                    detail.message ||
+                    detail.error ||
+                    detail.title ||
+                    "Lỗi API"
+                );
 
-    if (departmentSelect && positionSelect) {
+            } catch {
+                // API co the tra ve loi khong phai JSON
+            }
 
-        departmentSelect.addEventListener(
-            "change",
-            () => {
+            throw new Error(error);
+        }
 
-                positionSelect.innerHTML = selectOptions(
-                    "position",
-                    "",
-                    departmentSelect.value
+        if (response.status === 204) {
+            return null;
+        }
+
+        const value = await response.text();
+
+        return value ? JSON.parse(value) : null;
+    }
+
+    // ===================================
+    // 5. HIEN THI DU LIEU LIEN QUAN
+    // ===================================
+
+    function related(kind, id) {
+
+        const row = data[kind].find(
+            item => String(item.id) === String(id)
+        );
+
+        if (!row) {
+            return String(id);
+        }
+
+        if (kind === "employees") {
+            return (
+                `${row.code || ""} - ${row.fullName || ""}`
+            ).trim();
+        }
+
+        return row.name || row.code || id;
+    }
+
+    function display(key, value) {
+
+        if (
+            value === null ||
+            value === undefined ||
+            value === ""
+        ) {
+            return "—";
+        }
+
+        if (key === "isActive") {
+            return value ? "Hoạt động" : "Tạm khóa";
+        }
+
+        if (key === "departmentId") {
+            return related("departments", value);
+        }
+
+        if (key === "employeeId") {
+            return related("employees", value);
+        }
+
+        if (
+            key === "positionId" &&
+            tab !== "employees"
+        ) {
+            return related("positions", value);
+        }
+
+        if (
+            /Date$|^establishedYear$/.test(key) &&
+            typeof value === "string"
+        ) {
+            return value
+                .replace("T", " ")
+                .slice(0, 19);
+        }
+
+        return String(value);
+    }
+
+    function label(key) {
+        return C[tab].fields.find(
+            field => field.name === key
+        )?.label || key;
+    }
+
+    // ===================================
+    // 6. THONG KE
+    // ===================================
+
+    function counters() {
+
+        const ids = {
+            lecturers: "totalLecturers",
+            departments: "totalDepartments",
+            positions: "totalPositions",
+            employees: "totalEmployees",
+            "employee-positions": "totalEmployeePositions"
+        };
+
+        for (const kind of types) {
+            text(
+                ids[kind],
+                errors[kind]
+                    ? "—"
+                    : String(data[kind].length)
+            );
+        }
+    }
+
+    // ===================================
+    // 7. HIEN THI BANG
+    // ===================================
+
+    function render() {
+
+        const cfg = C[tab];
+
+        const query = (
+            $("searchInput")?.value || ""
+        )
+            .trim()
+            .toLocaleLowerCase("vi");
+
+        document.title = cfg.title + " | IT24M";
+
+        text("pageTitle", cfg.title);
+        text("n3Heading", cfg.title);
+        text("pageDescription", cfg.description);
+
+        text(
+            "tableTitle",
+            cfg.title.replace("Quản lý", "Danh sách")
+        );
+
+        const rows = data[tab].filter(row => {
+
+            if (!query) return true;
+
+            return cfg.columns.some(key =>
+                display(key, row[key])
+                    .toLocaleLowerCase("vi")
+                    .includes(query)
+            );
+        });
+
+        text(
+            "recordCount",
+            `${rows.length} / ${data[tab].length} bản ghi`
+        );
+
+        // Header
+        $("tableHead").innerHTML = `
+            <tr>
+                ${cfg.columns.map(key => `
+                    <th>${escapeHTML(label(key))}</th>
+                `).join("")}
+
+                <th class="text-end">Thao tác</th>
+            </tr>
+        `;
+
+        // Bang trong
+        if (rows.length === 0) {
+
+            const message = errors[tab]
+                ? "Không tải được dữ liệu"
+                : query
+                    ? "Không có kết quả phù hợp"
+                    : "Chưa có bản ghi";
+
+            $("tableBody").innerHTML = `
+                <tr>
+                    <td colspan="${cfg.columns.length + 1}"
+                        class="text-center text-muted py-4">
+                        ${message}
+                    </td>
+                </tr>
+            `;
+
+            return;
+        }
+
+        // Noi dung bang
+        $("tableBody").innerHTML = rows.map(row => `
+            <tr>
+
+                ${cfg.columns.map(key => `
+                    <td>
+                        ${escapeHTML(display(key, row[key]))}
+                    </td>
+                `).join("")}
+
+                <td class="text-end text-nowrap">
+
+                    <button type="button"
+                            class="btn btn-sm btn-outline-info"
+                            data-action="view"
+                            data-id="${escapeHTML(row.id)}"
+                            title="Xem">
+
+                        <i class="bi bi-eye"></i>
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-sm btn-outline-primary"
+                            data-action="edit"
+                            data-id="${escapeHTML(row.id)}"
+                            title="Sửa">
+
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-sm btn-outline-danger"
+                            data-action="delete"
+                            data-id="${escapeHTML(row.id)}"
+                            title="Xóa">
+
+                        <i class="bi bi-trash"></i>
+                    </button>
+
+                </td>
+            </tr>
+        `).join("");
+    }
+
+    // ===================================
+    // 8. DU LIEU CHO SELECT
+    // ===================================
+
+    function optionList(field) {
+
+        if (field.type === "status") {
+            return [
+                ["true", "Hoạt động"],
+                ["false", "Tạm khóa"]
+            ];
+        }
+
+        if (field.type === "gender") {
+            return [
+                ["Nam", "Nam"],
+                ["Nữ", "Nữ"],
+                ["Khác", "Khác"],
+                ["1", "1 - Nam"],
+                ["2", "2 - Nữ"],
+                ["0", "0 - Khác"]
+            ];
+        }
+
+        const map = {
+            department: "departments",
+            position: "positions",
+            employee: "employees"
+        };
+
+        const kind = map[field.type];
+
+        return (data[kind] || []).map(row => {
+
+            const name = kind === "employees"
+                ? `${row.code || ""} - ${row.fullName || ""}`
+                : (
+                    (row.code ? row.code + " - " : "") +
+                    (row.name || row.id)
+                );
+
+            return [row.id, name];
+        });
+    }
+
+    // ===================================
+    // 9. TAO FORM DONG
+    // ===================================
+
+    function control(field, raw, readonly) {
+
+        const value = raw == null
+            ? (
+                field.type === "status"
+                    ? "true"
+                    : ""
+            )
+            : String(raw);
+
+        const required =
+            field.required && !readonly
+                ? "required"
+                : "";
+
+        const disabled = readonly ? "disabled" : "";
+
+        const max = field.maxlength
+            ? `maxlength="${field.maxlength}"`
+            : "";
+
+        let html = "";
+
+        // Select
+        if ([
+            "status",
+            "gender",
+            "department",
+            "position",
+            "employee"
+        ].includes(field.type)) {
+
+            const options = optionList(field);
+
+            html = `
+                <select name="${field.name}"
+                        class="form-select"
+                        ${required}
+                        ${disabled}>
+
+                    ${field.type === "status"
+                        ? ""
+                        : '<option value="">-- Chọn --</option>'}
+
+                    ${options.map(([v, name]) => `
+                        <option value="${escapeHTML(v)}"
+                            ${String(v) === value ? "selected" : ""}>
+                            ${escapeHTML(name)}
+                        </option>
+                    `).join("")}
+
+                    ${
+                        value &&
+                        !options.some(
+                            ([v]) => String(v) === value
+                        )
+                            ? `
+                                <option selected
+                                        value="${escapeHTML(value)}">
+                                    ${escapeHTML(value)} (đã lưu)
+                                </option>
+                            `
+                            : ""
+                    }
+
+                </select>
+            `;
+
+        } else if (field.type === "textarea") {
+
+            html = `
+                <textarea name="${field.name}"
+                          rows="2"
+                          class="form-control"
+                          ${max}
+                          ${required}
+                          ${disabled}>${escapeHTML(value)}</textarea>
+            `;
+
+        } else {
+
+            const inputValue =
+                field.type === "datetime-local"
+                    ? value.slice(0, 16)
+                    : value;
+
+            const limits = field.type === "number"
+                ? `
+                    min="${field.min ?? 0}"
+                    max="${field.max ?? 99.99}"
+                    step="${field.step ?? 0.01}"
+                `
+                : "";
+
+            html = `
+                <input name="${field.name}"
+                       type="${field.type}"
+                       value="${escapeHTML(inputValue)}"
+                       class="form-control"
+                       ${required}
+                       ${disabled}
+                       ${max}
+                       ${limits}>
+            `;
+        }
+
+        return `
+            <div class="${field.wide ? "col-12" : "col-md-6"}">
+
+                <label class="form-label">
+                    ${escapeHTML(field.label)}
+
+                    ${field.required
+                        ? '<span class="text-danger">*</span>'
+                        : ""}
+                </label>
+
+                ${html}
+            </div>
+        `;
+    }
+
+    // ===================================
+    // 10. MO MODAL
+    // ===================================
+
+    function openForm(nextMode, row = null) {
+
+        mode = nextMode;
+        editId = row?.id || null;
+
+        const action =
+            nextMode === "add"
+                ? "Thêm"
+                : nextMode === "edit"
+                    ? "Sửa"
+                    : "Xem";
+
+        text(
+            "modalTitle",
+            `${action} - ${C[tab].title}`
+        );
+
+        $("formFields").innerHTML =
+            C[tab].fields.map(field =>
+                control(
+                    field,
+                    row?.[field.name],
+                    nextMode === "view"
+                )
+            ).join("");
+
+        $("saveBtn").hidden =
+            nextMode === "view";
+
+        modal.show();
+    }
+
+    // ===================================
+    // 11. LAY DU LIEU FORM
+    // ===================================
+
+    function payloadFromForm() {
+
+        const fd = new FormData($("dataForm"));
+
+        const payload = {};
+
+        for (const field of C[tab].fields) {
+
+            let value = String(
+                fd.get(field.name) ?? ""
+            ).trim();
+
+            if (!value) {
+                payload[field.name] = null;
+                continue;
+            }
+
+            if (field.type === "status") {
+
+                value = value === "true";
+
+            } else if (field.type === "number") {
+
+                value = Number(value);
+
+                if (!Number.isFinite(value)) {
+                    throw new Error(
+                        `${field.label} phải là số`
+                    );
+                }
+
+            } else if (
+                field.type === "datetime-local" &&
+                value.length === 16
+            ) {
+
+                value += ":00";
+            }
+
+            payload[field.name] = value;
+        }
+
+        // Kiem tra lich su cong tac
+        if (
+            tab === "employee-positions" &&
+            payload.endDate &&
+            payload.startDate &&
+            payload.endDate < payload.startDate
+        ) {
+            throw new Error(
+                "Ngày kết thúc phải sau ngày bắt đầu"
+            );
+        }
+
+        return payload;
+    }
+
+    // ===================================
+    // 12. TAI DU LIEU
+    // ===================================
+
+    async function loadAll() {
+
+        // Mot API loi khong lam cac API khac mat du lieu
+        const results = await Promise.allSettled(
+            types.map(kind => api(kind))
+        );
+
+        results.forEach((result, index) => {
+
+            const kind = types[index];
+
+            if (
+                result.status === "fulfilled" &&
+                Array.isArray(result.value)
+            ) {
+
+                data[kind] = result.value;
+                delete errors[kind];
+
+            } else {
+
+                data[kind] = [];
+
+                errors[kind] =
+                    result.status === "rejected"
+                        ? result.reason.message
+                        : "API không trả về danh sách JSON";
+            }
+        });
+
+        counters();
+        render();
+
+        notice(
+            errors[tab]
+                ? `${tab}: ${errors[tab]}`
+                : ""
+        );
+    }
+
+    // ===================================
+    // 13. CHUYEN CHUC NANG
+    // ===================================
+
+    function changeTab(
+        next,
+        updateUrl = false
+    ) {
+
+        if (!types.includes(next)) {
+            return;
+        }
+
+        tab = next;
+
+        $("searchInput").value = "";
+
+        // Menu N3 rieng
+        document.querySelectorAll(
+            ".sidebar-nav [data-tab]"
+        ).forEach(element => {
+
+            element.classList.toggle(
+                "active",
+                element.dataset.tab === tab
+            );
+        });
+
+        // Menu AdminLTE chung
+        document.querySelectorAll(
+            "[id^='menu-']"
+        ).forEach(element => {
+
+            if (element.id !== "menu-students") {
+
+                element.classList.toggle(
+                    "active",
+                    element.id === "menu-" + tab
                 );
             }
-        );
-    }
-
-    modal.show();
-}
-
-// =========================================
-// 12. LƯU DỮ LIỆU
-// =========================================
-
-$("dataForm").addEventListener("submit", async event => {
-
-    event.preventDefault();
-
-    if (currentMode === "view") {
-        return;
-    }
-
-    const formData = new FormData($("dataForm"));
-
-    const payload = Object.fromEntries(
-        formData.entries()
-    );
-
-    // Chuẩn hóa dữ liệu
-    for (const key of Object.keys(payload)) {
-
-        if (typeof payload[key] === "string") {
-            payload[key] = payload[key].trim();
-        }
-
-        if (payload[key] === "") {
-            payload[key] = null;
-        }
-    }
-
-    const path = currentTab +
-        (editingId ? "/" + editingId : "");
-
-    const method = editingId
-        ? "PUT"
-        : "POST";
-
-    $("saveBtn").disabled = true;
-
-    try {
-
-        await request(path, {
-            method: method,
-            body: JSON.stringify(payload)
         });
 
-        modal.hide();
+        if (updateUrl) {
 
-        await loadAll();
+            const url = new URL(location.href);
 
-        alert("Lưu thông tin thành công!");
+            url.searchParams.set("tab", tab);
 
-    } catch (error) {
-
-        alert("Không thể lưu: " + error.message);
-
-    } finally {
-
-        $("saveBtn").disabled = false;
-    }
-});
-
-// =========================================
-// 13. XEM / SỬA / XÓA
-// =========================================
-
-$("tableBody").addEventListener("click", async event => {
-
-    const button = event.target.closest(
-        "button[data-action]"
-    );
-
-    if (!button) return;
-
-    const action = button.dataset.action;
-
-    const id = button.dataset.id;
-
-    const item = dataStore[currentTab].find(
-        x => x.id === id
-    );
-
-    if (!item) return;
-
-    if (action === "view") {
-
-        openForm("view", item);
-    }
-
-    if (action === "edit") {
-
-        openForm("edit", item);
-    }
-
-    if (action === "delete") {
-
-        const confirmed = confirm(
-            "Bạn có chắc chắn muốn xóa bản ghi này?"
-        );
-
-        if (!confirmed) return;
-
-        try {
-
-            await request(currentTab + "/" + id, {
-                method: "DELETE"
-            });
-
-            await loadAll();
-
-            alert("Xóa thành công!");
-
-        } catch (error) {
-
-            alert("Không thể xóa: " + error.message);
+            history.replaceState(
+                {},
+                "",
+                url
+            );
         }
+
+        render();
+
+        notice(
+            errors[tab]
+                ? `${tab}: ${errors[tab]}`
+                : ""
+        );
     }
-});
 
-// =========================================
-// 14. TÌM KIẾM
-// =========================================
+    // ===================================
+    // 14. THEM MOI
+    // ===================================
 
-$("searchInput").addEventListener(
-    "input",
-    renderTable
-);
+    $("addBtn").addEventListener(
+        "click",
+        () => openForm("add")
+    );
 
-// =========================================
-// 15. THÊM MỚI
-// =========================================
+    // ===================================
+    // 15. LAM MOI
+    // ===================================
 
-$("addBtn").addEventListener("click", () => {
+    $("refreshBtn").addEventListener(
+        "click",
+        loadAll
+    );
 
-    openForm("add");
+    // ===================================
+    // 16. TIM KIEM
+    // ===================================
 
-});
+    $("searchInput").addEventListener(
+        "input",
+        render
+    );
 
-// =========================================
-// 16. LÀM MỚI
-// =========================================
+    // ===================================
+    // 17. LUU DU LIEU
+    // ===================================
 
-$("refreshBtn").addEventListener(
-    "click",
-    loadAll
-);
+    $("dataForm").addEventListener(
+        "submit",
+        async event => {
 
-// =========================================
-// 17. KHỞI ĐỘNG N3
-// =========================================
+            event.preventDefault();
 
-loadAll();
+            if (mode === "view" || busy) {
+                return;
+            }
+
+            let payload;
+
+            try {
+                payload = payloadFromForm();
+
+            } catch (error) {
+                alert(error.message);
+                return;
+            }
+
+            busy = true;
+
+            $("saveBtn").disabled = true;
+
+            try {
+
+                const path = tab + (
+                    editId
+                        ? "/" + editId
+                        : ""
+                );
+
+                const method = editId
+                    ? "PUT"
+                    : "POST";
+
+                await api(
+                    path,
+                    method,
+                    payload
+                );
+
+                modal.hide();
+
+                await loadAll();
+
+                notice(
+                    "Đã lưu thành công",
+                    true
+                );
+
+            } catch (error) {
+
+                notice(error.message);
+
+                alert(
+                    "Không thể lưu: " + error.message
+                );
+
+            } finally {
+
+                busy = false;
+
+                $("saveBtn").disabled = false;
+            }
+        }
+    );
+
+    // ===================================
+    // 18. XEM / SUA / XOA
+    // ===================================
+
+    $("tableBody").addEventListener(
+        "click",
+        async event => {
+
+            const button = event.target.closest(
+                "[data-action]"
+            );
+
+            if (!button) {
+                return;
+            }
+
+            const row = data[tab].find(
+                item =>
+                    String(item.id) === button.dataset.id
+            );
+
+            if (!row) {
+                return;
+            }
+
+            const action = button.dataset.action;
+
+            if (
+                action === "view" ||
+                action === "edit"
+            ) {
+
+                openForm(action, row);
+                return;
+            }
+
+            if (action === "delete") {
+
+                const name =
+                    row.code ||
+                    row.fullName ||
+                    row.name ||
+                    row.id;
+
+                if (!confirm(
+                    `Bạn có chắc muốn xóa bản ghi ${name}?`
+                )) {
+                    return;
+                }
+
+                try {
+
+                    await api(
+                        tab + "/" + row.id,
+                        "DELETE"
+                    );
+
+                    await loadAll();
+
+                    notice(
+                        "Đã xóa thành công",
+                        true
+                    );
+
+                } catch (error) {
+
+                    notice(error.message);
+
+                    alert(
+                        "Không thể xóa: " + error.message
+                    );
+                }
+            }
+        }
+    );
+
+    // ===================================
+    // 19. MENU N3 RIENG
+    // ===================================
+
+    document.querySelectorAll(
+        ".sidebar-nav [data-tab]"
+    ).forEach(element => {
+
+        element.addEventListener(
+            "click",
+            () => changeTab(
+                element.dataset.tab,
+                true
+            )
+        );
+    });
+
+    // ===================================
+    // 20. KHOI DONG
+    // ===================================
+
+    changeTab(tab);
+    loadAll();
+
+})();
