@@ -1,0 +1,10 @@
+
+package com.example.quanlydaotao.n3.repository;
+
+import com.example.quanlydaotao.n3.entity.Department;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.UUID;
+
+public interface DepartmentRepository
+        extends JpaRepository<Department, UUID> {
+}
