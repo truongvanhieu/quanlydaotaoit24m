@@ -48,7 +48,7 @@
                 <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="navigation" data-accordion="false">
                     <li class="nav-header text-uppercase text-muted px-3 fs-7">Nhóm 2 - Quản lý sinh viên</li>
                     <li class="nav-item">
-                        <a href="index.html" class="nav-link active">
+                        <a id="studentNavLink" href="index.html" class="nav-link active">
                             <i class="nav-icon bi bi-people-fill"></i>
                             <p>
                                 Hồ sơ Sinh viên
@@ -56,10 +56,10 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="/swagger-ui/index.html" target="_blank" class="nav-link text-warning">
+                        <a id="swaggerNavLink" href="index.html?page=swagger" class="nav-link text-warning">
                             <i class="nav-icon bi bi-code-slash"></i>
                             <p>
-                                Swagger API Docs <i class="bi bi-box-arrow-up-right fs-8"></i>
+                                Swagger API Docs
                             </p>
                         </a>
                     </li>
@@ -250,6 +250,24 @@
                             </form>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-swagger" style="display: none;">
+            <div class="app-content-header">
+                <div class="container-fluid">
+                    <h3 class="mb-0">Swagger API Docs</h3>
+                </div>
+            </div>
+            <div class="app-content">
+                <div class="container-fluid">
+                    <iframe
+                        id="swaggerFrame"
+                        src="/swagger-ui/index.html"
+                        title="Swagger API Docs"
+                        loading="lazy">
+                    </iframe>
                 </div>
             </div>
         </div>

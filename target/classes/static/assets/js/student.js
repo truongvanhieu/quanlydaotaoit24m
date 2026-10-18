@@ -4,34 +4,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const params = new URLSearchParams(window.location.search);
 
-    const page = params.get('page') || 'list';
+    const requestedPage = params.get('page');
+    const page = requestedPage === 'form' || requestedPage === 'swagger'
+        ? requestedPage
+        : 'list';
 
     const pageList = document.getElementById('page-list');
     const pageForm = document.getElementById('page-form');
+    const pageSwagger = document.getElementById('page-swagger');
+    const studentNavLink = document.getElementById('studentNavLink');
+    const swaggerNavLink = document.getElementById('swaggerNavLink');
 
-    if (page === 'form') {
-
-        if (pageList) {
-            pageList.style.display = 'none';
-        }
-
-        if (pageForm) {
-            pageForm.style.display = '';
-        }
-
-    } else {
-
-        if (pageList) {
-            pageList.style.display = '';
-        }
-
-        if (pageForm) {
-            pageForm.style.display = 'none';
-        }
-
+    if (pageList) {
+        pageList.style.display = page === 'list' ? '' : 'none';
     }
 
-    initStudentPage();
+    if (pageForm) {
+        pageForm.style.display = page === 'form' ? '' : 'none';
+    }
+
+    if (pageSwagger) {
+        pageSwagger.style.display = page === 'swagger' ? '' : 'none';
+    }
+
+    if (studentNavLink && swaggerNavLink) {
+        studentNavLink.classList.toggle('active', page !== 'swagger');
+        swaggerNavLink.classList.toggle('active', page === 'swagger');
+    }
+
+    if (page !== 'swagger') {
+        initStudentPage();
+    }
 
 });
 

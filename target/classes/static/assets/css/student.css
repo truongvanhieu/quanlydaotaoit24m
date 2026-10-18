@@ -73,3 +73,12 @@ body {
   max-width: 820px;
   margin: 40px auto;
 }
+
+#swaggerFrame {
+  display: block;
+  width: 100%;
+  height: calc(100vh - 190px);
+  min-height: 600px;
+  border: 0;
+  background: #fff;
+}

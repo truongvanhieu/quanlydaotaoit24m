@@ -1,4 +1,4 @@
-USE [quanlysinhvien];
+USE [it24m];
 GO
 
 -- 1. Backup old students table if exists and not yet backed up
