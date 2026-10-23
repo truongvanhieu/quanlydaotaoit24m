@@ -1,0 +1,9 @@
+com\example\quanlydaotao\n5\repository\AcademicYearRepository.class
+com\example\quanlydaotao\n5\controller\AcademicYearController.class
+com\example\quanlydaotao\n5\service\AcademicYearService.class
+com\example\quanlydaotao\QuanlydaotaoApplication.class
+com\example\quanlydaotao\n2\repository\StudentRepository.class
+com\example\quanlydaotao\n5\entity\AcademicYear.class
+com\example\quanlydaotao\n2\service\StudentService.class
+com\example\quanlydaotao\n2\entity\Student.class
+com\example\quanlydaotao\n2\controller\StudentController.class
