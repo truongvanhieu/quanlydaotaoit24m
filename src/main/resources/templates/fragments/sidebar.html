@@ -1,0 +1,33 @@
+<aside th:fragment="sidebar(activePage)" class="sidebar">
+	<a class="brand" th:href="@{/dashboard}">
+		<span class="brand-mark">ĐT</span>
+		<span><strong>EduManage</strong><small>Quản lý đào tạo</small></span>
+	</a>
+	<div class="nav-caption">TỔNG QUAN</div>
+	<nav class="side-nav">
+		<a th:href="@{/dashboard}" th:classappend="${activePage == 'dashboard'} ? 'active' : ''">
+			<span class="nav-icon">▦</span> Tổng quan
+		</a>
+	</nav>
+	<div class="nav-caption">DANH MỤC ĐÀO TẠO</div>
+	<nav class="side-nav">
+		<a th:href="@{/majors}" th:classappend="${activePage == 'majors'} ? 'active' : ''">
+			<span class="nav-icon">⌂</span> Ngành đào tạo
+		</a>
+		<a th:href="@{/training-programs}" th:classappend="${activePage == 'training-programs'} ? 'active' : ''">
+			<span class="nav-icon">▤</span> Chương trình đào tạo
+		</a>
+		<a th:href="@{/courses}" th:classappend="${activePage == 'courses'} ? 'active' : ''">
+			<span class="nav-icon">▣</span> Môn học / học phần
+		</a>
+		<a th:href="@{/program-courses}" th:classappend="${activePage == 'program-courses'} ? 'active' : ''">
+			<span class="nav-icon">☷</span> Môn trong chương trình
+		</a>
+		<a th:href="@{/prerequisites}" th:classappend="${activePage == 'prerequisites'} ? 'active' : ''">
+			<span class="nav-icon">⇢</span> Môn tiên quyết
+		</a>
+	</nav>
+	<div class="sidebar-footer">
+		<span class="status-dot"></span> Kết nối SQL Server
+	</div>
+</aside>
