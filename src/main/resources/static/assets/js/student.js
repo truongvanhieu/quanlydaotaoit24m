@@ -1,42 +1,59 @@
 import { API_ENDPOINTS } from './config.js';
 
+let studentClassesById = new Map();
+let advisorClasses = [];
+let studentPageInitialized = false;
+let advisorPageInitialized = false;
+
 document.addEventListener('DOMContentLoaded', () => {
+    showPage(getRequestedPage());
+});
 
-    const params = new URLSearchParams(window.location.search);
-
-    const requestedPage = params.get('page');
-    const page = requestedPage === 'form' || requestedPage === 'swagger'
+function getRequestedPage() {
+    const requestedPage = new URLSearchParams(window.location.search).get('page');
+    return ['form', 'swagger', 'lecturers', 'classes', 'statuses', 'status-histories'].includes(requestedPage)
         ? requestedPage
         : 'list';
+}
 
-    const pageList = document.getElementById('page-list');
-    const pageForm = document.getElementById('page-form');
-    const pageSwagger = document.getElementById('page-swagger');
-    const studentNavLink = document.getElementById('studentNavLink');
-    const swaggerNavLink = document.getElementById('swaggerNavLink');
+function showPage(page) {
+    const managementPages = ['classes', 'statuses', 'status-histories'];
+    const pageVisibility = {
+        'page-list': page === 'list',
+        'page-form': page === 'form',
+        'page-lecturers': page === 'lecturers',
+        'page-management': managementPages.includes(page),
+        'page-swagger': page === 'swagger'
+    };
 
-    if (pageList) {
-        pageList.style.display = page === 'list' ? '' : 'none';
-    }
+    Object.entries(pageVisibility).forEach(([id, visible]) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.style.display = visible ? '' : 'none';
+        }
+    });
 
-    if (pageForm) {
-        pageForm.style.display = page === 'form' ? '' : 'none';
-    }
+    const navPageById = {
+        studentNavLink: ['list', 'form'],
+        instructorNavLink: ['lecturers'],
+        classesNavLink: ['classes'],
+        statusesNavLink: ['statuses'],
+        statusHistoriesNavLink: ['status-histories'],
+        swaggerNavLink: ['swagger']
+    };
+    Object.entries(navPageById).forEach(([id, pages]) => {
+        document.getElementById(id)?.classList.toggle('active', pages.includes(page));
+    });
+    document.getElementById('swaggerNavLink')?.classList.toggle('active', page === 'swagger');
 
-    if (pageSwagger) {
-        pageSwagger.style.display = page === 'swagger' ? '' : 'none';
-    }
-
-    if (studentNavLink && swaggerNavLink) {
-        studentNavLink.classList.toggle('active', page !== 'swagger');
-        swaggerNavLink.classList.toggle('active', page === 'swagger');
-    }
-
-    if (page !== 'swagger') {
+    if (page === 'lecturers' && !advisorPageInitialized) {
+        advisorPageInitialized = true;
+        initAdvisorPage();
+    } else if (['list', 'form'].includes(page) && !studentPageInitialized) {
+        studentPageInitialized = true;
         initStudentPage();
     }
-
-});
+}
 
 function initStudentPage() {
     const studentTableBody = document.getElementById('studentTableBody');
@@ -46,9 +63,11 @@ function initStudentPage() {
     // =========================
     // TRANG DANH SÁCH
     // =========================
-    if (studentTableBody) {
-        loadStudents();
+    const classLoad = loadStudentClasses()
+        .catch((error) => console.error('Lỗi khi tải danh sách lớp:', error));
 
+    if (studentTableBody) {
+        classLoad.finally(() => loadStudents());
         if (searchForm) {
             searchForm.addEventListener('submit', handleSearch);
         }
@@ -58,7 +77,7 @@ function initStudentPage() {
     // TRANG FORM THÊM / SỬA / XEM
     // =========================
     if (studentForm) {
-        initStudentForm();
+        classLoad.finally(initStudentForm);
     }
 }
 
@@ -137,28 +156,20 @@ function renderStudents(students) {
             return `
                 <tr>
                     <td>
-                        ${escapeHtml(student.studentCode)}
+                        ${escapeHtml(student.code || student.studentCode || '-')}
                     </td>
 
                     <td>
                         <div class="d-flex align-items-center gap-2">
                             <span>
-                                ${escapeHtml(student.fullName)}
+                                ${escapeHtml(student.fullName || '-')}
                             </span>
                         </div>
                     </td>
 
-                    <td>
-                        ${escapeHtml(student.email)}
-                    </td>
-
-                    <td>
-                        ${escapeHtml(student.phone)}
-                    </td>
-
-                    <td>
-                        ${escapeHtml(student.className)}
-                    </td>
+                    <td>${escapeHtml(student.gender || '-')}</td>
+                    <td>${escapeHtml(getStudentClassLabel(student.studentClassessId))}</td>
+                    <td>${escapeHtml(student.status || '-')}</td>
 
                     <td class="text-end">
                         <div class="table-actions d-flex justify-content-end gap-1">
@@ -303,11 +314,7 @@ function setupFormMode(mode) {
     const submitButton = document.getElementById('submitButton');
 
     const fields = [
-        document.getElementById('studentCode'),
-        document.getElementById('fullName'),
-        document.getElementById('email'),
-        document.getElementById('phone'),
-        document.getElementById('className')
+        ...getStudentFieldIds().map((id) => document.getElementById(id))
     ];
 
     // =========================
@@ -403,7 +410,7 @@ function setupFormMode(mode) {
 
         fields.forEach((field) => {
             if (field) {
-                field.readOnly = true;
+                field.disabled = true;
             }
         });
     }
@@ -447,30 +454,44 @@ async function loadStudentDetail(id, mode) {
 // =========================
 
 function fillStudentForm(student) {
-    const studentCode = document.getElementById('studentCode');
-    const fullName = document.getElementById('fullName');
-    const email = document.getElementById('email');
-    const phone = document.getElementById('phone');
-    const className = document.getElementById('className');
-
-    if (studentCode) {
-        studentCode.value = student.studentCode || '';
+    const classSelect = document.getElementById('studentClassessId');
+    if (student.studentClassessId && classSelect && !studentClassesById.has(student.studentClassessId)) {
+        const orphanedClass = document.createElement('option');
+        orphanedClass.value = student.studentClassessId;
+        orphanedClass.textContent = `ID lớp không có trong danh sách: ${student.studentClassessId}`;
+        classSelect.append(orphanedClass);
     }
 
-    if (fullName) {
-        fullName.value = student.fullName || '';
-    }
+    const values = {
+        studentCode: student.code || student.studentCode,
+        fullName: student.fullName,
+        dateOfBirth: student.dateOfBirth,
+        gender: student.gender,
+        personalIdentificationNumber: student.personalIdentificationNumber,
+        dateOfIssue: student.dateOfIssue,
+        cardPlace: student.cardPlace,
+        address: student.address,
+        currentAddress: student.currentAddress,
+        academicYearYear: student.academicYearYear,
+        departmentId: student.departmentId,
+        majorId: student.majorId,
+        trainingProgramId: student.trainingProgramId,
+        status: student.status,
+        studentClassessId: student.studentClassessId,
+        admissionYear: formatDateTimeLocal(student.admissionYear),
+        userId: student.userId
+    };
 
-    if (email) {
-        email.value = student.email || '';
-    }
+    Object.entries(values).forEach(([id, value]) => {
+        const field = document.getElementById(id);
+        if (field) {
+            field.value = value || '';
+        }
+    });
 
-    if (phone) {
-        phone.value = student.phone || '';
-    }
-
-    if (className) {
-        className.value = student.className || '';
+    const isActive = document.getElementById('isActive');
+    if (isActive) {
+        isActive.checked = student.isActive !== false;
     }
 }
 
@@ -543,11 +564,24 @@ async function saveStudent(mode, id = null) {
 
 function getStudentFormData() {
     return {
-        studentCode: getValue('studentCode'),
+        code: getValue('studentCode'),
         fullName: getValue('fullName'),
-        email: getValue('email'),
-        phone: getValue('phone'),
-        className: getValue('className')
+        dateOfBirth: getValue('dateOfBirth') || null,
+        gender: getValue('gender') || null,
+        personalIdentificationNumber: getValue('personalIdentificationNumber') || null,
+        dateOfIssue: getValue('dateOfIssue') || null,
+        cardPlace: getValue('cardPlace') || null,
+        address: getValue('address') || null,
+        currentAddress: getValue('currentAddress') || null,
+        academicYearYear: getValue('academicYearYear') || null,
+        departmentId: getValue('departmentId') || null,
+        majorId: getValue('majorId') || null,
+        trainingProgramId: getValue('trainingProgramId') || null,
+        status: getValue('status') || null,
+        studentClassessId: getValue('studentClassessId') || null,
+        admissionYear: getValue('admissionYear') ? `${getValue('admissionYear')}:00` : null,
+        userId: getValue('userId') || null,
+        isActive: document.getElementById('isActive')?.checked ?? true
     };
 }
 
@@ -564,7 +598,7 @@ function getValue(id) {
 // =========================
 
 function validateStudent(student) {
-    if (!student.studentCode) {
+    if (!student.code) {
         alert('Vui lòng nhập mã sinh viên');
         return false;
     }
@@ -574,21 +608,18 @@ function validateStudent(student) {
         return false;
     }
 
-    if (!student.email) {
-        alert('Vui lòng nhập email');
+    if (student.studentClassessId && !isUuid(student.studentClassessId)) {
+        alert('ID lớp không hợp lệ');
         return false;
     }
 
-    if (!student.phone) {
-        alert('Vui lòng nhập số điện thoại');
-        return false;
+    for (const id of ['academicYearYear', 'departmentId', 'majorId', 'trainingProgramId', 'userId']) {
+        const value = student[id];
+        if (value && !isUuid(value)) {
+            alert(`Trường ${id} phải là UUID hợp lệ`);
+            return false;
+        }
     }
-
-    if (!student.className) {
-        alert('Vui lòng nhập lớp');
-        return false;
-    }
-
     return true;
 }
 
@@ -597,21 +628,301 @@ function validateStudent(student) {
 // =========================
 
 function setFormReadOnly(readOnly) {
-    const fields = [
-        'studentCode',
-        'fullName',
-        'email',
-        'phone',
-        'className'
-    ];
-
-    fields.forEach((id) => {
+    getStudentFieldIds().forEach((id) => {
         const element = document.getElementById(id);
 
         if (element) {
-            element.readOnly = readOnly;
+            element.disabled = readOnly;
         }
     });
+}
+
+function getStudentFieldIds() {
+    return [
+        'studentCode',
+        'fullName',
+        'dateOfBirth',
+        'gender',
+        'personalIdentificationNumber',
+        'dateOfIssue',
+        'cardPlace',
+        'address',
+        'currentAddress',
+        'studentClassessId',
+        'admissionYear',
+        'academicYearYear',
+        'departmentId',
+        'majorId',
+        'trainingProgramId',
+        'userId',
+        'status',
+        'isActive'
+    ];
+}
+
+async function loadStudentClasses() {
+    const response = await fetch(API_ENDPOINTS.STUDENT_CLASSES);
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+    }
+
+    const classes = await response.json();
+    studentClassesById = new Map(classes.map((studentClass) => [studentClass.id, studentClass]));
+    setClassOptions(document.getElementById('studentClassessId'), classes);
+}
+
+function setClassOptions(select, classes) {
+    if (!select) {
+        return;
+    }
+
+    const selectedValue = select.value;
+    select.innerHTML = '<option value="">-- Chọn lớp --</option>' + classes
+        .map((studentClass) => {
+            const label = [studentClass.code, studentClass.name].filter(Boolean).join(' - ') || studentClass.id;
+            return `<option value="${escapeHtml(studentClass.id)}">${escapeHtml(label)}</option>`;
+        })
+        .join('');
+    select.value = selectedValue;
+}
+
+function getStudentClassLabel(classId) {
+    if (!classId) {
+        return '-';
+    }
+
+    const studentClass = studentClassesById.get(classId);
+    return studentClass
+        ? [studentClass.code, studentClass.name].filter(Boolean).join(' - ') || classId
+        : classId;
+}
+
+function formatDate(value) {
+    return value ? String(value).slice(0, 10) : '-';
+}
+
+function formatDateTimeLocal(value) {
+    return value ? String(value).slice(0, 16) : '';
+}
+
+function isUuid(value) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
+function initAdvisorPage() {
+    const form = document.getElementById('advisorForm');
+    const addButton = document.getElementById('addAdvisorButton');
+    const cancelButton = document.getElementById('cancelAdvisorButton');
+    const tableBody = document.getElementById('advisorTableBody');
+
+    if (addButton) {
+        addButton.addEventListener('click', () => showAdvisorForm());
+    }
+    if (cancelButton) {
+        cancelButton.addEventListener('click', hideAdvisorForm);
+    }
+    if (form) {
+        form.addEventListener('submit', saveAdvisorAssignment);
+    }
+    if (tableBody) {
+        tableBody.addEventListener('click', handleAdvisorTableAction);
+    }
+
+    loadAdvisorClasses()
+        .then(loadAdvisorAssignments)
+        .catch((error) => {
+            console.error('Lỗi khi tải dữ liệu phân công giảng viên:', error);
+            if (tableBody) {
+                tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Không thể tải dữ liệu phân công giảng viên. Vui lòng kiểm tra API.</td></tr>';
+            }
+        });
+}
+
+async function loadAdvisorClasses() {
+    const response = await fetch(API_ENDPOINTS.STUDENT_CLASSES);
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+    }
+
+    advisorClasses = await response.json();
+    setClassOptions(document.getElementById('advisorClassId'), advisorClasses);
+}
+
+async function loadAdvisorAssignments() {
+    const response = await fetch(API_ENDPOINTS.ADVISOR_CLASSE_SECTIONS);
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+    }
+
+    renderAdvisorAssignments(await response.json());
+}
+
+function renderAdvisorAssignments(assignments) {
+    const tableBody = document.getElementById('advisorTableBody');
+    if (!tableBody) {
+        return;
+    }
+
+    if (!assignments.length) {
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Chưa có phân công giảng viên</td></tr>';
+        return;
+    }
+
+    tableBody.innerHTML = assignments.map((assignment) => {
+        const studentClass = advisorClasses.find((item) => item.id === assignment.studentClasseId);
+        const classLabel = studentClass
+            ? [studentClass.code, studentClass.name].filter(Boolean).join(' - ')
+            : (assignment.studentClasseId || '-');
+        const active = assignment.isActive !== false;
+        return `
+            <tr>
+                <td class="text-break">${escapeHtml(assignment.employeeId || '-')}</td>
+                <td>${escapeHtml(classLabel)}</td>
+                <td>${escapeHtml(formatDate(assignment.startDate))}</td>
+                <td>${escapeHtml(formatDate(assignment.endDate))}</td>
+                <td><span class="badge ${active ? 'text-bg-success' : 'text-bg-secondary'}">${active ? 'Đang hoạt động' : 'Đã ngừng'}</span></td>
+                <td class="text-end">
+                    <div class="table-actions">
+                        <button type="button" class="btn btn-warning btn-sm" data-action="edit" data-id="${escapeHtml(assignment.id)}" title="Sửa"><i class="bi bi-pencil-square"></i></button>
+                        <button type="button" class="btn btn-danger btn-sm" data-action="delete" data-id="${escapeHtml(assignment.id)}" title="Ngừng phân công"><i class="bi bi-trash"></i></button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    window.advisorAssignments = assignments;
+}
+
+function handleAdvisorTableAction(event) {
+    const button = event.target.closest('button[data-action]');
+    if (!button) {
+        return;
+    }
+
+    const assignments = window.advisorAssignments || [];
+    const assignment = assignments.find((item) => item.id === button.dataset.id);
+    if (!assignment) {
+        return;
+    }
+
+    if (button.dataset.action === 'edit') {
+        showAdvisorForm(assignment);
+    } else if (button.dataset.action === 'delete') {
+        deleteAdvisorAssignment(assignment.id);
+    }
+}
+
+function showAdvisorForm(assignment = null) {
+    const form = document.getElementById('advisorForm');
+    const card = document.getElementById('advisorFormCard');
+    if (!form || !card) {
+        return;
+    }
+
+    form.reset();
+    document.getElementById('advisorAssignmentId').value = assignment?.id || '';
+    document.getElementById('employeeId').value = assignment?.employeeId || '';
+    const classSelect = document.getElementById('advisorClassId');
+    if (assignment?.studentClasseId && !advisorClasses.some((item) => item.id === assignment.studentClasseId)) {
+        const orphanedClass = document.createElement('option');
+        orphanedClass.value = assignment.studentClasseId;
+        orphanedClass.textContent = `ID lớp không có trong danh sách: ${assignment.studentClasseId}`;
+        classSelect.append(orphanedClass);
+    }
+    document.getElementById('advisorClassId').value = assignment?.studentClasseId || '';
+    document.getElementById('advisorStartDate').value = formatDateInput(assignment?.startDate);
+    document.getElementById('advisorEndDate').value = formatDateInput(assignment?.endDate);
+    document.getElementById('advisorIsActive').checked = assignment?.isActive !== false;
+    document.getElementById('advisorFormTitle').textContent = assignment
+        ? 'Cập nhật phân công giảng viên'
+        : 'Thêm phân công giảng viên';
+    card.style.display = '';
+    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function formatDateInput(value) {
+    return value ? String(value).slice(0, 10) : '';
+}
+
+function hideAdvisorForm() {
+    const card = document.getElementById('advisorFormCard');
+    const form = document.getElementById('advisorForm');
+    if (card) {
+        card.style.display = 'none';
+    }
+    if (form) {
+        form.reset();
+    }
+}
+
+async function saveAdvisorAssignment(event) {
+    event.preventDefault();
+
+    const id = getValue('advisorAssignmentId');
+    const employeeId = getValue('employeeId');
+    const studentClasseId = getValue('advisorClassId');
+    const startDate = getValue('advisorStartDate');
+    const endDate = getValue('advisorEndDate');
+
+    if (!isUuid(employeeId)) {
+        alert('Vui lòng nhập ID nhân viên/giảng viên đúng định dạng UUID');
+        return;
+    }
+    if (startDate && endDate && startDate > endDate) {
+        alert('Ngày kết thúc phải bằng hoặc sau ngày bắt đầu');
+        return;
+    }
+
+    const assignment = {
+        employeeId,
+        studentClasseId,
+        startDate: startDate ? `${startDate}T00:00:00` : null,
+        endDate: endDate ? `${endDate}T00:00:00` : null,
+        isActive: document.getElementById('advisorIsActive').checked
+    };
+
+    try {
+        const response = await fetch(
+            id ? `${API_ENDPOINTS.ADVISOR_CLASSE_SECTIONS}/${encodeURIComponent(id)}` : API_ENDPOINTS.ADVISOR_CLASSE_SECTIONS,
+            {
+                method: id ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(assignment)
+            }
+        );
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        hideAdvisorForm();
+        await loadAdvisorAssignments();
+        alert(id ? 'Cập nhật phân công thành công' : 'Thêm phân công thành công');
+    } catch (error) {
+        console.error('Lỗi khi lưu phân công giảng viên:', error);
+        alert('Không thể lưu phân công. Vui lòng kiểm tra lại dữ liệu và API.');
+    }
+}
+
+async function deleteAdvisorAssignment(id) {
+    if (!window.confirm('Bạn có chắc muốn ngừng phân công giảng viên này?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            `${API_ENDPOINTS.ADVISOR_CLASSE_SECTIONS}/${encodeURIComponent(id)}`,
+            { method: 'DELETE' }
+        );
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        await loadAdvisorAssignments();
+        alert('Đã ngừng phân công giảng viên');
+    } catch (error) {
+        console.error('Lỗi khi ngừng phân công giảng viên:', error);
+        alert('Không thể ngừng phân công giảng viên');
+    }
 }
 
 // =========================
