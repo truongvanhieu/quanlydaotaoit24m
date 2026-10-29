@@ -308,17 +308,39 @@ async function loadClassStudents(classId) {
         && String(section.status || '').toLocaleLowerCase() === 'studying'
     ));
 
-    return activeSections.map((section) => {
+    const classStudentsById = new Map();
+    activeSections.forEach((section) => {
         const student = studentsById.get(section.studentId);
-        return {
+        classStudentsById.set(section.studentId, {
             code: student?.code || student?.studentCode || '-',
             fullName: student?.fullName || (section.studentId ? `Không tìm thấy sinh viên (${section.studentId})` : '-'),
             gender: student?.gender || '-',
             status: section.status || '-',
             startDate: section.startDate || '-',
             endDate: section.endDate || '-'
-        };
+        });
     });
+
+    students
+        .filter((student) => (
+            student.studentClassessId === classId
+            && student.isActive !== false
+            && !student.deletedAt
+        ))
+        .forEach((student) => {
+            if (!classStudentsById.has(student.id)) {
+                classStudentsById.set(student.id, {
+                    code: student.code || student.studentCode || '-',
+                    fullName: student.fullName || '-',
+                    gender: student.gender || '-',
+                    status: student.status || 'studying',
+                    startDate: '-',
+                    endDate: '-'
+                });
+            }
+        });
+
+    return Array.from(classStudentsById.values());
 }
 
 function renderClassStudents(students, keyword = '') {
