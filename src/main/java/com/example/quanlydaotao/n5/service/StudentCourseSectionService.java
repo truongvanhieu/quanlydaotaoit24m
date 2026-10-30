@@ -1,6 +1,7 @@
 package com.example.quanlydaotao.n5.service;
 
 import com.example.quanlydaotao.n5.entity.StudentCourseSection;
+import com.example.quanlydaotao.n5.dto.StudentCourseSectionDetails;
 import com.example.quanlydaotao.n5.repository.StudentCourseSectionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,16 @@ import java.util.UUID;
 public class StudentCourseSectionService {
 
     private final StudentCourseSectionRepository repository;
+    private static final List<String> ALLOWED_STATUSES =
+            List.of("REGISTERED", "STUDYING", "COMPLETED", "CANCELLED");
+
+    public List<StudentCourseSectionDetails> getDetails(
+            UUID studentId, UUID courseSectionId, String status, Boolean isActive) {
+        String normalizedStatus = status == null || status.isBlank()
+                ? null
+                : normalizeStatus(status);
+        return repository.findDetails(studentId, courseSectionId, normalizedStatus, isActive);
+    }
 
     public List<StudentCourseSection> getAll(UUID studentId, UUID courseSectionId, String status, String registrationType, Boolean isActive) {
         if (studentId != null || courseSectionId != null || status != null || registrationType != null || isActive != null) {
@@ -30,6 +41,7 @@ public class StudentCourseSectionService {
     }
 
     public StudentCourseSection create(StudentCourseSection registration) {
+        registration.setStatus(normalizeStatus(registration.getStatus()));
         if (registration.getStudentId() != null && registration.getCourseSectionId() != null) {
             boolean exists = repository.existsByStudentIdAndCourseSectionIdAndDeletedAtIsNull(
                     registration.getStudentId(), registration.getCourseSectionId()
@@ -48,7 +60,9 @@ public class StudentCourseSectionService {
         existing.setCourseSectionId(request.getCourseSectionId());
         existing.setRegistrationDate(request.getRegistrationDate());
         existing.setRegistrationType(request.getRegistrationType());
-        existing.setStatus(request.getStatus());
+        if (request.getStatus() != null) {
+            existing.setStatus(normalizeStatus(request.getStatus()));
+        }
         existing.setAttemptNumber(request.getAttemptNumber());
         existing.setNote(request.getNote());
         existing.setUpdatedBy(request.getUpdatedBy());
@@ -61,9 +75,22 @@ public class StudentCourseSectionService {
 
     public void updateStatus(UUID id, String status, UUID updatedBy) {
         StudentCourseSection existing = getById(id);
-        existing.setStatus(status);
+        existing.setStatus(normalizeStatus(status));
         existing.setUpdatedBy(updatedBy);
         repository.save(existing);
+    }
+
+    private String normalizeStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return "REGISTERED";
+        }
+        String normalized = status.trim().toUpperCase();
+        if (!ALLOWED_STATUSES.contains(normalized)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Trạng thái phải là REGISTERED, STUDYING, COMPLETED hoặc CANCELLED");
+        }
+        return normalized;
     }
 
     public void softDelete(UUID id, UUID deletedBy) {

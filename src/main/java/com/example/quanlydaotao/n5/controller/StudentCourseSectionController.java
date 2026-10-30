@@ -1,6 +1,7 @@
 package com.example.quanlydaotao.n5.controller;
 
 import com.example.quanlydaotao.n5.entity.StudentCourseSection;
+import com.example.quanlydaotao.n5.dto.StudentCourseSectionDetails;
 import com.example.quanlydaotao.n5.service.StudentCourseSectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,15 @@ import java.util.UUID;
 public class StudentCourseSectionController {
 
     private final StudentCourseSectionService service;
+
+    @GetMapping("/details")
+    public ResponseEntity<List<StudentCourseSectionDetails>> getDetails(
+            @RequestParam(required = false) UUID studentId,
+            @RequestParam(required = false) UUID courseSectionId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Boolean isActive) {
+        return ResponseEntity.ok(service.getDetails(studentId, courseSectionId, status, isActive));
+    }
 
     @GetMapping
     public ResponseEntity<List<StudentCourseSection>> getAll(
