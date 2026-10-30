@@ -75,11 +75,17 @@ This project aims to develop a web platform for University Training Management S
 | 23  | schedules | Lịch học chi tiết cho lớp học phần |
 
 **VIII. NHÓM ĐIỂM – ĐÁNH GIÁ HỌC TẬP**
-| STT | Tên bảng         | Chức năng                                       |
-| --- | ---------------- | ----------------------------------------------- |
-| 24  | grade_components | Thành phần điểm (chuyên cần, giữa kỳ, cuối kỳ…) |
-| 25  | student_grades   | Điểm sinh viên theo học phần                    |
-| 26  | grade_scales     | Thang điểm (10, chữ A–F…)                       |
+| STT | Tên bảng                 | Chức năng                                               |
+| --- | ------------------------ | ------------------------------------------------------- |
+| 24  | grade_components         | Thành phần điểm và trọng số theo lớp học phần           |
+| 25  | student_component_grades | Điểm của sinh viên theo từng thành phần                 |
+| 26  | grade_scales             | Thang xếp loại và quy đổi GPA                           |
+| 27  | student_summaries        | Điểm tổng kết và kết quả đã tính theo đăng ký học phần  |
+
+Trang **Điểm - Đánh giá** tại `/grades.html` hỗ trợ quản lý thành phần điểm,
+nhập/sửa/xóa điểm theo sinh viên và xem điểm tổng kết. Điểm tổng kết chỉ được
+tính khi tổng trọng số các thành phần đang hoạt động bằng 100% và sinh viên đã
+có điểm ở tất cả thành phần; xếp loại/GPA được tra từ `grade_scales`.
 
 **IX. NHÓM HỌC PHÍ – TÀI CHÍNH**
 | STT | Tên bảng        | Chức năng                               |
@@ -220,5 +226,4 @@ This project aims to develop a web platform for University Training Management S
 - Regularly update this README.md to reflect the current state of the project.
 - Use GitHub Issues to track detailed tasks and bugs.
 - Utilize GitHub Projects for more advanced project management.
-
 
