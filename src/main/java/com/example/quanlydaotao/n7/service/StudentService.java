@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import com.example.quanlydaotao.n7.entity.Student;
 import com.example.quanlydaotao.n7.repository.StudentRepository;
 
-@Service
+@Service("n7StudentService")
 public class StudentService {
 
     private final StudentRepository studentRepository;

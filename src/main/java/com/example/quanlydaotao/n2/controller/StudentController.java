@@ -18,7 +18,7 @@ import com.example.quanlydaotao.n2.entity.Student;
 import com.example.quanlydaotao.n2.service.StudentService;
 
 @RestController
-@RequestMapping("/api/students")
+@RequestMapping("/api/n2/students")
 public class StudentController {
 
     @Autowired

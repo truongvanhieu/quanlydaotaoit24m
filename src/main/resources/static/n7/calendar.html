@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light" />
+    <title>Lịch học | School Manager</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/roboto@5.0.8/index.css" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" crossorigin="anonymous" />
+    <link rel="stylesheet" href="/n7/assets/css/calendar.css" />
+</head>
+<body>
+    <div class="calendar-app">
+        <header class="topbar">
+            <a class="brand" href="/calendar.html" aria-label="School Manager - Lịch học">
+                <span class="brand-icon"><i class="bi bi-calendar3"></i></span>
+                <span>School Manager</span>
+            </a>
+            <div class="topbar-actions">
+                <a class="icon-button help-button" href="/index.html" title="Quản lý sinh viên" aria-label="Quản lý sinh viên">
+                    <i class="bi bi-people"></i>
+                </a>
+                <span class="avatar" aria-label="Người dùng">Q</span>
+            </div>
+        </header>
+
+        <div class="calendar-layout">
+            <aside class="sidebar">
+                <a href="/index.html" class="create-button"><i class="bi bi-people"></i><span>Danh sách sinh viên</span></a>
+                <section class="mini-calendar" aria-label="Lịch tháng nhỏ">
+                    <div class="mini-calendar-head">
+                        <h2 id="miniMonthTitle"></h2>
+                        <div class="mini-nav">
+                            <button class="icon-button" id="miniPrev" title="Tháng trước" aria-label="Tháng trước"><i class="bi bi-chevron-left"></i></button>
+                            <button class="icon-button" id="miniNext" title="Tháng sau" aria-label="Tháng sau"><i class="bi bi-chevron-right"></i></button>
+                        </div>
+                    </div>
+                    <div class="mini-weekdays" aria-hidden="true">
+                        <span>T</span><span>H</span><span>B</span><span>T</span><span>N</span><span>S</span><span>C</span>
+                    </div>
+                    <div class="mini-days" id="miniDays"></div>
+                </section>
+
+                <section class="calendar-list">
+                    <h2>Lịch của tôi</h2>
+                    <label class="calendar-toggle">
+                        <input type="checkbox" checked disabled />
+                        <span class="calendar-color"></span>
+                        <span>Lịch học</span>
+                    </label>
+                </section>
+                <div class="sidebar-note">
+                    <i class="bi bi-info-circle"></i>
+                    <span>Chọn một buổi học để xem thông tin chi tiết.</span>
+                </div>
+            </aside>
+
+            <main class="main-panel">
+                <div class="toolbar">
+                    <div class="toolbar-left">
+                        <button class="today-button" id="todayButton">Hôm nay</button>
+                        <div class="toolbar-nav">
+                            <button class="icon-button" id="prevPeriod" aria-label="Khoảng thời gian trước" title="Trước"><i class="bi bi-chevron-left"></i></button>
+                            <button class="icon-button" id="nextPeriod" aria-label="Khoảng thời gian sau" title="Sau"><i class="bi bi-chevron-right"></i></button>
+                        </div>
+                        <h1 id="periodTitle" aria-live="polite"></h1>
+                    </div>
+                    <div class="toolbar-right">
+                        <label class="search-box">
+                            <i class="bi bi-search"></i>
+                            <input type="search" id="eventSearch" placeholder="Tìm lịch học" aria-label="Tìm lịch học" />
+                        </label>
+                        <div class="view-switch" role="group" aria-label="Chế độ xem lịch">
+                            <button type="button" class="view-button active" data-view="week">Tuần</button>
+                            <button type="button" class="view-button" data-view="month">Tháng</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="calendarStatus" class="status-message" role="status" hidden></div>
+                <section class="calendar-surface" aria-label="Lịch học">
+                    <div id="calendarView"></div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <dialog id="eventDialog" class="event-dialog">
+        <form method="dialog">
+            <button class="dialog-close icon-button" aria-label="Đóng"><i class="bi bi-x-lg"></i></button>
+        </form>
+        <div class="dialog-color-bar"></div>
+        <div class="dialog-content">
+            <p class="dialog-eyebrow">CHI TIẾT BUỔI HỌC</p>
+            <h2 id="dialogCourse"></h2>
+            <p class="dialog-course-code" id="dialogSection"></p>
+            <div class="dialog-detail"><i class="bi bi-calendar3"></i><span id="dialogDate"></span></div>
+            <div class="dialog-detail"><i class="bi bi-clock"></i><span id="dialogPeriod"></span></div>
+            <div class="dialog-detail"><i class="bi bi-geo-alt"></i><span id="dialogRoom"></span></div>
+            <div class="dialog-detail" id="dialogStatusRow"><i class="bi bi-bookmark"></i><span id="dialogStatus"></span></div>
+            <p id="dialogDescription" class="dialog-description"></p>
+        </div>
+    </dialog>
+
+    <script type="module" src="/n7/assets/js/calendar.js"></script>
+</body>
+</html>

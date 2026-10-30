@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.quanlydaotao.n7.entity.Student;
 import com.example.quanlydaotao.n7.service.StudentService;
 
-@RestController
+@RestController("n7StudentController")
 @RequestMapping("/api/students")
 public class StudentController {
 
