@@ -1,0 +1,64 @@
+http://localhost:8080
+http://localhost:8080/calendar.html
+de chay pj:
+.\mvnw.cmd spring-boot:run
+
+swagger:
+http://localhost:8080/swagger-ui/index.html#/
+
+///////////////////////////////////////////////
+Các chức năng hiện có
+Bing:
+Quản lý sinh viên
+Giao diện chính ở /index.html, API tại /api/students:
+- Xem danh sách sinh viên và tìm kiếm theo mã, họ tên, email hoặc số điện thoại.
+- Xem chi tiết sinh viên.
+- Thêm, sửa và xóa sinh viên.
+- Có kiểm tra dữ liệu trên form.
+Ngoài ra, API tương tự ở /api/n2/students hỗ trợ liệt kê, tìm kiếm, xem, thêm, sửa và xóa sinh viên.
+Quản lý tòa nhà
+
+Phúc:
+API tại /api/buildings:
+- Xem danh sách, tìm kiếm và lọc theo trạng thái hoạt động.
+- Xem chi tiết tòa nhà và danh sách phòng thuộc tòa nhà.
+- Thêm, sửa và xóa tòa nhà.
+Quản lý phòng học
+API tại /api/rooms:
+- Xem danh sách; lọc theo tòa nhà, trạng thái, loại phòng, sức chứa tối thiểu và trạng thái hoạt động.
+- Xem chi tiết phòng và lịch sử dụng phòng.
+- Tìm phòng trống theo ngày, khoảng tiết và sức chứa tối thiểu.
+- Thêm, sửa và xóa phòng.
+Quản lý lịch học
+
+
+Lộc:
+API tại /api/schedules:
+- Xem danh sách lịch, có tìm kiếm, lọc theo phòng, lớp học phần, thứ, khoảng ngày và trạng thái; hỗ trợ phân trang.
+- Xem lịch theo tuần, theo lớp học phần hoặc xem chi tiết một lịch.
+- Thêm, sửa và xóa lịch.
+- Kiểm tra dữ liệu lịch và phát hiện trùng phòng/lớp theo thứ, ngày và tiết.
+Giao diện lịch
+Trang /calendar.html có:
+- Xem lịch theo tuần hoặc tháng.
+- Chuyển tuần/tháng, về hôm nay hoặc chọn ngày trên lịch nhỏ.
+- Tìm kiếm lịch và bấm vào buổi học để xem thông tin chi tiết.
+
+Bên cạnh các việc chính thì tính những việc khác thì ngang nhau
+
+
+Cải tiến:
+thêm 2 luồng xử lý
+--> 1 sinh viên vào --> tra thời khóa biểu --> get lịch của sv đó (theo id sv) trong bảng lịch schedule.
+--> 1 giảng viên vào --> tra thời khóa biểu --> get lịch của gv đó (theo id gv) trong bảng lịch schedule.
+
+thêm tính năng:
+	tạo học phần
+	chỉnh sửa học phần
+	tìm kiếm học phần theo idsv
+	tìm kiếm học phần theo gv
+	calendar riêng cho sinh viên/giảng viên
+	quản lí lớp học phần
+    quản lí việc phân công giảng viên
+    danh sách sinh viên trong lớp học phần
+    
