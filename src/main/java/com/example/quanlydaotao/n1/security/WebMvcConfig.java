@@ -1,4 +1,3 @@
-
 package com.example.quanlydaotao.n1.security;
 
 import org.springframework.context.annotation.Configuration;

@@ -1,4 +1,3 @@
-
 package com.example.quanlydaotao.n1.dto;
 
 import java.util.UUID;
@@ -18,7 +17,7 @@ public record UserResponse(
         return new UserResponse(
                 user.getId(),
                 user.getUsername(),
-                user.getFullName(),
+                user.   getFullName(),
                 user.getEmail(),
                 user.getPhone(),
                 user.getAvatarUrl(),

@@ -1,4 +1,3 @@
-
 package com.example.quanlydaotao.n1.entity;
 
 import java.time.LocalDateTime;
