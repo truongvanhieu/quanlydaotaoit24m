@@ -59,10 +59,17 @@
 			<version>2.8.13</version>
 		</dependency>
 		<dependency>
+<<<<<<< HEAD
     <groupId>org.projectlombok</groupId>
     <artifactId>lombok</artifactId>
     <optional>true</optional>
 </dependency>
+=======
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+>>>>>>> 0e14477f53db94f00fe602d227fe85203aa2a4a6
 	</dependencies>
 	<build>
 		<plugins>
