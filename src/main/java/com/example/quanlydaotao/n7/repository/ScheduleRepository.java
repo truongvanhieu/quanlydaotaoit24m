@@ -89,4 +89,25 @@ public interface ScheduleRepository extends JpaRepository<Schedule, UUID> {
             @Param("dateEnd") LocalDateTime dateEnd,
             @Param("startPeriod") Integer startPeriod,
             @Param("endPeriod") Integer endPeriod);
+
+    @Query(value = """
+            select distinct s.* from schedules s
+            join student_course_sections scs on scs.course_section_id = s.course_section_id
+            where scs.student_id = :studentId and scs.deleted_at is null
+              and coalesce(scs.is_active, 1) = 1 and s.deleted_at is null
+              and coalesce(s.is_active, 1) = 1
+            """, nativeQuery = true)
+    List<Schedule> findForStudent(@Param("studentId") UUID studentId);
+
+    @Query(value = """
+            select s.* from schedules s
+            where s.deleted_at is null and coalesce(s.is_active, 1) = 1
+              and (s.employee_id = :lecturerId or s.employee_id in (
+                    select e.id from lecturers l join employees e on e.user_id = l.user_id
+                    where l.id = :lecturerId and l.user_id is not null
+                      and l.deleted_at is null and e.deleted_at is null
+              ))
+            order by s.start_date, s.start_period
+            """, nativeQuery = true)
+    List<Schedule> findForLecturer(@Param("lecturerId") UUID lecturerId);
 }

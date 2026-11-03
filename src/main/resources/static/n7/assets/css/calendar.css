@@ -16,6 +16,11 @@ button, input { font: inherit; }
 button { color: inherit; }
 
 .calendar-app { min-height: 100vh; }
+.personal-calendar form { display: grid; gap: 8px; margin-top: 10px; }
+.personal-calendar label { color: #5f6368; font-size: 12px; font-weight: 600; }
+.personal-calendar select, .personal-calendar input { width: 100%; min-width: 0; border: 1px solid #dadce0; border-radius: 6px; padding: 8px; background: #fff; color: #202124; }
+.personal-calendar .create-button { border: 0; justify-content: center; cursor: pointer; font: inherit; }
+.personal-management-link { display: inline-block; margin-top: 12px; color: #1a73e8; font-size: 13px; text-decoration: none; }
 .topbar {
     height: 64px;
     display: flex;
@@ -190,7 +195,9 @@ button { color: inherit; }
     .topbar { height: 58px; padding: 0 15px; }
     .brand { font-size: 18px; }
     .calendar-layout { display: block; min-height: calc(100vh - 58px); }
-    .sidebar { display: none; }
+    .sidebar { display: block; padding: 12px 16px; border-right: 0; border-bottom: 1px solid #e5e7eb; }
+    .sidebar > .create-button, .sidebar > .mini-calendar, .sidebar > .calendar-list:not(.personal-calendar), .sidebar-note { display: none; }
+    .personal-calendar { margin-top: 0; padding-top: 0; border-top: 0; }
     .main-panel { padding: 0 12px 18px; }
     .toolbar { gap: 10px; }
     .toolbar-left { gap: 3px; }

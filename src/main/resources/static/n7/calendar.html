@@ -41,6 +41,21 @@
                     <div class="mini-days" id="miniDays"></div>
                 </section>
 
+                <section class="calendar-list personal-calendar">
+                    <h2>Thời khóa biểu cá nhân</h2>
+                    <form id="personalCalendarForm">
+                        <label for="calendarAudience">Đối tượng</label>
+                        <select id="calendarAudience" name="audience">
+                            <option value="student">Sinh viên</option>
+                            <option value="lecturer">Giảng viên</option>
+                        </select>
+                        <label for="calendarPersonId">Mã sinh viên / giảng viên hoặc UUID</label>
+                        <input id="calendarPersonId" name="personId" type="text" placeholder="Nhập mã 6 số hoặc UUID" required />
+                        <button type="submit" class="create-button">Xem thời khóa biểu</button>
+                    </form>
+                    <a class="personal-management-link" href="/course-sections.html">Quản lý lớp học phần</a>
+                </section>
+
                 <section class="calendar-list">
                     <h2>Lịch của tôi</h2>
                     <label class="calendar-toggle">

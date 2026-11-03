@@ -54,6 +54,30 @@ public class ScheduleController {
         return scheduleService.weekly(date);
     }
 
+    @GetMapping("/student/{studentId}/weekly")
+    public List<ScheduleResponse> weeklyForStudent(@PathVariable UUID studentId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return scheduleService.weeklyForStudent(studentId, date);
+    }
+
+    @GetMapping("/student/by-code/{studentCode}/weekly")
+    public List<ScheduleResponse> weeklyForStudentCode(@PathVariable String studentCode,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return scheduleService.weeklyForStudentCode(studentCode, date);
+    }
+
+    @GetMapping("/lecturer/{lecturerId}/weekly")
+    public List<ScheduleResponse> weeklyForLecturer(@PathVariable UUID lecturerId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return scheduleService.weeklyForLecturer(lecturerId, date);
+    }
+
+    @GetMapping("/lecturer/by-code/{lecturerCode}/weekly")
+    public List<ScheduleResponse> weeklyForLecturerCode(@PathVariable String lecturerCode,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return scheduleService.weeklyForLecturerCode(lecturerCode, date);
+    }
+
     @GetMapping("/course-section/{courseSectionId}")
     public List<ScheduleResponse> byCourseSection(@PathVariable UUID courseSectionId) {
         return scheduleService.byCourseSection(courseSectionId);

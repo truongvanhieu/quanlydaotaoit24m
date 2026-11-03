@@ -104,6 +104,94 @@ public class ScheduleService {
                 .toList();
     }
 
+    public List<ScheduleResponse> weeklyForStudent(UUID studentId, LocalDate date) {
+        return forStudentWeek(resolveStudentId(studentId), date);
+    }
+
+    public List<ScheduleResponse> weeklyForStudentCode(String studentCode, LocalDate date) {
+        return forStudentWeek(resolveStudentCode(studentCode), date);
+    }
+
+    public List<ScheduleResponse> weeklyForLecturer(UUID lecturerId, LocalDate date) {
+        return forWeek(scheduleRepository.findForLecturer(resolveLecturerId(lecturerId)), date);
+    }
+
+    public List<ScheduleResponse> weeklyForLecturerCode(String lecturerCode, LocalDate date) {
+        return forWeek(scheduleRepository.findForLecturer(resolveLecturerCode(lecturerCode)), date);
+    }
+
+    private UUID resolveStudentId(UUID id) {
+        List<UUID> academicIds = jdbcTemplate.query(
+                "select id from students_ where id = ? and deleted_at is null",
+                (rs, row) -> rs.getObject("id", UUID.class), id);
+        if (!academicIds.isEmpty()) return academicIds.get(0);
+        List<String> legacyCodes = jdbcTemplate.query(
+                "select student_code from students where id = ?", (rs, row) -> rs.getString("student_code"), id);
+        if (!legacyCodes.isEmpty()) return findAcademicStudentByCode(legacyCodes.get(0));
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sinh viên theo UUID");
+    }
+
+    private UUID resolveStudentCode(String code) {
+        String normalized = code == null ? "" : code.trim();
+        if (normalized.isEmpty()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã sinh viên là bắt buộc");
+        return findAcademicStudentByCode(normalized);
+    }
+
+    private UUID findAcademicStudentByCode(String code) {
+        List<UUID> ids = jdbcTemplate.query(
+                "select top (1) id from students_ where code = ? and deleted_at is null order by id",
+                (rs, row) -> rs.getObject("id", UUID.class), code);
+        if (!ids.isEmpty()) return ids.get(0);
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ học vụ của sinh viên");
+    }
+
+    private List<ScheduleResponse> forStudentWeek(UUID studentId, LocalDate date) {
+        List<Schedule> schedules = scheduleRepository.findForStudent(studentId);
+        if (schedules.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Sinh viên chưa có lịch học được đăng ký");
+        }
+        return forWeek(schedules, date);
+    }
+
+    private UUID resolveLecturerId(UUID id) {
+        List<UUID> ids = jdbcTemplate.query(
+                "select id from lecturers where id = ? and deleted_at is null",
+                (rs, row) -> rs.getObject("id", UUID.class), id);
+        if (!ids.isEmpty()) return ids.get(0);
+        List<UUID> employeeIds = jdbcTemplate.query(
+                "select id from employees where id = ? and deleted_at is null",
+                (rs, row) -> rs.getObject("id", UUID.class), id);
+        if (!employeeIds.isEmpty()) return employeeIds.get(0);
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy giảng viên theo UUID");
+    }
+
+    private UUID resolveLecturerCode(String code) {
+        String normalized = code == null ? "" : code.trim();
+        List<UUID> ids = jdbcTemplate.query(
+                "select top (1) id from lecturers where lecturer_code = ? and deleted_at is null order by id",
+                (rs, row) -> rs.getObject("id", UUID.class), normalized);
+        if (!ids.isEmpty()) return ids.get(0);
+        List<UUID> employeeIds = jdbcTemplate.query(
+                "select top (1) id from employees where code = ? and deleted_at is null order by id",
+                (rs, row) -> rs.getObject("id", UUID.class), normalized);
+        if (!employeeIds.isEmpty()) return employeeIds.get(0);
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy giảng viên theo mã");
+    }
+
+    private List<ScheduleResponse> forWeek(List<Schedule> candidates, LocalDate date) {
+        LocalDate monday = (date == null ? LocalDate.now() : date)
+                .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        LocalDateTime weekStart = monday.atStartOfDay();
+        LocalDateTime weekEnd = monday.plusDays(6).atTime(23, 59, 59, 999_999_900);
+        return candidates.stream()
+                .filter(schedule -> schedule.getDayOfWeek() != null && schedule.getStartDate() != null
+                        && schedule.getEndDate() != null
+                        && hasWeekdayOccurrence(later(weekStart, schedule.getStartDate()),
+                                earlier(weekEnd, schedule.getEndDate()), schedule.getDayOfWeek()))
+                .map(ScheduleService::toResponse)
+                .toList();
+    }
+
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public ScheduleResponse create(ScheduleRequest request) {
         validate(request);

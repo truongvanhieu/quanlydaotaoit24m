@@ -1,4 +1,7 @@
 const API_BASE = '/api';
+const pageParams = new URLSearchParams(window.location.search);
+const audienceParam = pageParams.get('audience');
+const personIdParam = pageParams.get('personId') || '';
 const DAYS = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ nhật'];
 const DEFAULT_PERIOD_COUNT = 12;
 const today = startOfDay(new Date());
@@ -14,6 +17,18 @@ const miniTitle = document.getElementById('miniMonthTitle');
 const miniDays = document.getElementById('miniDays');
 const searchInput = document.getElementById('eventSearch');
 const eventDialog = document.getElementById('eventDialog');
+const personalCalendarForm = document.getElementById('personalCalendarForm');
+const audienceSelect = document.getElementById('calendarAudience');
+const personIdInput = document.getElementById('calendarPersonId');
+
+if (audienceParam === 'student' || audienceParam === 'lecturer') audienceSelect.value = audienceParam;
+personIdInput.value = personIdParam;
+personalCalendarForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!personIdInput.value.trim()) return;
+    const params = new URLSearchParams({ audience: audienceSelect.value, personId: personIdInput.value.trim() });
+    window.location.search = params.toString();
+});
 
 document.getElementById('todayButton').addEventListener('click', () => navigateTo(today));
 document.getElementById('prevPeriod').addEventListener('click', () => shiftPeriod(-1));
@@ -113,7 +128,11 @@ async function loadSchedules() {
 
     try {
         const weeks = await Promise.all(dates.map(async (date) => {
-            const url = `${API_BASE}/schedules/weekly?date=${encodeURIComponent(toIsoDate(date))}`;
+            const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(personIdParam);
+            const schedulePath = personIdParam && (audienceParam === 'student' || audienceParam === 'lecturer')
+                ? `/schedules/${audienceParam}/${isUuid ? '' : 'by-code/'}${encodeURIComponent(personIdParam)}/weekly`
+                : '/schedules/weekly';
+            const url = `${API_BASE}${schedulePath}?date=${encodeURIComponent(toIsoDate(date))}`;
             const response = await fetch(url, { headers: { Accept: 'application/json' } });
             if (!response.ok) throw new Error(`Máy chủ phản hồi ${response.status}`);
             return response.json();

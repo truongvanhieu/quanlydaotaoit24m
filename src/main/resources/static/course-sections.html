@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quản lý lớp học phần</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <style>
+        body{background:#f5f7fb;color:#202938}.container{max-width:1180px}.panel{background:#fff;border:1px solid #e3e8ef;border-radius:12px;padding:20px;margin:18px 0;box-shadow:0 3px 12px #15263a0b}.table{vertical-align:middle}.muted{color:#657184}.toolbar{display:flex;gap:10px;flex-wrap:wrap}.toolbar input{max-width:340px}.status{min-height:1.5rem}.status.error{color:#b42318}.form-label{font-weight:600;font-size:.9rem}.action-row{display:flex;gap:7px;white-space:nowrap}
+    </style>
+</head>
+<body>
+<main class="container py-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div><h1 class="h3 mb-1">Quản lý lớp học phần</h1><div class="muted">Lớp học phần, danh sách sinh viên và phân công giảng viên</div></div>
+        <a href="/calendar.html" class="btn btn-outline-primary">Thời khóa biểu</a>
+    </div>
+    <div id="status" class="status" role="status"></div>
+    <section class="panel">
+        <h2 class="h5">Danh mục học phần</h2>
+        <form id="courseForm" class="row g-3">
+            <input id="courseRecordId" type="hidden">
+            <div class="col-md-2"><label class="form-label" for="courseCode">Mã học phần *</label><input id="courseCode" class="form-control" maxlength="100" required></div>
+            <div class="col-md-4"><label class="form-label" for="courseName">Tên học phần *</label><input id="courseName" class="form-control" maxlength="255" required></div>
+            <div class="col-md-3"><label class="form-label" for="courseNameEn">Tên tiếng Anh</label><input id="courseNameEn" class="form-control" maxlength="255"></div>
+            <div class="col-md-3"><label class="form-label" for="departmentId">ID khoa</label><input id="departmentId" class="form-control" placeholder="UUID"></div>
+            <div class="col-md-2"><label class="form-label" for="credits">Số tín chỉ</label><input id="credits" class="form-control" type="number" min="0" step="0.5"></div>
+            <div class="col-md-2"><label class="form-label" for="theoryHours">Giờ lý thuyết</label><input id="theoryHours" class="form-control" type="number" min="0" step="0.5"></div>
+            <div class="col-md-2"><label class="form-label" for="practiceHours">Giờ thực hành</label><input id="practiceHours" class="form-control" type="number" min="0" step="0.5"></div>
+            <div class="col-md-2"><label class="form-label" for="selfStudyHours">Giờ tự học</label><input id="selfStudyHours" class="form-control" type="number" min="0" step="0.5"></div>
+            <div class="col-md-2"><label class="form-label" for="internshipCredits">Tín chỉ thực tập</label><input id="internshipCredits" class="form-control" type="number" min="0" step="0.5"></div>
+            <div class="col-md-3"><label class="form-label" for="courseType">Loại học phần</label><input id="courseType" class="form-control" maxlength="255"></div>
+            <div class="col-md-7"><label class="form-label" for="courseDescription">Mô tả</label><input id="courseDescription" class="form-control"></div>
+            <div class="col-md-2 d-flex align-items-end"><div class="form-check mb-2"><input id="courseActive" class="form-check-input" type="checkbox" checked><label class="form-check-label" for="courseActive">Đang hoạt động</label></div></div>
+            <div class="col-12"><button class="btn btn-primary" type="submit">Lưu học phần</button><button class="btn btn-outline-secondary ms-2" id="resetCourseForm" type="button">Làm mới</button></div>
+        </form>
+        <div class="table-responsive mt-3"><table class="table table-hover"><thead><tr><th>Mã</th><th>Tên học phần</th><th>Tín chỉ</th><th>Trạng thái</th><th></th></tr></thead><tbody id="courseRows"></tbody></table></div>
+    </section>
+    <section class="panel">
+        <h2 class="h5">Tạo / chỉnh sửa lớp học phần</h2>
+        <form id="sectionForm" class="row g-3">
+            <input id="sectionId" type="hidden">
+            <div class="col-md-3"><label class="form-label" for="code">Mã lớp *</label><input id="code" class="form-control" maxlength="100" required></div>
+            <div class="col-md-5"><label class="form-label" for="name">Tên lớp *</label><input id="name" class="form-control" maxlength="255" required></div>
+            <div class="col-md-4"><label class="form-label" for="courseId">Học phần gốc *</label><select id="courseId" class="form-select" required><option value="">Chọn học phần</option></select></div>
+            <div class="col-md-3"><label class="form-label" for="semesterId">ID học kỳ</label><input id="semesterId" class="form-control" placeholder="UUID"></div>
+            <div class="col-md-3"><label class="form-label" for="roomId">ID phòng</label><input id="roomId" class="form-control" placeholder="UUID"></div>
+            <div class="col-md-3"><label class="form-label" for="buildingId">ID tòa nhà</label><input id="buildingId" class="form-control" placeholder="UUID"></div>
+            <div class="col-md-3"><label class="form-label" for="classType">Loại lớp</label><input id="classType" class="form-control" maxlength="255"></div>
+            <div class="col-md-3"><label class="form-label" for="maxStudents">Sĩ số tối đa</label><input id="maxStudents" class="form-control" type="number" min="0"></div>
+            <div class="col-md-3"><label class="form-label" for="minStudents">Sĩ số tối thiểu</label><input id="minStudents" class="form-control" type="number" min="0"></div>
+            <div class="col-md-3"><label class="form-label" for="sectionStatus">Trạng thái</label><input id="sectionStatus" class="form-control" maxlength="50" value="Đang mở"></div>
+            <div class="col-md-3"><label class="form-label" for="registrationStart">Mở đăng ký</label><input id="registrationStart" class="form-control" type="datetime-local"></div>
+            <div class="col-md-3"><label class="form-label" for="registrationEnd">Đóng đăng ký</label><input id="registrationEnd" class="form-control" type="datetime-local"></div>
+            <div class="col-md-3"><label class="form-label" for="note">Ghi chú</label><input id="note" class="form-control" maxlength="255"></div>
+            <div class="col-md-3 d-flex align-items-end"><div class="form-check mb-2"><input id="active" class="form-check-input" type="checkbox" checked><label class="form-check-label" for="active">Đang hoạt động</label></div></div>
+            <div class="col-12 d-flex gap-2"><button class="btn btn-primary" type="submit">Lưu lớp học phần</button><button class="btn btn-outline-secondary" id="resetForm" type="button">Làm mới</button></div>
+        </form>
+    </section>
+    <section class="panel">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2"><h2 class="h5 mb-0">Danh sách lớp học phần</h2><div class="toolbar"><input id="sectionSearch" class="form-control" placeholder="Tìm theo mã hoặc tên"><input id="studentSearchId" class="form-control" placeholder="UUID sinh viên (students_)"><button id="searchSections" class="btn btn-outline-primary">Tìm</button><button id="allSections" class="btn btn-outline-secondary">Tất cả</button></div></div>
+        <div class="toolbar mt-2"><input id="sectionLecturerId" class="form-control" placeholder="UUID giảng viên để lọc lớp học phần"><button id="searchSectionsByLecturer" class="btn btn-outline-primary">Lọc theo giảng viên</button></div>
+        <div class="table-responsive mt-3"><table class="table table-hover"><thead><tr><th>Mã lớp</th><th>Tên lớp</th><th>Học phần</th><th>Sĩ số</th><th>Trạng thái</th><th></th></tr></thead><tbody id="sectionRows"></tbody></table></div>
+    </section>
+    <section class="panel" id="rosterPanel" hidden><h2 class="h5">Sinh viên trong lớp <span id="rosterTitle" class="muted"></span></h2><div class="table-responsive"><table class="table"><thead><tr><th>Mã SV</th><th>Họ tên</th><th>Email</th><th>Trạng thái</th><th>Hình thức</th></tr></thead><tbody id="rosterRows"></tbody></table></div></section>
+    <section class="panel">
+        <h2 class="h5">Phân công giảng viên</h2>
+        <p class="muted">Bảng phân công của cơ sở dữ liệu dùng ID trong <code>courses_classes</code> và <code>lecturers</code>.</p>
+        <form id="assignmentForm" class="row g-2 align-items-end">
+            <div class="col-md-4"><label class="form-label" for="courseClassId">ID lớp trong courses_classes *</label><input id="courseClassId" class="form-control" required placeholder="UUID lớp học phần"></div>
+            <div class="col-md-4"><label class="form-label" for="lecturerId">ID giảng viên *</label><input id="lecturerId" class="form-control" required placeholder="UUID giảng viên"></div>
+            <div class="col-md-2"><label class="form-label" for="lecturerRole">Vai trò</label><input id="lecturerRole" class="form-control" placeholder="Chính / phụ"></div>
+            <div class="col-md-2"><button class="btn btn-primary w-100" type="submit">Phân công</button></div>
+        </form>
+        <div class="toolbar mt-3"><input id="classCodeSearch" class="form-control" placeholder="Tìm lớp theo mã lớp / mã học phần"><button id="searchClasses" class="btn btn-outline-primary">Tìm lớp để phân công</button></div>
+        <div class="toolbar mt-3"><input id="lecturerSearchId" class="form-control" placeholder="UUID giảng viên để tìm lớp"><button id="searchLecturerClasses" class="btn btn-outline-primary">Tìm lớp của giảng viên</button></div>
+        <div class="table-responsive mt-3"><table class="table table-sm"><thead><tr><th>Mã lớp</th><th>Học phần</th><th>Giảng viên</th><th>Trạng thái</th></tr></thead><tbody id="classSearchRows"></tbody></table></div>
+        <div class="table-responsive mt-3"><table class="table table-hover"><thead><tr><th>Mã lớp</th><th>Học phần</th><th>Giảng viên</th><th>Vai trò</th><th></th></tr></thead><tbody id="assignmentRows"></tbody></table></div>
+    </section>
+</main>
+<script src="/n7/assets/js/course-sections.js"></script>
+</body>
+</html>
