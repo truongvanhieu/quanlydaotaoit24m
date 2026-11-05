@@ -1,0 +1,11 @@
+
+.git
+.git/**
+target/
+bin/
+.idea/
+.vscode/
+*.log
+.env
+.env.*
+database/

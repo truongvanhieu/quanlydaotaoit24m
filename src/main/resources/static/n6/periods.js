@@ -22,6 +22,36 @@ function resetPeriodForm() {
         'Lưu đợt đăng ký';
 }
 
+function getPeriodState(row) {
+    // startTime/endTime tu Java LocalDateTime khong kem timezone;
+    // parse theo gio may trinh duyet (nguoi dung tai Viet Nam).
+    const now = new Date();
+    const start = row.startTime ? new Date(row.startTime) : null;
+    const end = row.endTime ? new Date(row.endTime) : null;
+
+    if (row.active === false) {
+        return { label: 'Đã khóa thủ công', css: 'off', detail: 'Đợt đã bị vô hiệu hóa' };
+    }
+    if (!start || Number.isNaN(start.getTime()) || !end || Number.isNaN(end.getTime())) {
+        return { label: 'Thiếu thời gian', css: 'off', detail: 'Kiểm tra thời gian bắt đầu/kết thúc' };
+    }
+    if (now < start) {
+        return { label: 'Chưa mở', css: 'off', detail: 'Chưa đến thời gian bắt đầu' };
+    }
+    // Thoi diem end la moc dong: now >= end thi da dong.
+    if (now >= end) {
+        return { label: 'Đã kết thúc', css: 'off', detail: 'Đã quá thời gian đăng ký' };
+    }
+    return { label: 'Đang mở', css: 'good', detail: 'Đang trong thời gian đăng ký' };
+}
+
+function lookupField(row, key) {
+    if (!row) return undefined;
+    if (row[key] !== undefined) return row[key];
+    const found = Object.keys(row).find(k => k.toLowerCase() === key.toLowerCase());
+    return found ? row[found] : undefined;
+}
+
 function renderPeriods() {
     const container = document.getElementById('periodTable');
 
@@ -31,10 +61,12 @@ function renderPeriods() {
     }
 
     const semesterMap = new Map(
-        semesterRows.map(row => [
-            row.id,
-            `${row.code || ''} ${row.name || ''}`.trim()
-        ])
+        semesterRows.map(row => {
+            const id = lookupField(row, 'id');
+            const code = lookupField(row, 'code') || '';
+            const name = lookupField(row, 'name') || '';
+            return [String(id || '').toLowerCase(), { code, name, id }];
+        })
     );
 
     container.innerHTML = `
@@ -51,7 +83,10 @@ function renderPeriods() {
             </thead>
 
             <tbody>
-                ${periodRows.map(row => `
+                ${periodRows.map(row => {
+                    const semester = semesterMap.get(String(row.semesterId || '').toLowerCase());
+                    const state = getPeriodState(row);
+                    return `
                     <tr>
 
                         <td>
@@ -62,10 +97,8 @@ function renderPeriods() {
                         </td>
 
                         <td>
-                            ${N6.esc(
-                                semesterMap.get(row.semesterId)
-                                || row.semesterId
-                            )}
+                            <strong>${N6.esc(semester ? `${semester.code} — ${semester.name}`.replace(/^ — | — $/g, '') : 'Không tìm thấy học kỳ')}</strong>
+                            <div class="muted">${N6.esc(semester?.id || row.semesterId || '—')}</div>
                         </td>
 
                         <td>
@@ -83,10 +116,8 @@ function renderPeriods() {
                         </td>
 
                         <td>
-                            <span class="badge ${row.active ? 'good' : 'off'}">
-                                ${row.active ? 'Đang mở' : 'Đã đóng'}
-                            </span>
-
+                            <span class="badge ${state.css}">${state.label}</span>
+                            <div class="muted">${state.detail}</div>
                             <div class="muted">
                                 ${row.allowRetake
                                     ? 'Cho phép học lại/cải thiện'
@@ -119,7 +150,7 @@ function renderPeriods() {
                         </td>
 
                     </tr>
-                `).join('')}
+                `}).join('')}
             </tbody>
         </table>
     `;
@@ -140,8 +171,8 @@ async function loadPage() {
             'semesterId',
             semesterRows,
             'Chọn học kỳ',
-            row => `${row.code || ''} — ${row.name || ''}`
-                .replace(/^ — /, '')
+            row => `${lookupField(row, 'code') || ''} — ${lookupField(row, 'name') || ''}`
+                .replace(/^ — | — $/g, '')
         );
 
         await loadPeriods();

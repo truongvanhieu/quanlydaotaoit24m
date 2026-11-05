@@ -1,75 +1,229 @@
+
+/* =========================================
+   THEME CHUNG - QUAN LY DAO TAO
+   Mau chu dao cua toan bo website
+========================================= */
+
+:root {
+    --n6-navy: #15345c;
+    --n6-blue: #1464c0;
+    --n6-blue-hover: #0d4e99;
+    --n6-background: #f3f6fb;
+    --n6-white: #ffffff;
+    --n6-border: #e2e8f0;
+    --n6-text: #263449;
+    --n6-muted: #64748b;
+
+    --bs-primary: #1464c0;
+    --bs-primary-rgb: 20, 100, 192;
+}
+
+/* =========================================
+   BACKGROUND CHUNG
+========================================= */
+
 body {
-  min-height: 100vh;
-  background: #f4f6f9;
+    background-color: var(--n6-background);
+    color: var(--n6-text);
 }
 
-.user-chip {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(13, 110, 253, 0.08);
-  border: 1px solid rgba(13, 110, 253, 0.12);
+/* =========================================
+   SIDEBAR ADMINLTE - TRANG SINH VIEN
+========================================= */
+
+.app-sidebar,
+.app-sidebar.bg-body-secondary {
+    background-color: var(--n6-navy) !important;
+    color: var(--n6-white) !important;
 }
 
-.user-chip small {
-  display: block;
-  color: #6c757d;
+.app-sidebar .brand-link,
+.app-sidebar .sidebar-brand,
+.app-sidebar .brand-text {
+    color: var(--n6-white) !important;
+    border-color: #ffffff30 !important;
 }
 
-.table-actions {
-  display: inline-flex;
-  gap: 6px;
-  justify-content: flex-end;
+.app-sidebar .nav-header {
+    color: #a9bfd8 !important;
+    font-weight: 700;
 }
 
-.table-actions form {
-  display: inline-flex;
+.app-sidebar .nav-link {
+    color: #dce8f6 !important;
+    border-radius: 8px;
+    margin: 3px 8px;
+    transition: background .2s;
 }
 
-.table-actions .btn {
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  background: #ffffff;
-  border: 1px solid #dfe3e8;
-  color: #212529;
-  box-shadow: none;
-  transition: all 0.2s ease;
+.app-sidebar .nav-link .nav-icon {
+    color: #dce8f6 !important;
 }
 
-.table-actions .btn:hover,
-.table-actions .btn:focus {
-  background: #f8f9fa;
-  border-color: #c9ced6;
-  color: #111827;
+.app-sidebar .nav-link:hover {
+    background-color: #ffffff18 !important;
+    color: #ffffff !important;
 }
 
-.table-actions .btn-info,
-.table-actions .btn-warning,
-.table-actions .btn-danger {
-  background: #ffffff;
-  border-color: #d9dde3;
-  color: #1f2937;
+.app-sidebar .nav-link.active,
+.app-sidebar .nav-item.menu-open > .nav-link {
+    background-color: var(--n6-blue) !important;
+    color: #ffffff !important;
+    font-weight: 650;
 }
 
-.table-actions .btn-info:hover,
-.table-actions .btn-warning:hover,
-.table-actions .btn-danger:hover,
-.table-actions .btn-info:focus,
-.table-actions .btn-warning:focus,
-.table-actions .btn-danger:focus {
-  background: #f3f4f6;
-  border-color: #cbd5e1;
-  color: #111827;
+.app-sidebar .nav-link.active .nav-icon {
+    color: #ffffff !important;
 }
 
-.form-card {
-  max-width: 820px;
-  margin: 40px auto;
+/* =========================================
+   HEADER VA CONTENT ADMINLTE
+========================================= */
+
+.app-header {
+    background-color: #ffffff !important;
+    border-bottom: 1px solid var(--n6-border);
+}
+
+.app-main,
+.app-content,
+.content-wrapper {
+    background-color: var(--n6-background) !important;
+}
+
+/* =========================================
+   SIDEBAR CAC TRANG N6
+========================================= */
+
+.sidebar {
+    background-color: var(--n6-navy) !important;
+    color: #ffffff !important;
+}
+
+.sidebar .brand {
+    color: #ffffff !important;
+    border-color: #ffffff30 !important;
+}
+
+.sidebar .brand small {
+    color: #b8cce2 !important;
+}
+
+.sidebar .nav-title {
+    color: #a9bfd8 !important;
+}
+
+.sidebar .nav-menu a {
+    color: #dce8f6 !important;
+    border-radius: 8px;
+}
+
+.sidebar .nav-menu a:hover {
+    background-color: #ffffff18 !important;
+    color: #ffffff !important;
+}
+
+.sidebar .nav-menu a.active {
+    background-color: var(--n6-blue) !important;
+    color: #ffffff !important;
+    font-weight: 700;
+}
+
+.sidebar .sidebar-footer {
+    color: #b8cce2 !important;
+    border-color: #ffffff30 !important;
+}
+
+/* =========================================
+   HEADER N6
+========================================= */
+
+.topbar {
+    background-color: #ffffff !important;
+    border-bottom: 1px solid var(--n6-border) !important;
+}
+
+.topbar h1 {
+    color: var(--n6-navy);
+}
+
+/* =========================================
+   CARD VA FORM
+========================================= */
+
+.card {
+    background-color: #ffffff;
+    border-color: var(--n6-border);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--n6-blue) !important;
+    outline-color: #bfdbfe !important;
+}
+
+/* =========================================
+   CAC NUT BAM CHINH
+========================================= */
+
+.btn-primary,
+.btn-info {
+    background-color: var(--n6-blue) !important;
+    border-color: var(--n6-blue) !important;
+    color: #ffffff !important;
+}
+
+.btn-primary:hover,
+.btn-info:hover {
+    background-color: var(--n6-blue-hover) !important;
+    border-color: var(--n6-blue-hover) !important;
+}
+
+/* Nut trong giao dien N6 */
+
+.sidebar + .main button:not(.secondary):not(.danger) {
+    background-color: var(--n6-blue);
+    color: #ffffff;
+}
+
+.sidebar + .main button:not(.secondary):not(.danger):hover {
+    background-color: var(--n6-blue-hover);
+}
+
+/* =========================================
+   LINK
+========================================= */
+
+a {
+    color: var(--n6-blue);
+}
+
+a:hover {
+    color: var(--n6-blue-hover);
+}
+
+/* =========================================
+   TABLE
+========================================= */
+
+table th {
+    background-color: #eef3fa;
+    color: #475569;
+}
+
+table td,
+table th {
+    border-bottom-color: var(--n6-border);
+}
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 760px) {
+    .app-sidebar,
+    .sidebar {
+        background-color: var(--n6-navy) !important;
+    }
 }

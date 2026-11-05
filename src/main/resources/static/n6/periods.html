@@ -18,69 +18,57 @@
 <body>
 
     <!-- MENU DOC -->
-    <aside class="sidebar">
 
-        <a class="brand" href="/n6/index.html">
-            <strong>QUẢN LÝ ĐÀO TẠO</strong>
-            <small>Nhóm 6 - Đăng ký học phần</small>
+<aside class="sidebar">
+
+    <a class="brand" href="/n6/index.html">
+        <strong>QUẢN LÝ ĐÀO TẠO</strong>
+        <small>Nhóm 6 - Đăng ký học phần</small>
+    </a>
+
+    <div class="nav-title">
+        ĐIỀU HƯỚNG
+    </div>
+
+    <nav class="nav-menu">
+
+        <a data-nav href="/n6/index.html">
+            <i class="bi bi-speedometer2"></i>
+            <span>Tổng quan N6</span>
         </a>
 
-        <div class="nav-title">Điều hướng</div>
+        <a data-nav href="/n6/periods.html">
+            <i class="bi bi-calendar-week"></i>
+            <span>Đợt đăng ký</span>
+        </a>
 
-        <nav class="nav-menu">
+        <a data-nav href="/n6/registrations.html">
+            <i class="bi bi-journal-check"></i>
+            <span>Đăng ký học phần</span>
+        </a>
 
-            <a data-nav href="/index.html">
-                <span class="nav-icon">
-                    <i class="bi bi-people"></i>
-                </span>
-                <span>Quản lý sinh viên</span>
-            </a>
+        <a data-nav href="/n6/equivalences.html">
+            <i class="bi bi-arrow-left-right"></i>
+            <span>Môn học tương đương</span>
+        </a>
 
-            <a data-nav href="/n6/index.html">
-                <span class="nav-icon">
-                    <i class="bi bi-speedometer2"></i>
-                </span>
-                <span>Tổng quan N6</span>
-            </a>
+        <a href="/swagger-ui.html"
+           target="_blank"
+           rel="noopener">
+            <i class="bi bi-braces"></i>
+            <span>Swagger API</span>
+        </a>
 
-            <a data-nav href="/n6/periods.html" class="active">
-                <span class="nav-icon">
-                    <i class="bi bi-calendar-week"></i>
-                </span>
-                <span>Đợt đăng ký</span>
-            </a>
+    </nav>
 
-            <a data-nav href="/n6/registrations.html">
-                <span class="nav-icon">
-                    <i class="bi bi-journal-check"></i>
-                </span>
-                <span>Đăng ký học phần</span>
-            </a>
+    <div class="sidebar-footer">
+        Spring Boot · SQL Server
+        <br>
+        API dùng chung của dự án
+    </div>
 
-            <a data-nav href="/n6/index.html#equivalences">
-                <span class="nav-icon">
-                    <i class="bi bi-arrow-left-right"></i>
-                </span>
-                <span>Môn học tương đương</span>
-            </a>
+</aside>
 
-            <a data-nav href="/swagger-ui.html"
-               target="_blank" rel="noopener">
-                <span class="nav-icon">
-                    <i class="bi bi-braces"></i>
-                </span>
-                <span>Swagger API</span>
-            </a>
-
-        </nav>
-
-        <div class="sidebar-footer">
-            Spring Boot · SQL Server
-            <br>
-            API dùng chung của dự án
-        </div>
-
-    </aside>
 
     <!-- NOI DUNG -->
     <div class="main">
@@ -293,6 +281,29 @@
 
     <script src="/n6/n6-common.js"></script>
     <script src="/n6/periods.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const currentPath = window.location.pathname;
+
+    document.querySelectorAll('[data-nav]').forEach(link => {
+
+        const linkPath = new URL(
+            link.href,
+            window.location.origin
+        ).pathname;
+
+        if (linkPath === currentPath) {
+            link.classList.add('active');
+        } else {
+            link.classList.remove('active');
+        }
+
+    });
+
+});
+</script>
 
 </body>
 </html>

@@ -94,7 +94,8 @@
         for (const row of rows || []) {
             const option = document.createElement('option');
 
-            option.value = row.id;
+            const idKey = Object.keys(row || {}).find(key => key.toLowerCase() === 'id');
+            option.value = idKey ? row[idKey] : '';
             option.textContent = labelFn(row);
 
             select.append(option);

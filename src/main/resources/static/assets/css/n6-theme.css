@@ -1,0 +1,229 @@
+
+/* =========================================
+   THEME CHUNG - QUAN LY DAO TAO
+   Mau chu dao cua toan bo website
+========================================= */
+
+:root {
+    --n6-navy: #15345c;
+    --n6-blue: #1464c0;
+    --n6-blue-hover: #0d4e99;
+    --n6-background: #f3f6fb;
+    --n6-white: #ffffff;
+    --n6-border: #e2e8f0;
+    --n6-text: #263449;
+    --n6-muted: #64748b;
+
+    --bs-primary: #1464c0;
+    --bs-primary-rgb: 20, 100, 192;
+}
+
+/* =========================================
+   BACKGROUND CHUNG
+========================================= */
+
+body {
+    background-color: var(--n6-background);
+    color: var(--n6-text);
+}
+
+/* =========================================
+   SIDEBAR ADMINLTE - TRANG SINH VIEN
+========================================= */
+
+.app-sidebar,
+.app-sidebar.bg-body-secondary {
+    background-color: var(--n6-navy) !important;
+    color: var(--n6-white) !important;
+}
+
+.app-sidebar .brand-link,
+.app-sidebar .sidebar-brand,
+.app-sidebar .brand-text {
+    color: var(--n6-white) !important;
+    border-color: #ffffff30 !important;
+}
+
+.app-sidebar .nav-header {
+    color: #a9bfd8 !important;
+    font-weight: 700;
+}
+
+.app-sidebar .nav-link {
+    color: #dce8f6 !important;
+    border-radius: 8px;
+    margin: 3px 8px;
+    transition: background .2s;
+}
+
+.app-sidebar .nav-link .nav-icon {
+    color: #dce8f6 !important;
+}
+
+.app-sidebar .nav-link:hover {
+    background-color: #ffffff18 !important;
+    color: #ffffff !important;
+}
+
+.app-sidebar .nav-link.active,
+.app-sidebar .nav-item.menu-open > .nav-link {
+    background-color: var(--n6-blue) !important;
+    color: #ffffff !important;
+    font-weight: 650;
+}
+
+.app-sidebar .nav-link.active .nav-icon {
+    color: #ffffff !important;
+}
+
+/* =========================================
+   HEADER VA CONTENT ADMINLTE
+========================================= */
+
+.app-header {
+    background-color: #ffffff !important;
+    border-bottom: 1px solid var(--n6-border);
+}
+
+.app-main,
+.app-content,
+.content-wrapper {
+    background-color: var(--n6-background) !important;
+}
+
+/* =========================================
+   SIDEBAR CAC TRANG N6
+========================================= */
+
+.sidebar {
+    background-color: var(--n6-navy) !important;
+    color: #ffffff !important;
+}
+
+.sidebar .brand {
+    color: #ffffff !important;
+    border-color: #ffffff30 !important;
+}
+
+.sidebar .brand small {
+    color: #b8cce2 !important;
+}
+
+.sidebar .nav-title {
+    color: #a9bfd8 !important;
+}
+
+.sidebar .nav-menu a {
+    color: #dce8f6 !important;
+    border-radius: 8px;
+}
+
+.sidebar .nav-menu a:hover {
+    background-color: #ffffff18 !important;
+    color: #ffffff !important;
+}
+
+.sidebar .nav-menu a.active {
+    background-color: var(--n6-blue) !important;
+    color: #ffffff !important;
+    font-weight: 700;
+}
+
+.sidebar .sidebar-footer {
+    color: #b8cce2 !important;
+    border-color: #ffffff30 !important;
+}
+
+/* =========================================
+   HEADER N6
+========================================= */
+
+.topbar {
+    background-color: #ffffff !important;
+    border-bottom: 1px solid var(--n6-border) !important;
+}
+
+.topbar h1 {
+    color: var(--n6-navy);
+}
+
+/* =========================================
+   CARD VA FORM
+========================================= */
+
+.card {
+    background-color: #ffffff;
+    border-color: var(--n6-border);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--n6-blue) !important;
+    outline-color: #bfdbfe !important;
+}
+
+/* =========================================
+   CAC NUT BAM CHINH
+========================================= */
+
+.btn-primary,
+.btn-info {
+    background-color: var(--n6-blue) !important;
+    border-color: var(--n6-blue) !important;
+    color: #ffffff !important;
+}
+
+.btn-primary:hover,
+.btn-info:hover {
+    background-color: var(--n6-blue-hover) !important;
+    border-color: var(--n6-blue-hover) !important;
+}
+
+/* Nut trong giao dien N6 */
+
+.sidebar + .main button:not(.secondary):not(.danger) {
+    background-color: var(--n6-blue);
+    color: #ffffff;
+}
+
+.sidebar + .main button:not(.secondary):not(.danger):hover {
+    background-color: var(--n6-blue-hover);
+}
+
+/* =========================================
+   LINK
+========================================= */
+
+a {
+    color: var(--n6-blue);
+}
+
+a:hover {
+    color: var(--n6-blue-hover);
+}
+
+/* =========================================
+   TABLE
+========================================= */
+
+table th {
+    background-color: #eef3fa;
+    color: #475569;
+}
+
+table td,
+table th {
+    border-bottom-color: var(--n6-border);
+}
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 760px) {
+    .app-sidebar,
+    .sidebar {
+        background-color: var(--n6-navy) !important;
+    }
+}

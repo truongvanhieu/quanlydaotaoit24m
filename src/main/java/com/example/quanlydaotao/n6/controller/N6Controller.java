@@ -88,6 +88,17 @@ public class N6Controller {
         return service.registrations(studentId, registrationPeriodId, courseClassId, status);
     }
 
+    @GetMapping("/api/course-registrations/details")
+    @Operation(summary = "Danh sách đăng ký kèm tên sinh viên, lớp học phần, môn học và đợt đăng ký")
+    public List<Map<String, Object>> registrationDetails(
+            @RequestParam(name = "studentId", required = false) UUID studentId,
+            @RequestParam(name = "registrationPeriodId", required = false) UUID registrationPeriodId,
+            @RequestParam(name = "courseClassId", required = false) UUID courseClassId,
+            @RequestParam(name = "status", required = false) Short status) {
+        return service.registrationDetails(studentId, registrationPeriodId,
+                courseClassId, status);
+    }
+
     @GetMapping("/api/course-registrations/{id}")
     @Operation(summary = "Chi tiết một đăng ký học phần")
     public CourseRegistration getRegistration(@PathVariable("id") UUID id) {
