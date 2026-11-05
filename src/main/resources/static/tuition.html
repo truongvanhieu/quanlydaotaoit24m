@@ -1,0 +1,785 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title id="pageTitle">
+        Học phí – Tài chính | AdminLTE 4
+    </title>
+    <meta name="color-scheme" content="light dark" />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" crossorigin="anonymous" />
+    <link rel="stylesheet" href="/adminlte/css/adminlte.css" />
+    <link rel="stylesheet" href="/assets/css/student.css" />
+</head>
+
+<body class="layout-fixed sidebar-expand-lg sidebar-open bg-body-tertiary">
+<div class="app-wrapper">
+    <nav class="app-header navbar navbar-expand bg-body">
+        <div class="container-fluid">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" data-lte-toggle="sidebar" href="#" role="button">
+                        <i class="bi bi-list"></i>
+                    </a>
+                </li>
+                <li class="nav-item d-none d-md-block">
+                    <span class="nav-link fw-semibold">
+                        Quản lý đào tạo
+                    </span>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
+        <div class="sidebar-brand">
+            <a href="index.html" class="brand-link">
+                <img src="/adminlte/assets/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image opacity-75 shadow" />
+                <span class="brand-text fw-light">
+                    School Manager
+                </span>
+            </a>
+        </div>
+
+        <div class="sidebar-wrapper">
+            <nav class="mt-2">
+                <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="navigation" data-accordion="false">
+                    <li class="nav-item">
+                        <a href="index.html" class="nav-link">
+                            <i class="nav-icon bi bi-people-fill"></i>
+                            <p>
+                                Sinh viên
+                            </p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="tuition.html" class="nav-link active">
+                            <i class="nav-icon bi bi-cash-coin"></i>
+                            <p>
+                                Học phí – Tài chính
+                            </p>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </aside>
+
+    <main class="app-main">
+        <!-- Page Header -->
+        <div class="app-content-header">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <div class="col-sm-6">
+                        <h3 class="mb-0">
+                            Học phí – Tài chính
+                        </h3>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-end mb-0">
+                            <li class="breadcrumb-item">
+                                <a href="index.html">
+                                    Trang chủ
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item active" aria-current="page">
+                                Học phí – Tài chính
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Content -->
+        <div class="app-content">
+            <div class="container-fluid">
+                <!-- Thẻ thống kê tổng quan -->
+                <div class="row g-3 mb-3" id="summaryCards">
+                    <div class="col-12">
+                        <div class="text-muted small">
+                            Đang tải thống kê tổng quan...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <ul class="nav nav-tabs mb-3" id="tuitionTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="tab-tuition-fees" data-bs-toggle="tab" data-bs-target="#panel-tuition-fees" type="button" role="tab" aria-controls="panel-tuition-fees" aria-selected="true">
+                            Định mức học phí
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tab-student-tuitions" data-bs-toggle="tab" data-bs-target="#panel-student-tuitions" type="button" role="tab" aria-controls="panel-student-tuitions" aria-selected="false">
+                            Học phí sinh viên
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tab-payments" data-bs-toggle="tab" data-bs-target="#panel-payments" type="button" role="tab" aria-controls="panel-payments" aria-selected="false">
+                            Giao dịch thanh toán
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tab-reports" data-bs-toggle="tab" data-bs-target="#panel-reports" type="button" role="tab" aria-controls="panel-reports" aria-selected="false">
+                            Báo cáo công nợ
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    <!-- TAB 1: ĐỊNH MỨC HỌC PHÍ -->
+                    <div class="tab-pane fade show active" id="panel-tuition-fees" role="tabpanel" aria-labelledby="tab-tuition-fees">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                                <h3 class="card-title mb-0">
+                                    Danh sách định mức học phí
+                                </h3>
+                                <div class="d-flex flex-wrap align-items-center gap-2">
+                                    <!-- Search -->
+                                    <form id="feeSearchForm" class="d-flex gap-2 align-items-center">
+                                        <div class="input-group input-group-sm" style="width: 320px;">
+                                            <span class="input-group-text">
+                                                <i class="bi bi-search"></i>
+                                            </span>
+                                            <input type="text" id="keyword" name="keyword" class="form-control" placeholder="Tìm theo khóa học, vd K23" />
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="submit">
+                                            <i class="bi bi-funnel me-1"></i>
+                                            Tìm kiếm
+                                        </button>
+                                    </form>
+                                    <!-- Create -->
+                                    <button type="button" id="addTuitionFeeButton" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-plus-circle me-1"></i>
+                                        Thêm định mức
+                                    </button>
+                                    <!-- Export -->
+                                    <button type="button" class="btn btn-outline-success btn-sm" data-export="tuition-fees">
+                                        <i class="bi bi-file-earmark-excel me-1"></i>
+                                        Xuất Excel
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="table-light">
+                                        <tr>
+                                            <th>
+                                                Khóa học
+                                            </th>
+                                            <th>
+                                                Chương trình
+                                            </th>
+                                            <th>
+                                                Đơn giá/tín chỉ
+                                            </th>
+                                            <th>
+                                                Học phí cơ bản
+                                            </th>
+                                            <th>
+                                                Ngày áp dụng
+                                            </th>
+                                            <th>
+                                                Hiệu lực
+                                            </th>
+                                            <th class="text-end">
+                                                Hành động
+                                            </th>
+                                        </tr>
+                                        </thead>
+                                        <tbody id="tuitionFeeTableBody">
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted py-4">
+                                                Đang tải dữ liệu...
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: HỌC PHÍ SINH VIÊN -->
+                    <div class="tab-pane fade" id="panel-student-tuitions" role="tabpanel" aria-labelledby="tab-student-tuitions">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                                <h3 class="card-title mb-0">
+                                    Danh sách học phí sinh viên
+                                </h3>
+                                <div class="d-flex flex-wrap align-items-center gap-2">
+                                    <!-- Filter -->
+                                    <form id="studentTuitionFilterForm" class="d-flex flex-wrap gap-2 align-items-center">
+                                        <select id="studentId" name="studentId" class="form-select form-select-sm" style="width: 280px;">
+                                            <option value="">Tất cả sinh viên</option>
+                                        </select>
+                                        <select id="semesterId" name="semesterId" class="form-select form-select-sm" style="width: 220px;">
+                                            <option value="">Tất cả học kỳ</option>
+                                        </select>
+                                        <select id="studentTuitionStatus" name="status" class="form-select form-select-sm" style="width: 180px;">
+                                            <option value="">Tất cả</option>
+                                            <option value="1">1 - PAID</option>
+                                            <option value="2">2 - PARTIAL</option>
+                                            <option value="3">3 - DEBT</option>
+                                            <option value="4">4 - OVERDUE</option>
+                                        </select>
+                                        <button class="btn btn-primary btn-sm" type="submit">
+                                            <i class="bi bi-funnel me-1"></i>
+                                            Lọc
+                                        </button>
+                                    </form>
+                                    <!-- Create -->
+                                    <button type="button" id="addStudentTuitionButton" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-plus-circle me-1"></i>
+                                        Thêm học phí
+                                    </button>
+                                    <!-- Export -->
+                                    <button type="button" class="btn btn-outline-success btn-sm" data-export="student-tuitions">
+                                        <i class="bi bi-file-earmark-excel me-1"></i>
+                                        Xuất Excel
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="table-light">
+                                        <tr>
+                                            <th>
+                                                Sinh viên
+                                            </th>
+                                            <th>
+                                                Học kỳ
+                                            </th>
+                                            <th>
+                                                Định mức
+                                            </th>
+                                            <th>
+                                                Tín chỉ
+                                            </th>
+                                            <th>
+                                                Tiền gốc
+                                            </th>
+                                            <th>
+                                                Miễn giảm
+                                            </th>
+                                            <th>
+                                                Học bổng
+                                            </th>
+                                            <th>
+                                                Thực nộp
+                                            </th>
+                                            <th>
+                                                Đã nộp
+                                            </th>
+                                            <th>
+                                                Còn nợ
+                                            </th>
+                                            <th>
+                                                Trạng thái
+                                            </th>
+                                            <th>
+                                                Hạn chót
+                                            </th>
+                                            <th class="text-end">
+                                                Hành động
+                                            </th>
+                                        </tr>
+                                        </thead>
+                                        <tbody id="studentTuitionTableBody">
+                                        <tr>
+                                            <td colspan="13" class="text-center text-muted py-4">
+                                                Đang tải dữ liệu...
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: GIAO DỊCH THANH TOÁN -->
+                    <div class="tab-pane fade" id="panel-payments" role="tabpanel" aria-labelledby="tab-payments">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                                <h3 class="card-title mb-0">
+                                    Danh sách giao dịch thanh toán
+                                </h3>
+                                <div class="d-flex flex-wrap align-items-center gap-2">
+                                    <!-- Filter -->
+                                    <form id="paymentFilterForm" class="d-flex flex-wrap gap-2 align-items-center">
+                                        <select id="tuitionId" name="tuitionId" class="form-select form-select-sm" style="width: 280px;">
+                                            <option value="">Tất cả học phí sinh viên</option>
+                                        </select>
+                                        <select id="paymentStatus" name="status" class="form-select form-select-sm" style="width: 170px;">
+                                            <option value="">Tất cả</option>
+                                            <option value="SUCCESS">SUCCESS</option>
+                                            <option value="PENDING">PENDING</option>
+                                            <option value="FAILED">FAILED</option>
+                                            <option value="REFUNDED">REFUNDED</option>
+                                            <option value="CANCELLED">CANCELLED</option>
+                                        </select>
+                                        <select id="method" name="method" class="form-select form-select-sm" style="width: 180px;">
+                                            <option value="">Tất cả</option>
+                                            <option value="1">1 - Chuyển khoản</option>
+                                            <option value="2">2 - Tiền mặt</option>
+                                            <option value="3">3 - Ví điện tử</option>
+                                        </select>
+                                        <button class="btn btn-primary btn-sm" type="submit">
+                                            <i class="bi bi-funnel me-1"></i>
+                                            Lọc
+                                        </button>
+                                    </form>
+                                    <!-- Create -->
+                                    <button type="button" id="addPaymentButton" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-plus-circle me-1"></i>
+                                        Ghi nhận thanh toán
+                                    </button>
+                                    <!-- Export -->
+                                    <button type="button" class="btn btn-outline-success btn-sm" data-export="payments">
+                                        <i class="bi bi-file-earmark-excel me-1"></i>
+                                        Xuất Excel
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="table-light">
+                                        <tr>
+                                            <th>
+                                                Ngày giao dịch
+                                            </th>
+                                            <th>
+                                                Học phí
+                                            </th>
+                                            <th>
+                                                Số tiền
+                                            </th>
+                                            <th>
+                                                Hình thức
+                                            </th>
+                                            <th>
+                                                Trạng thái
+                                            </th>
+                                            <th>
+                                                Mã tham chiếu
+                                            </th>
+                                            <th>
+                                                Ghi chú
+                                            </th>
+                                            <th class="text-end">
+                                                Hành động
+                                            </th>
+                                        </tr>
+                                        </thead>
+                                        <tbody id="paymentTableBody">
+                                        <tr>
+                                            <td colspan="8" class="text-center text-muted py-4">
+                                                Đang tải dữ liệu...
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 4: BÁO CÁO CÔNG NỢ THEO HỌC KỲ -->
+                    <div class="tab-pane fade" id="panel-reports" role="tabpanel" aria-labelledby="tab-reports">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                                <h3 class="card-title mb-0">
+                                    Báo cáo công nợ theo học kỳ
+                                </h3>
+                                <div class="d-flex flex-wrap align-items-center gap-2">
+                                    <button type="button" id="reloadReportButton" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-arrow-clockwise me-1"></i>
+                                        Tải lại
+                                    </button>
+                                    <button type="button" class="btn btn-outline-success btn-sm" data-export="student-tuitions">
+                                        <i class="bi bi-file-earmark-excel me-1"></i>
+                                        Xuất Excel
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="table-light">
+                                        <tr>
+                                            <th>
+                                                Học kỳ
+                                            </th>
+                                            <th class="text-end">
+                                                Số sinh viên
+                                            </th>
+                                            <th class="text-end">
+                                                Sinh viên còn nợ
+                                            </th>
+                                            <th class="text-end">
+                                                Tổng phải thu
+                                            </th>
+                                            <th class="text-end">
+                                                Đã thu
+                                            </th>
+                                            <th class="text-end">
+                                                Còn nợ
+                                            </th>
+                                            <th class="text-end">
+                                                Tỷ lệ thu
+                                            </th>
+                                        </tr>
+                                        </thead>
+                                        <tbody id="semesterReportTableBody">
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted py-4">
+                                                Đang tải dữ liệu...
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <div class="float-end d-none d-sm-inline">
+            School Manager
+        </div>
+        <strong>
+            Học phí – Tài chính | AdminLTE 4
+        </strong>
+    </footer>
+</div>
+
+<!-- MODAL: ĐỊNH MỨC HỌC PHÍ -->
+<div class="modal fade" id="tuitionFeeModal" tabindex="-1" aria-labelledby="tuitionFeeModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="tuitionFeeForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="tuitionFeeModalTitle">
+                        Thêm định mức học phí
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="tuitionFeeId" />
+
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label">
+                                Chương trình đào tạo
+                            </label>
+                            <select id="feeProgramId" class="form-select" required>
+                                <option value="">-- Chọn chương trình đào tạo --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                Khóa học
+                            </label>
+                            <input type="text" id="feeCourseYear" class="form-control" placeholder="vd K23" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                Đơn giá/tín chỉ
+                            </label>
+                            <input type="number" id="feePricePerCredit" class="form-control" step="0.01" min="0" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                Học phí cơ bản
+                            </label>
+                            <input type="number" id="feeBaseTuition" class="form-control" step="0.01" min="0" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                Ngày áp dụng
+                            </label>
+                            <input type="date" id="feeEffectiveDate" class="form-control" required />
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-check">
+                                <input type="checkbox" id="feeIsActive" class="form-check-input" checked />
+                                <label class="form-check-label" for="feeIsActive">
+                                    Đang hiệu lực
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Hủy
+                    </button>
+                    <button type="submit" id="tuitionFeeSubmitButton" class="btn btn-primary">
+                        Thêm mới
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: HỌC PHÍ SINH VIÊN -->
+<div class="modal fade" id="studentTuitionModal" tabindex="-1" aria-labelledby="studentTuitionModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="studentTuitionForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="studentTuitionModalTitle">
+                        Thêm học phí sinh viên
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="studentTuitionId" />
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                Sinh viên
+                            </label>
+                            <select id="stStudentId" class="form-select" required>
+                                <option value="">-- Chọn sinh viên --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                Học kỳ
+                            </label>
+                            <select id="stSemesterId" class="form-select" required>
+                                <option value="">-- Chọn học kỳ --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label">
+                                Định mức học phí
+                            </label>
+                            <select id="stTuitionFeeId" class="form-select" required>
+                                <option value="">-- Chọn định mức học phí --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                Số tín chỉ
+                            </label>
+                            <input type="number" id="stTotalCredits" class="form-control" min="1" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                Học bổng giảm trừ
+                            </label>
+                            <input type="number" id="stScholarshipDeduction" class="form-control" step="0.01" min="0" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                Miễn giảm
+                            </label>
+                            <input type="number" id="stExemptionAmount" class="form-control" step="0.01" min="0" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                Hạn chót
+                            </label>
+                            <input type="date" id="stDeadline" class="form-control" />
+                        </div>
+                        <div class="col-md-12">
+                            <p class="text-muted small mb-0">
+                                Tiền gốc, thực nộp, đã nộp, còn nợ và trạng thái do hệ thống tự tính từ định mức học phí và lịch sử thanh toán.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Hủy
+                    </button>
+                    <button type="submit" id="studentTuitionSubmitButton" class="btn btn-primary">
+                        Thêm mới
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: GIAO DỊCH THANH TOÁN -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="paymentForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="paymentModalTitle">
+                        Ghi nhận thanh toán
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="paymentId" />
+
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label">
+                                Học phí sinh viên
+                            </label>
+                            <select id="payTuitionId" class="form-select" required>
+                                <option value="">-- Chọn học phí sinh viên --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                Số tiền thanh toán
+                            </label>
+                            <input type="number" id="payAmountPaid" class="form-control" step="0.01" min="0.01" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                Ngày giao dịch
+                            </label>
+                            <input type="datetime-local" id="payPaymentDate" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                Hình thức thanh toán
+                            </label>
+                            <select id="payPaymentMethod" class="form-select">
+                                <option value="1">1 - Chuyển khoản</option>
+                                <option value="2">2 - Tiền mặt</option>
+                                <option value="3">3 - Ví điện tử</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                Trạng thái
+                            </label>
+                            <select id="payPaymentStatus" class="form-select">
+                                <option value="SUCCESS" selected>SUCCESS</option>
+                                <option value="PENDING">PENDING</option>
+                                <option value="FAILED">FAILED</option>
+                                <option value="REFUNDED">REFUNDED</option>
+                                <option value="CANCELLED">CANCELLED</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                Mã tham chiếu
+                            </label>
+                            <input type="text" id="payTransactionRef" class="form-control" maxlength="100" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                Người thu tiền
+                            </label>
+                            <input type="text" id="payCashierId" class="form-control" placeholder="UUID người thu tiền (không bắt buộc)" />
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label">
+                                Ghi chú
+                            </label>
+                            <textarea id="payNotes" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-check">
+                                <input type="checkbox" id="payIsActive" class="form-check-input" checked />
+                                <label class="form-check-label" for="payIsActive">
+                                    Giao dịch hợp lệ
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Hủy
+                    </button>
+                    <button type="submit" id="paymentSubmitButton" class="btn btn-primary">
+                        Thêm mới
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: BIÊN LAI THU TIỀN -->
+<div class="modal fade" id="receiptModal" tabindex="-1" aria-labelledby="receiptModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="receiptModalTitle">
+                    Biên lai thu tiền
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body">
+                <div id="receiptContent">
+                    <div class="text-muted">Đang tải biên lai...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Đóng
+                </button>
+                <button type="button" id="printReceiptButton" class="btn btn-primary">
+                    <i class="bi bi-printer me-1"></i>
+                    In biên lai
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @media print {
+        body * {
+            visibility: hidden !important;
+        }
+
+        #receiptContent,
+        #receiptContent * {
+            visibility: visible !important;
+        }
+
+        #receiptContent {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 0;
+        }
+
+        .modal-backdrop,
+        .modal-header,
+        .modal-footer {
+            display: none !important;
+        }
+
+        .modal,
+        .modal-dialog,
+        .modal-content {
+            position: static !important;
+            overflow: visible !important;
+            border: 0 !important;
+            box-shadow: none !important;
+        }
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+<script src="/adminlte/js/adminlte.js"></script>
+<script type="module" src="/assets/js/tuition.js"></script>
+</body>
+</html>
