@@ -508,11 +508,16 @@ public class GradeService {
 
     public List<CourseClassOption> getCourseClasses() {
         return jdbcTemplate.query("""
-                SELECT DISTINCT course_class_id FROM grade_components WHERE is_active = 1 AND deleted_at IS NULL
+                SELECT DISTINCT gc.course_class_id,
+                       COALESCE(cc.code, 'Lớp ' + SUBSTRING(CAST(gc.course_class_id AS VARCHAR(36)), 1, 6)) AS class_code,
+                       COALESCE(cc.name, 'Môn học') AS class_name
+                FROM grade_components gc
+                LEFT JOIN courses_classes cc ON cc.id = gc.course_class_id
+                WHERE gc.is_active = 1 AND gc.deleted_at IS NULL
                 """, (rs, rowNum) -> new CourseClassOption(
                 uuid(rs, "course_class_id"),
-                "Lớp " + uuid(rs, "course_class_id").toString().substring(0, 6),
-                "MH01",
-                "Môn học"));
+                rs.getString("class_code"),
+                "IT24M",
+                rs.getString("class_name")));
     }
 }

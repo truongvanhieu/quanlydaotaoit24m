@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     componentForm.addEventListener('submit', saveComponent);
     componentTableBody.addEventListener('click', handleComponentAction);
     gradeTableBody.addEventListener('click', handleGradeAction);
+    document.getElementById('exportCsvBtn').addEventListener('click', exportCsv);
 
     await loadCourseClasses();
 });
@@ -52,11 +53,16 @@ async function loadGradeBook() {
     const courseClassId = classSelect.value;
     currentGradeBook = null;
     resetComponentForm();
+    const statsRow = document.getElementById('statsRow');
+    const exportBtn = document.getElementById('exportCsvBtn');
+
     if (!courseClassId) {
         componentTableBody.innerHTML = emptyRow(6, 'Chọn lớp học phần để xem thành phần điểm.');
         gradeTableHead.innerHTML = '<tr><th>Sinh viên</th><th>Chọn lớp học phần để xem điểm</th></tr>';
         gradeTableBody.innerHTML = emptyRow(2, 'Chọn lớp học phần để tải bảng điểm.');
         weightSummary.textContent = '';
+        if (statsRow) statsRow.hidden = true;
+        if (exportBtn) exportBtn.disabled = true;
         showAlert('Chọn lớp học phần để xem danh sách điểm.', 'info');
         return;
     }
@@ -67,12 +73,74 @@ async function loadGradeBook() {
         currentGradeBook = await request(`${API_ENDPOINTS.GRADES}?courseClassId=${encodeURIComponent(courseClassId)}`);
         renderGradeBook(currentGradeBook);
         renderComponents(currentGradeBook.components);
+        renderStats(currentGradeBook);
         document.getElementById('toggleComponentForm').disabled = false;
+        if (exportBtn) exportBtn.disabled = !currentGradeBook.students.length;
         showAlert(currentGradeBook.statusMessage, currentGradeBook.gradebookReady ? 'success' : 'warning');
     } catch (error) {
         showAlert(error.message, 'danger');
         gradeTableBody.innerHTML = emptyRow(2, 'Không thể tải bảng điểm.');
+        if (statsRow) statsRow.hidden = true;
+        if (exportBtn) exportBtn.disabled = true;
     }
+}
+
+function renderStats(gradeBook) {
+    const statsRow = document.getElementById('statsRow');
+    if (!statsRow) return;
+    const students = gradeBook.students || [];
+    if (!students.length) {
+        statsRow.hidden = true;
+        return;
+    }
+    statsRow.hidden = false;
+    const total = students.length;
+    const completed = students.filter((s) => s.totalScore != null);
+    const passed = completed.filter((s) => s.result === 'Đạt');
+
+    document.getElementById('statTotalStudents').textContent = total;
+    document.getElementById('statCompletedStudents').textContent = `${completed.length}/${total}`;
+
+    if (completed.length > 0) {
+        const sumScore = completed.reduce((acc, s) => acc + Number(s.totalScore), 0);
+        const avg = (sumScore / completed.length).toFixed(2);
+        const passRate = Math.round((passed.length / completed.length) * 100);
+        document.getElementById('statAvgScore').textContent = avg;
+        document.getElementById('statPassRate').textContent = `${passRate}% (${passed.length} SV)`;
+    } else {
+        document.getElementById('statAvgScore').textContent = '—';
+        document.getElementById('statPassRate').textContent = '—';
+    }
+}
+
+function exportCsv() {
+    if (!currentGradeBook || !currentGradeBook.students.length) return;
+    const components = currentGradeBook.components;
+    const headers = ['Mã sinh viên', 'Họ và tên', ...components.map((c) => `"${c.componentName} (${c.weightPercentage}%)"`), 'Điểm tổng kết', 'Xếp loại', 'Kết quả'];
+    const rows = currentGradeBook.students.map((s) => {
+        const scores = components.map((c) => {
+            const g = s.grades.find((item) => item.componentId === c.id);
+            return g && g.score != null ? g.score : '';
+        });
+        return [
+            `"${s.studentCode || ''}"`,
+            `"${s.studentName || ''}"`,
+            ...scores,
+            s.totalScore != null ? s.totalScore : '',
+            `"${s.letterGrade || ''}"`,
+            `"${s.result || ''}"`,
+        ].join(',');
+    });
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const selectedOption = classSelect.options[classSelect.selectedIndex];
+    const className = selectedOption ? selectedOption.text.split('—')[0].trim().replace(/\s+/g, '_') : 'BangDiem';
+    a.href = url;
+    a.download = `BangDiem_${className}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
 }
 
 function renderComponents(components) {

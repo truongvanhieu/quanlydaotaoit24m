@@ -1,5 +1,6 @@
-const BASE_URL = 'http://localhost:8080/api';
+const BASE_URL = '/api';
 
 export const API_ENDPOINTS = {
     STUDENTS: `${BASE_URL}/students`,
+    GRADES: `${BASE_URL}/grades`,
 };

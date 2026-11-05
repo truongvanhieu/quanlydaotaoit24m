@@ -1,0 +1,37 @@
+.grade-class-filter {
+  min-width: min(100%, 360px);
+}
+
+.gradebook-table {
+  min-width: 1000px;
+}
+
+.gradebook-table th {
+  white-space: nowrap;
+}
+
+.grade-input {
+  min-width: 92px;
+  width: 92px;
+}
+
+.grade-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.grade-cell .btn {
+  flex: 0 0 auto;
+}
+
+.component-actions {
+  display: inline-flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+#componentForm[hidden],
+#componentSection[hidden] {
+  display: none !important;
+}

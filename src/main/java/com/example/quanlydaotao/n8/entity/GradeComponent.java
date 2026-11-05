@@ -21,7 +21,7 @@ public class GradeComponent {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "course_section_id", nullable = false)
+    @Column(name = "course_class_id", nullable = false)
     private UUID courseSectionId;
 
     @Column(name = "component_code", nullable = false)
