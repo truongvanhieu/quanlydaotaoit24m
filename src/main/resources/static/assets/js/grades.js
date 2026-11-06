@@ -39,8 +39,68 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (openCreateClassModalBtn) openCreateClassModalBtn.addEventListener('click', openCreateClassModal);
     if (confirmCreateClassBtn) confirmCreateClassBtn.addEventListener('click', handleConfirmCreateClass);
 
+    // Global modal close handlers
+    document.addEventListener('click', (e) => {
+        const dismissBtn = e.target.closest('[data-bs-dismiss="modal"]');
+        if (dismissBtn) {
+            const modal = dismissBtn.closest('.modal');
+            if (modal) closeModal(modal);
+        }
+    });
+
     await loadCourseClasses();
 });
+
+function openModal(modalId) {
+    const modalEl = typeof modalId === 'string' ? document.getElementById(modalId) : modalId;
+    if (!modalEl) return;
+
+    if (window.bootstrap && window.bootstrap.Modal) {
+        try {
+            const instance = bootstrap.Modal.getOrCreateInstance(modalEl);
+            instance.show();
+            return;
+        } catch (e) {
+            console.warn('Bootstrap modal error, using fallback:', e);
+        }
+    }
+
+    modalEl.style.display = 'block';
+    setTimeout(() => {
+        modalEl.classList.add('show');
+    }, 10);
+    document.body.classList.add('modal-open');
+
+    if (!document.querySelector('.modal-backdrop')) {
+        const backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop fade show';
+        document.body.appendChild(backdrop);
+    }
+}
+
+function closeModal(modalId) {
+    const modalEl = typeof modalId === 'string' ? document.getElementById(modalId) : modalId;
+    if (!modalEl) return;
+
+    if (window.bootstrap && window.bootstrap.Modal) {
+        try {
+            const instance = bootstrap.Modal.getInstance(modalEl);
+            if (instance) {
+                instance.hide();
+                return;
+            }
+        } catch (e) {
+            console.warn('Bootstrap modal hide error, using fallback:', e);
+        }
+    }
+
+    modalEl.classList.remove('show');
+    setTimeout(() => {
+        modalEl.style.display = 'none';
+        document.body.classList.remove('modal-open');
+        document.querySelectorAll('.modal-backdrop').forEach((el) => el.remove());
+    }, 150);
+}
 
 async function loadCourseClasses(selectedId = null) {
     classSelect.innerHTML = '<option value="">Đang tải lớp học phần...</option>';
@@ -115,13 +175,7 @@ async function openAddStudentModal() {
     if (selectStudent) selectStudent.innerHTML = '<option value="">Đang tải danh sách...</option>';
     if (confirmAddStudentBtn) confirmAddStudentBtn.disabled = true;
 
-    if (!addStudentModalInstance && window.bootstrap) {
-        const modalEl = document.getElementById('addStudentModal');
-        if (modalEl) addStudentModalInstance = new bootstrap.Modal(modalEl);
-    }
-    if (addStudentModalInstance) {
-        addStudentModalInstance.show();
-    }
+    openModal('addStudentModal');
 
     try {
         const students = await request(`${API_ENDPOINTS.GRADES}/available-students?courseClassId=${encodeURIComponent(courseClassId)}`);
@@ -161,9 +215,7 @@ async function handleConfirmAddStudent() {
             method: 'POST',
             body: JSON.stringify({ courseClassId, studentId }),
         });
-        if (addStudentModalInstance) {
-            addStudentModalInstance.hide();
-        }
+        closeModal('addStudentModal');
         showAlert('Đã thêm sinh viên vào lớp học phần thành công!', 'success');
         await loadGradeBook();
     } catch (error) {
@@ -182,11 +234,7 @@ function openCreateClassModal() {
     const check = document.getElementById('initDefaultComponentsCheck');
     if (check) check.checked = true;
 
-    if (!createClassModalInstance && window.bootstrap) {
-        const modalEl = document.getElementById('createClassModal');
-        if (modalEl) createClassModalInstance = new bootstrap.Modal(modalEl);
-    }
-    if (createClassModalInstance) createClassModalInstance.show();
+    openModal('createClassModal');
 }
 
 async function handleConfirmCreateClass() {
@@ -213,7 +261,7 @@ async function handleConfirmCreateClass() {
             }),
         });
 
-        if (createClassModalInstance) createClassModalInstance.hide();
+        closeModal('createClassModal');
         showAlert(`Đã tạo thành công lớp học phần "${newClass.classCode}"!`, 'success');
 
         await loadCourseClasses(newClass.id);

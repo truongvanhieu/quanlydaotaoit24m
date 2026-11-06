@@ -89,7 +89,7 @@
                             </select>
                         </div>
                         <div class="d-flex gap-2 flex-wrap">
-                            <button id="openCreateClassModalBtn" class="btn btn-success fw-semibold" type="button">
+                            <button id="openCreateClassModalBtn" class="btn btn-success fw-semibold" type="button" data-bs-toggle="modal" data-bs-target="#createClassModal">
                                 <i class="bi bi-journal-plus me-1"></i>
                                 Tạo lớp mới
                             </button>
@@ -97,7 +97,7 @@
                                 <i class="bi bi-sliders me-1"></i>
                                 Quản lý thành phần điểm
                             </button>
-                            <button id="addStudentToClassBtn" class="btn btn-outline-primary" type="button" disabled>
+                            <button id="addStudentToClassBtn" class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#addStudentModal" disabled>
                                 <i class="bi bi-person-plus me-1"></i>
                                 Thêm SV vào lớp
                             </button>
@@ -314,6 +314,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/adminlte/js/adminlte.js"></script>
-<script type="module" src="/assets/js/grades.js"></script>
+<script type="module" src="/assets/js/grades.js?v=2.2"></script>
 </body>
 </html>
