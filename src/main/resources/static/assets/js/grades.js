@@ -13,8 +13,13 @@ const selectStudent = document.getElementById('selectStudent');
 const confirmAddStudentBtn = document.getElementById('confirmAddStudentBtn');
 const modalAlert = document.getElementById('modalAlert');
 
+const openCreateClassModalBtn = document.getElementById('openCreateClassModalBtn');
+const confirmCreateClassBtn = document.getElementById('confirmCreateClassBtn');
+const createClassModalAlert = document.getElementById('createClassModalAlert');
+
 let currentGradeBook = null;
 let addStudentModalInstance = null;
+let createClassModalInstance = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     classSelect.addEventListener('change', loadGradeBook);
@@ -31,11 +36,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('exportCsvBtn').addEventListener('click', exportCsv);
     if (addStudentBtn) addStudentBtn.addEventListener('click', openAddStudentModal);
     if (confirmAddStudentBtn) confirmAddStudentBtn.addEventListener('click', handleConfirmAddStudent);
+    if (openCreateClassModalBtn) openCreateClassModalBtn.addEventListener('click', openCreateClassModal);
+    if (confirmCreateClassBtn) confirmCreateClassBtn.addEventListener('click', handleConfirmCreateClass);
 
     await loadCourseClasses();
 });
 
-async function loadCourseClasses() {
+async function loadCourseClasses(selectedId = null) {
     classSelect.innerHTML = '<option value="">Đang tải lớp học phần...</option>';
     try {
         const classes = await request(API_ENDPOINTS.GRADES + '/course-classes');
@@ -47,9 +54,14 @@ async function loadCourseClasses() {
         }
 
         classSelect.innerHTML = '<option value="">-- Chọn lớp học phần --</option>' + classes
-            .map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.classCode)} — ${escapeHtml(item.courseCode || '')} ${escapeHtml(item.courseName || '')}</option>`)
+            .map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.classCode)} — ${escapeHtml(item.courseName || '')}</option>`)
             .join('');
         document.getElementById('toggleComponentForm').disabled = false;
+
+        if (selectedId) {
+            classSelect.value = selectedId;
+            await loadGradeBook();
+        }
     } catch (error) {
         classSelect.innerHTML = '<option value="">Không thể tải lớp học phần</option>';
         showAlert(error.message, 'danger');
@@ -160,6 +172,58 @@ async function handleConfirmAddStudent() {
             modalAlert.classList.remove('d-none');
         }
         confirmAddStudentBtn.disabled = false;
+    }
+}
+
+function openCreateClassModal() {
+    if (createClassModalAlert) createClassModalAlert.classList.add('d-none');
+    const form = document.getElementById('createClassForm');
+    if (form) form.reset();
+    const check = document.getElementById('initDefaultComponentsCheck');
+    if (check) check.checked = true;
+
+    if (!createClassModalInstance && window.bootstrap) {
+        const modalEl = document.getElementById('createClassModal');
+        if (modalEl) createClassModalInstance = new bootstrap.Modal(modalEl);
+    }
+    if (createClassModalInstance) createClassModalInstance.show();
+}
+
+async function handleConfirmCreateClass() {
+    const code = document.getElementById('newClassCode')?.value.trim();
+    const name = document.getElementById('newClassName')?.value.trim();
+    const initDefault = document.getElementById('initDefaultComponentsCheck')?.checked ?? true;
+
+    if (!code || !name) {
+        if (createClassModalAlert) {
+            createClassModalAlert.textContent = 'Vui lòng điền đầy đủ mã và tên lớp học phần!';
+            createClassModalAlert.classList.remove('d-none');
+        }
+        return;
+    }
+
+    try {
+        if (confirmCreateClassBtn) confirmCreateClassBtn.disabled = true;
+        const newClass = await request(`${API_ENDPOINTS.GRADES}/course-classes`, {
+            method: 'POST',
+            body: JSON.stringify({
+                code: code,
+                name: name,
+                initDefaultComponents: initDefault,
+            }),
+        });
+
+        if (createClassModalInstance) createClassModalInstance.hide();
+        showAlert(`Đã tạo thành công lớp học phần "${newClass.classCode}"!`, 'success');
+
+        await loadCourseClasses(newClass.id);
+    } catch (error) {
+        if (createClassModalAlert) {
+            createClassModalAlert.textContent = error.message;
+            createClassModalAlert.classList.remove('d-none');
+        }
+    } finally {
+        if (confirmCreateClassBtn) confirmCreateClassBtn.disabled = false;
     }
 }
 

@@ -30,6 +30,11 @@ public class GradeController {
         return gradeService.getCourseClasses();
     }
 
+    @PostMapping("/course-classes")
+    public CourseClassOption createCourseClass(@RequestBody CourseClassCreateRequest request) {
+        return gradeService.createCourseClass(request);
+    }
+
     @GetMapping("/components")
     public List<GradeComponentView> getComponents(@RequestParam UUID courseClassId) {
         return gradeService.getComponents(courseClassId);

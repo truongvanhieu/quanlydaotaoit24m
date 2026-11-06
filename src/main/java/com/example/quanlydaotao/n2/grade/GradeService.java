@@ -508,17 +508,62 @@ public class GradeService {
 
     public List<CourseClassOption> getCourseClasses() {
         return jdbcTemplate.query("""
-                SELECT DISTINCT gc.course_class_id,
-                       COALESCE(cc.code, 'Lớp ' + SUBSTRING(CAST(gc.course_class_id AS VARCHAR(36)), 1, 6)) AS class_code,
-                       COALESCE(cc.name, 'Môn học') AS class_name
-                FROM grade_components gc
-                LEFT JOIN courses_classes cc ON cc.id = gc.course_class_id
-                WHERE gc.is_active = 1 AND gc.deleted_at IS NULL
-                """, (rs, rowNum) -> new CourseClassOption(
-                uuid(rs, "course_class_id"),
-                rs.getString("class_code"),
-                "IT24M",
-                rs.getString("class_name")));
+                SELECT id, code, name
+                FROM courses_classes
+                WHERE (is_active IS NULL OR is_active = 1) AND deleted_at IS NULL
+                ORDER BY code
+                """, (rs, rowNum) -> {
+            String code = rs.getString("code");
+            String courseCode = code != null && code.contains("-") ? code.split("-")[0] : "IT24M";
+            return new CourseClassOption(
+                    uuid(rs, "id"),
+                    code,
+                    courseCode,
+                    rs.getString("name"));
+        });
+    }
+
+    @Transactional
+    public CourseClassOption createCourseClass(CourseClassCreateRequest request) {
+        if (request == null || request.code() == null || request.code().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã lớp học phần không được để trống");
+        }
+        if (request.name() == null || request.name().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên lớp học phần không được để trống");
+        }
+
+        String code = request.code().trim().toUpperCase();
+        String name = request.name().trim();
+
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM courses_classes WHERE code = ? AND deleted_at IS NULL",
+                Integer.class, code);
+        if (count != null && count > 0) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Mã lớp học phần '" + code + "' đã tồn tại!");
+        }
+
+        UUID id = UUID.randomUUID();
+        jdbcTemplate.update("""
+                INSERT INTO courses_classes (id, code, name, is_active)
+                VALUES (?, ?, ?, 1)
+                """, id, code, name);
+
+        if (request.initDefaultComponents() == null || request.initDefaultComponents()) {
+            initDefaultComponents(id);
+        }
+
+        String courseCode = code.contains("-") ? code.split("-")[0] : code;
+        return new CourseClassOption(id, code, courseCode, name);
+    }
+
+    private void initDefaultComponents(UUID courseClassId) {
+        jdbcTemplate.update("""
+                INSERT INTO grade_components (id, course_class_id, component_code, component_name, weight_percentage, min_score, max_score, is_required, input_order, is_active, created_at)
+                VALUES 
+                (NEWID(), ?, 'CC', N'Chuyên cần', 20.00, 0.00, 10.00, 1, 1, 1, CURRENT_TIMESTAMP),
+                (NEWID(), ?, 'GK', N'Kiểm tra giữa kỳ', 20.00, 0.00, 10.00, 1, 2, 1, CURRENT_TIMESTAMP),
+                (NEWID(), ?, 'CK', N'Thi kết thúc học phần', 60.00, 0.00, 10.00, 1, 3, 1, CURRENT_TIMESTAMP)
+                """, courseClassId, courseClassId, courseClassId);
     }
 
     public List<AvailableStudentOption> getAvailableStudents(UUID courseClassId) {

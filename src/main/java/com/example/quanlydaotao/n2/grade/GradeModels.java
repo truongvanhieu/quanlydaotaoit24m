@@ -79,4 +79,7 @@ public final class GradeModels {
 
     public record AvailableStudentOption(UUID id, String studentCode, String fullName, String className) {
     }
+
+    public record CourseClassCreateRequest(String code, String name, Boolean initDefaultComponents) {
+    }
 }
