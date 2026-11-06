@@ -1,36 +1,22 @@
 package com.example.quanlydaotao.n5.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
-@Table(name = "school_year")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class SchoolYear {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id", updatable = false, nullable = false)
-    private UUID id;
-
+@Table(name = "school_years")
+public class SchoolYear extends BaseEntity {
     @Column(name = "code", length = 100)
     private String code;
 
     @Column(name = "name", length = 255)
     private String name;
 
-    @Column(name = "school_year_id")
-    private UUID schoolYearId;
+    @Column(name = "description", length = 255)
+    private String description;
 
-    @Column(name = "school_year_name", length = 20)
-    private String schoolYearName;
+    @Column(name = "note", length = 255)
+    private String note;
 
     @Column(name = "start_date")
     private LocalDate startDate;
@@ -38,41 +24,22 @@ public class SchoolYear {
     @Column(name = "end_date")
     private LocalDate endDate;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    // Getters & Setters
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    @Column(name = "created_by", updatable = false)
-    private UUID createdBy;
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    @Column(name = "updated_by")
-    private UUID updatedBy;
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    public LocalDate getStartDate() { return startDate; }
+    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
 
-    @Column(name = "deleted_by")
-    private UUID deletedBy;
-
-    @Column(name = "is_active")
-    private Boolean isActive;
-
-   @PrePersist
-protected void onCreate() {
-    this.createdAt = LocalDateTime.now();
-    if (this.isActive == null) {
-        this.isActive = true;
-    }
-    // Tự động sinh UUID cho schoolYearId nếu người dùng bỏ trống trên Swagger
-    if (this.schoolYearId == null) {
-        this.schoolYearId = UUID.randomUUID();
-    }
-}
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
+    public LocalDate getEndDate() { return endDate; }
+    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
 }

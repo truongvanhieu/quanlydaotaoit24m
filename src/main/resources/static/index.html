@@ -1,273 +1,1500 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Đào tạo - Module N5</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            --blue-gradient: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%);
+            --purple-gradient: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+            --green-gradient: linear-gradient(135deg, #059669 0%, #34d399 100%);
+            --orange-gradient: linear-gradient(135deg, #ea580c 0%, #fb923c 100%);
+            --cyan-gradient: linear-gradient(135deg, #0891b2 0%, #38bdf8 100%);
+            --indigo-gradient: linear-gradient(135deg, #4f46e5 0%, #818cf8 100%);
+            --dark-card: #ffffff;
+        }
 
-    <title id="pageTitle">
-        Quản lý sinh viên | AdminLTE 4
-    </title>
-    <meta name="color-scheme" content="light dark" />
+        body {
+            background-color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #1e293b;
+        }
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css" crossorigin="anonymous" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" crossorigin="anonymous" />
-    <link rel="stylesheet" href="/adminlte/css/adminlte.css" />
-    <link rel="stylesheet" href="/assets/css/student.css" />
+        .navbar-brand-custom {
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .stat-card {
+            border-radius: 12px;
+            padding: 1.25rem;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        }
+        .stat-card .icon {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            font-size: 2.5rem;
+            opacity: 0.25;
+        }
+        .stat-card h6 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9; margin-bottom: 0.35rem; }
+        .stat-card h3 { font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .stat-card small { font-size: 0.8rem; opacity: 0.9; }
+
+        .custom-nav-tabs {
+            border-bottom: 2px solid #e2e8f0;
+            gap: 4px;
+        }
+        .custom-nav-tabs .nav-link {
+            border: 1px solid transparent;
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            color: #64748b;
+            font-weight: 600;
+            padding: 0.75rem 1.25rem;
+            background-color: #e2e8f0;
+            transition: all 0.2s;
+        }
+        .custom-nav-tabs .nav-link:hover {
+            background-color: #cbd5e1;
+            color: #0f172a;
+        }
+        .custom-nav-tabs .nav-link.active {
+            background-color: #ffffff;
+            color: #2563eb;
+            border-color: #e2e8f0;
+            border-top: 3px solid #2563eb;
+        }
+
+        .content-card {
+            background: #ffffff;
+            border-radius: 0 0 12px 12px;
+            border: 1px solid #e2e8f0;
+            border-top: none;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        }
+
+        .table thead th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+            border-bottom: 2px solid #e2e8f0;
+            padding: 0.85rem;
+        }
+        .table tbody td {
+            vertical-align: middle;
+            padding: 0.85rem;
+            font-size: 0.9rem;
+        }
+
+        .badge-active { background-color: #dcfce7; color: #166534; font-weight: 600; }
+        .badge-inactive { background-color: #f1f5f9; color: #64748b; font-weight: 600; }
+        .badge-open { background-color: #e0f2fe; color: #0369a1; font-weight: 600; }
+        .badge-closed { background-color: #fee2e2; color: #991b1b; font-weight: 600; }
+
+        .btn-action-icon {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1090;
+        }
+    </style>
 </head>
+<body>
 
-<body class="layout-fixed sidebar-expand-lg sidebar-open bg-body-tertiary">
-<div class="app-wrapper">
-    <nav class="app-header navbar navbar-expand bg-body">
-        <div class="container-fluid">
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link" data-lte-toggle="sidebar" href="#" role="button">
-                        <i class="bi bi-list"></i>
-                    </a>
-                </li>
-                <li class="nav-item d-none d-md-block">
-                    <span class="nav-link fw-semibold">
-                        Quản lý đào tạo
-                    </span>
-                </li>
-            </ul>
-        </div>
-    </nav>
-    <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
-        <div class="sidebar-brand">
-            <a href="index.html" class="brand-link">
-                <img src="/adminlte/assets/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image opacity-75 shadow" />
-                <span class="brand-text fw-light">
-                    School Manager
-                </span>
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm" style="background: var(--primary-gradient) !important;">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand navbar-brand-custom d-flex align-items-center gap-2" href="#">
+            <i class="bi bi-mortarboard-fill fs-3"></i>
+            <div>
+                <span class="fs-5">Quản Lý Đào Tạo</span>
+                <span class="badge bg-warning text-dark ms-2 fw-bold">Nhóm 5</span>
+            </div>
+        </a>
+        <div class="d-flex align-items-center gap-2">
+            <a href="/swagger-ui/index.html" target="_blank" class="btn btn-sm btn-outline-light d-flex align-items-center gap-1">
+                <i class="bi bi-file-code"></i> API Docs (Swagger)
             </a>
+            <button class="btn btn-sm btn-light fw-bold" onclick="refreshAll()">
+                <i class="bi bi-arrow-clockwise"></i> Làm mới
+            </button>
         </div>
+    </div>
+</nav>
 
-        <div class="sidebar-wrapper">
-            <nav class="mt-2">
-                <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="navigation" data-accordion="false">
-                    <li class="nav-item">
-                        <a href="index.html" class="nav-link active">
-                            <i class="nav-icon bi bi-people-fill"></i>
-                            <p>
-                                Sinh viên
-                            </p>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="n5.html" class="nav-link">
-                            <i class="nav-icon bi bi-grid-1x2-fill"></i>
-                            <p>
-                                Module N5
-                            </p>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        </div>
-    </aside>
+<!-- MAIN CONTAINER -->
+<div class="container-fluid px-4 py-4">
 
-    <main class="app-main">
-        <div id="page-list">
-            <!-- Page Header -->
-            <div class="app-content-header">
-                <div class="container-fluid">
-                    <div class="row align-items-center">
-                        <div class="col-sm-6">
-                            <h3 class="mb-0">
-                                Quản lý sinh viên
-                            </h3>
-                        </div>
-                        <div class="col-sm-6">
-                            <ol class="breadcrumb float-sm-end mb-0">
-                                <li class="breadcrumb-item">
-                                    <a href="index.html">
-                                        Trang chủ
-                                    </a>
-                                </li>
-                                <li class="breadcrumb-item active" aria-current="page">
-                                    Sinh viên
-                                </li>
-                            </ol>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- Content -->
-            <div class="app-content">
-                <div class="container-fluid">
-                    <div class="card shadow-sm border-0">
-                        <!-- Card Header -->
-                        <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
-                            <h3 class="card-title mb-0">
-                                Danh sách sinh viên
-                            </h3>
-                            <div class="d-flex flex-wrap align-items-center gap-2">
-                                <!-- Search -->
-                                <form id="searchForm" class="d-flex gap-2 align-items-center">
-                                    <div class="input-group input-group-sm" style="width: 320px;">
-                                        <span class="input-group-text">
-                                            <i class="bi bi-search"></i>
-                                        </span>
-                                        <input type="text" id="keyword" name="keyword" class="form-control" placeholder="Tìm theo mã / họ tên / email..." />
-                                    </div>
-                                    <button class="btn btn-primary btn-sm" type="submit">
-                                        <i class="bi bi-funnel me-1"></i>
-                                        Tìm kiếm
-                                    </button>
-                                </form>
-                                <!-- Create -->
-                                <a class="btn btn-primary btn-sm" href="index.html?page=form">
-                                    <i class="bi bi-plus-circle me-1"></i>
-                                    Thêm sinh viên
-                                </a>
-                            </div>
-                        </div>
-                        <!-- Table -->
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0">
-                                    <thead class="table-light">
-                                    <tr>
-                                        <th style="width: 18%;">
-                                            Mã sinh viên
-                                        </th>
-                                        <th style="width: 24%;">
-                                            Họ và tên
-                                        </th>
-                                        <th style="width: 22%;">
-                                            Email
-                                        </th>
-                                        <th style="width: 16%;">
-                                            Số điện thoại
-                                        </th>
-                                        <th style="width: 12%;">
-                                            Lớp
-                                        </th>
-                                        <th style="width: 8%;" class="text-end">
-                                            Hành động
-                                        </th>
-                                    </tr>
-                                    </thead>
-                                    <tbody id="studentTableBody">
-                                    <tr>
-                                        <td colspan="6" class="text-center text-muted py-4">
-                                            Đang tải dữ liệu...
-                                        </td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    <!-- STATS OVERVIEW -->
+    <div class="row g-3 mb-4">
+        <!-- 1. Niên khóa -->
+        <div class="col-md-4 col-xl-2">
+            <div class="stat-card" style="background: var(--cyan-gradient);">
+                <i class="bi bi-award icon"></i>
+                <h6>Niên Khóa</h6>
+                <h3 id="stat-academic-years">0</h3>
+                <small>Hoạt động: <b id="stat-academic-years-active">0</b></small>
             </div>
         </div>
-
-        <div id="page-form" style="display: none;">
-            <!-- Page Header -->
-            <div class="app-content-header">
-                <div class="container-fluid">
-                    <div class="row align-items-center">
-                        <div class="col-sm-6">
-                            <h3 class="mb-0" id="pageHeading">
-                                Thêm sinh viên
-                            </h3>
-                        </div>
-                        <div class="col-sm-6">
-                            <ol class="breadcrumb float-sm-end mb-0">
-                                <li class="breadcrumb-item">
-                                    <a href="index.html">
-                                        Danh sách
-                                    </a>
-                                </li>
-                                <li class="breadcrumb-item active" aria-current="page" id="breadcrumbTitle">
-                                    Thêm
-                                </li>
-                            </ol>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- Content -->
-            <div class="app-content">
-                <div class="container-fluid">
-                    <div class="card form-card shadow-sm border-0">
-                        <div class="card-header">
-                            <h3 class="card-title mb-0" id="formTitle">
-                                Thêm sinh viên mới
-                            </h3>
-                        </div>
-                        <div class="card-body">
-                            <form id="studentForm">
-                                <!-- Student Code -->
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label">
-                                            Mã sinh viên
-                                        </label>
-                                        <input type="text" id="studentCode" name="studentCode" class="form-control" />
-                                    </div>
-                                    <!-- Full Name -->
-                                    <div class="col-md-6">
-                                        <label class="form-label">
-                                            Họ và tên
-                                        </label>
-                                        <input type="text" id="fullName" name="fullName" class="form-control" />
-                                    </div>
-                                    <!-- Email -->
-                                    <div class="col-md-6">
-                                        <label class="form-label">
-                                            Email
-                                        </label>
-                                        <input type="email" id="email" name="email" class="form-control" />
-                                    </div>
-                                    <!-- Phone -->
-                                    <div class="col-md-6">
-                                        <label class="form-label">
-                                            Số điện thoại
-                                        </label>
-                                        <input type="text" id="phone" name="phone" class="form-control" />
-                                    </div>
-                                    <div class="col-md-12">
-                                        <label class="form-label">
-                                            Lớp
-                                        </label>
-                                        <input type="text" id="className" name="className" class="form-control" />
-                                    </div>
-                                </div>
-                                <div class="mt-4 d-flex gap-2">
-                                    <button id="submitButton" type="submit" class="btn btn-primary">
-                                        <i class="bi bi-plus-circle me-1"></i>
-                                        Thêm sinh viên
-                                    </button>
-                                    <a href="index.html" class="btn btn-secondary">
-                                        <i class="bi bi-arrow-left me-1"></i>
-                                        Quay lại
-                                    </a>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
+        <!-- 2. Năm học -->
+        <div class="col-md-4 col-xl-2">
+            <div class="stat-card" style="background: var(--blue-gradient);">
+                <i class="bi bi-calendar3 icon"></i>
+                <h6>Năm Học</h6>
+                <h3 id="stat-school-years">0</h3>
+                <small>Hoạt động: <b id="stat-school-years-active">0</b></small>
             </div>
         </div>
-    </main>
-
-    <footer class="app-footer">
-        <div class="float-end d-none d-sm-inline">
-            School Manager
+        <!-- 3. Học kỳ -->
+        <div class="col-md-4 col-xl-2">
+            <div class="stat-card" style="background: var(--purple-gradient);">
+                <i class="bi bi-calendar2-range icon"></i>
+                <h6>Học Kỳ</h6>
+                <h3 id="stat-semesters">0</h3>
+                <small>Hoạt động: <b id="stat-semesters-active">0</b></small>
+            </div>
         </div>
-        <strong>
-            Quản lý sinh viên | AdminLTE 4
-        </strong>
-    </footer>
+        <!-- 4. Lớp học phần -->
+        <div class="col-md-4 col-xl-2">
+            <div class="stat-card" style="background: var(--indigo-gradient);">
+                <i class="bi bi-journal-bookmark icon"></i>
+                <h6>Lớp Học Phần</h6>
+                <h3 id="stat-course-sections">0</h3>
+                <small>Hoạt động: <b id="stat-course-sections-active">0</b></small>
+            </div>
+        </div>
+        <!-- 5. Đăng ký học phần -->
+        <div class="col-md-4 col-xl-2">
+            <div class="stat-card" style="background: var(--green-gradient);">
+                <i class="bi bi-pencil-square icon"></i>
+                <h6>Đăng Ký HP</h6>
+                <h3 id="stat-registrations">0</h3>
+                <small>Hoạt động: <b id="stat-registrations-active">0</b></small>
+            </div>
+        </div>
+        <!-- 6. Phân công giảng viên -->
+        <div class="col-md-4 col-xl-2">
+            <div class="stat-card" style="background: var(--orange-gradient);">
+                <i class="bi bi-person-video3 icon"></i>
+                <h6>Phân Công GV</h6>
+                <h3 id="stat-assignments">0</h3>
+                <small>Hoạt động: <b id="stat-assignments-active">0</b></small>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABS -->
+    <ul class="nav custom-nav-tabs" id="mainTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" id="tab-academic-year-btn" onclick="selectTab('academic_year')">
+                <i class="bi bi-award me-1"></i> Niên Khóa
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="tab-school-year-btn" onclick="selectTab('school_year')">
+                <i class="bi bi-calendar3 me-1"></i> Năm Học
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="tab-semester-btn" onclick="selectTab('semester')">
+                <i class="bi bi-calendar2-range me-1"></i> Học Kỳ
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="tab-course-section-btn" onclick="selectTab('course_section')">
+                <i class="bi bi-journal-bookmark me-1"></i> Lớp Học Phần
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="tab-registration-btn" onclick="selectTab('registration')">
+                <i class="bi bi-pencil-square me-1"></i> Đăng Ký Học Phần
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="tab-assignment-btn" onclick="selectTab('assignment')">
+                <i class="bi bi-person-video3 me-1"></i> Phân Công Giảng Viên
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="tab-student-btn" onclick="selectTab('student')">
+                <i class="bi bi-people me-1"></i> Sinh Viên
+            </button>
+        </li>
+    </ul>
+
+    <!-- TAB CONTENT CARD -->
+    <div class="content-card">
+        <!-- TOOLBAR -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+            <div>
+                <h4 class="fw-bold mb-1" id="section-title">Danh sách niên khóa</h4>
+                <p class="text-muted small mb-0" id="section-desc">Quản lý các khóa đào tạo của trường.</p>
+            </div>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <div class="input-group" style="width: 280px;">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" id="searchInput" class="form-control border-start-0 ps-0" placeholder="Tìm kiếm nhanh..." onkeyup="applyFilter()">
+                </div>
+                <select id="statusFilter" class="form-select fw-semibold" style="width: 170px;" onchange="applyFilter()">
+                    <option value="all">Tất cả trạng thái</option>
+                    <option value="active">Đang hoạt động</option>
+                    <option value="inactive">Đã khóa</option>
+                </select>
+                <button class="btn btn-primary fw-bold d-flex align-items-center gap-1 shadow-sm" onclick="openCreateModal()">
+                    <i class="bi bi-plus-lg"></i> <span id="btn-add-label">Thêm mới</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- DATA TABLE -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead id="tableHead"></thead>
+                <tbody id="tableBody">
+                    <tr><td colspan="7" class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm me-2"></span> Đang tải dữ liệu...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
+<!-- ================= MODALS ================= -->
 
-<script src="/adminlte/js/adminlte.js"></script>
+<!-- 1. MODAL NIÊN KHÓA (Academic Year) -->
+<div class="modal fade" id="modalAcademicYear" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold" id="titleAcademicYear">Thêm Niên Khóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formAcademicYear" onsubmit="handleSaveAcademicYear(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="ay-id">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Mã niên khóa <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="ay-code" required placeholder="VD: 2023-2027">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tên niên khóa <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="ay-name" required placeholder="VD: Khóa 2023 - 2027">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Khóa đào tạo</label>
+                        <input type="text" class="form-control" id="ay-year" placeholder="VD: K23">
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label class="form-label fw-bold">Ngày bắt đầu</label>
+                            <input type="date" class="form-control" id="ay-start">
+                        </div>
+                        <div class="col">
+                            <label class="form-label fw-bold">Ngày kết thúc</label>
+                            <input type="date" class="form-control" id="ay-end">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Mô tả</label>
+                        <textarea class="form-control" id="ay-desc" rows="2" placeholder="Ghi chú niên khóa..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary fw-bold">Lưu Niên Khóa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
+<!-- 2. MODAL NĂM HỌC (School Year) -->
+<div class="modal fade" id="modalSchoolYear" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold" id="titleSchoolYear">Thêm Năm Học</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formSchoolYear" onsubmit="handleSaveSchoolYear(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="sy-id">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Mã năm học <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="sy-code" required placeholder="VD: 2024-2025">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tên năm học <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="sy-name" required placeholder="VD: Năm học 2024-2025">
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label class="form-label fw-bold">Ngày bắt đầu</label>
+                            <input type="date" class="form-control" id="sy-start">
+                        </div>
+                        <div class="col">
+                            <label class="form-label fw-bold">Ngày kết thúc</label>
+                            <input type="date" class="form-control" id="sy-end">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Mô tả / Chi tiết</label>
+                        <input type="text" class="form-control" id="sy-desc" placeholder="Chi tiết năm học...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Ghi chú</label>
+                        <input type="text" class="form-control" id="sy-note" placeholder="Ghi chú thêm...">
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary fw-bold">Lưu Năm Học</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
-<script type="module" src="/assets/js/student.js"></script>
+<!-- 3. MODAL HỌC KỲ (Semester) -->
+<div class="modal fade" id="modalSemester" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold" id="titleSemester">Thêm Học Kỳ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formSemester" onsubmit="handleSaveSemester(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="sem-id">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Mã học kỳ <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="sem-code" required placeholder="VD: HK1_2024_2025">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tên học kỳ <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="sem-name" required placeholder="VD: Học kỳ 1 (2024 - 2025)">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Thuộc Năm học <span class="text-danger">*</span></label>
+                        <select class="form-select" id="sem-school-year" required>
+                            <option value="">-- Chọn năm học --</option>
+                        </select>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label class="form-label fw-bold">Ngày bắt đầu</label>
+                            <input type="date" class="form-control" id="sem-start">
+                        </div>
+                        <div class="col">
+                            <label class="form-label fw-bold">Ngày kết thúc</label>
+                            <input type="date" class="form-control" id="sem-end">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary fw-bold">Lưu Học Kỳ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 4. MODAL LỚP HỌC PHẦN (Course Section) -->
+<div class="modal fade" id="modalCourseSection" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold" id="titleCourseSection">Thêm Lớp Học Phần</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formCourseSection" onsubmit="handleSaveCourseSection(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="cs-id">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Mã lớp HP <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="cs-code" required placeholder="VD: IT101-01">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Tên lớp HP <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="cs-name" required placeholder="VD: Lập trình Java N01">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Thuộc Học kỳ <span class="text-danger">*</span></label>
+                            <select class="form-select" id="cs-semester" required>
+                                <option value="">-- Chọn học kỳ --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Loại lớp</label>
+                            <select class="form-select" id="cs-type">
+                                <option value="Lý thuyết">Lý thuyết</option>
+                                <option value="Thực hành">Thực hành</option>
+                                <option value="Đồ án / Khóa luận">Đồ án / Khóa luận</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Sĩ số tối đa</label>
+                            <input type="number" class="form-control" id="cs-max" value="50" min="1">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Sĩ số tối thiểu</label>
+                            <input type="number" class="form-control" id="cs-min" value="15" min="1">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Trạng thái mở</label>
+                            <select class="form-select" id="cs-status">
+                                <option value="open">Đang mở đăng ký (open)</option>
+                                <option value="closed">Đã đóng đăng ký (closed)</option>
+                                <option value="planned">Dự kiến (planned)</option>
+                                <option value="canceled">Đã hủy (canceled)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Ghi chú</label>
+                            <input type="text" class="form-control" id="cs-note" placeholder="Thông tin phòng học, giảng đường...">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary fw-bold">Lưu Lớp Học Phần</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 5. MODAL ĐĂNG KÝ HỌC PHẦN (Student Course Section) -->
+<div class="modal fade" id="modalRegistration" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold" id="titleRegistration">Đăng Ký Học Phần Cho Sinh Viên</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formRegistration" onsubmit="handleSaveRegistration(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="reg-id">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Sinh viên <span class="text-danger">*</span></label>
+                        <select class="form-select" id="reg-student" required>
+                            <option value="">-- Chọn sinh viên --</option>
+                        </select>
+                        <small class="text-muted">Hoặc có thể chọn trực tiếp từ danh mục sinh viên.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Lớp học phần <span class="text-danger">*</span></label>
+                        <select class="form-select" id="reg-section" required>
+                            <option value="">-- Chọn lớp học phần --</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Loại đăng ký</label>
+                        <select class="form-select" id="reg-type">
+                            <option value="Học lần đầu">Học lần đầu</option>
+                            <option value="Học lại">Học lại</option>
+                            <option value="Học cải thiện">Học cải thiện</option>
+                            <option value="Học thay thế">Học thay thế</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Trạng thái</label>
+                        <select class="form-select" id="reg-status">
+                            <option value="REGISTERED">Đã đăng ký (REGISTERED)</option>
+                            <option value="STUDYING">Đang theo học (STUDYING)</option>
+                            <option value="COMPLETED">Hoàn thành (COMPLETED)</option>
+                            <option value="CANCELLED">Đã hủy (CANCELLED)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Ghi chú</label>
+                        <input type="text" class="form-control" id="reg-note" placeholder="Ghi chú thêm...">
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary fw-bold">Xác Nhận Đăng Ký</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 6. MODAL PHÂN CÔNG GIẢNG VIÊN (Lecturer Assignment) -->
+<div class="modal fade" id="modalAssignment" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold" id="titleAssignment">Phân Công Giảng Viên</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formAssignment" onsubmit="handleSaveAssignment(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="as-id">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Lớp học phần <span class="text-danger">*</span></label>
+                        <select class="form-select" id="as-section" required>
+                            <option value="">-- Chọn lớp học phần --</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tên Giảng viên <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="as-lecturer-name" required placeholder="VD: TS. Nguyễn Văn A">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Mã / UUID Giảng viên (nếu có)</label>
+                        <input type="text" class="form-control" id="as-lecturer-id" placeholder="Tùy chọn UUID...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Vai trò giảng dạy</label>
+                        <select class="form-select" id="as-role">
+                            <option value="Giảng viên chính">Giảng viên chính</option>
+                            <option value="Giảng viên phụ">Giảng viên phụ / Trợ giảng</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Ghi chú</label>
+                        <input type="text" class="form-control" id="as-note" placeholder="Ghi chú phân công...">
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary fw-bold">Lưu Phân Công</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 7. MODAL SINH VIÊN (Student) -->
+<div class="modal fade" id="modalStudent" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold" id="titleStudent">Thêm Sinh Viên</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formStudent" onsubmit="handleSaveStudent(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="st-id">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Mã sinh viên <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="st-code" required placeholder="VD: SV24001">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Họ và tên <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="st-name" required placeholder="VD: Nguyễn Văn B">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Email</label>
+                        <input type="email" class="form-control" id="st-email" placeholder="VD: sv@donga.edu.vn">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số điện thoại</label>
+                        <input type="text" class="form-control" id="st-phone" placeholder="VD: 0912345678">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Lớp sinh hoạt</label>
+                        <input type="text" class="form-control" id="st-class" placeholder="VD: IT24M">
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary fw-bold">Lưu Sinh Viên</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST NOTIFICATION CONTAINER -->
+<div class="toast-container">
+    <div id="liveToast" class="toast align-items-center text-white bg-success border-0 shadow-lg" role="alert">
+        <div class="d-flex">
+            <div class="toast-body fw-bold" id="toastMessage">Thành công!</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap 5 JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- JAVASCRIPT APPLICATION LOGIC -->
+<script>
+    let currentTab = 'academic_year';
+    let rawData = [];
+    
+    // Shared drop-down cache
+    let cachedSchoolYears = [];
+    let cachedSemesters = [];
+    let cachedCourseSections = [];
+    let cachedStudents = [];
+
+    const API = {
+        ACADEMIC_YEARS: '/api/academic-years',
+        SCHOOL_YEARS: '/api/school-years',
+        SEMESTERS: '/api/semesters',
+        COURSE_SECTIONS: '/api/course-sections',
+        REGISTRATIONS: '/api/student-course-sections',
+        ASSIGNMENTS: '/api/lecturer-course-classes',
+        STUDENTS: '/api/students'
+    };
+
+    function showToast(msg, isError = false) {
+        const toastEl = document.getElementById('liveToast');
+        toastEl.className = `toast align-items-center text-white border-0 shadow-lg ${isError ? 'bg-danger' : 'bg-success'}`;
+        document.getElementById('toastMessage').innerText = msg;
+        const toast = new bootstrap.Toast(toastEl);
+        toast.show();
+    }
+
+    async function loadStats() {
+        try {
+            const [rAY, rSY, rSem, rCS, rReg, rAs] = await Promise.all([
+                fetch(API.ACADEMIC_YEARS).then(r => r.json()).catch(() => []),
+                fetch(API.SCHOOL_YEARS).then(r => r.json()).catch(() => []),
+                fetch(API.SEMESTERS).then(r => r.json()).catch(() => []),
+                fetch(API.COURSE_SECTIONS).then(r => r.json()).catch(() => []),
+                fetch(API.REGISTRATIONS).then(r => r.json()).catch(() => []),
+                fetch(API.ASSIGNMENTS).then(r => r.json()).catch(() => [])
+            ]);
+
+            document.getElementById('stat-academic-years').innerText = rAY.length;
+            document.getElementById('stat-academic-years-active').innerText = rAY.filter(i => i.isActive).length;
+
+            document.getElementById('stat-school-years').innerText = rSY.length;
+            document.getElementById('stat-school-years-active').innerText = rSY.filter(i => i.isActive).length;
+
+            document.getElementById('stat-semesters').innerText = rSem.length;
+            document.getElementById('stat-semesters-active').innerText = rSem.filter(i => i.isActive).length;
+
+            document.getElementById('stat-course-sections').innerText = rCS.length;
+            document.getElementById('stat-course-sections-active').innerText = rCS.filter(i => i.isActive).length;
+
+            document.getElementById('stat-registrations').innerText = rReg.length;
+            document.getElementById('stat-registrations-active').innerText = rReg.filter(i => i.isActive).length;
+
+            document.getElementById('stat-assignments').innerText = rAs.length;
+            document.getElementById('stat-assignments-active').innerText = rAs.filter(i => i.isActive).length;
+
+            cachedSchoolYears = rSY;
+            cachedSemesters = rSem;
+            cachedCourseSections = rCS;
+        } catch (e) {
+            console.error("Lỗi cập nhật thống kê", e);
+        }
+    }
+
+    function selectTab(tab) {
+        currentTab = tab;
+        document.querySelectorAll('#mainTabs .nav-link').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`tab-${tab.replace('_', '-')}-btn`).classList.add('active');
+
+        document.getElementById('searchInput').value = '';
+        document.getElementById('statusFilter').value = 'all';
+
+        const titleEl = document.getElementById('section-title');
+        const descEl = document.getElementById('section-desc');
+        const btnAddLabel = document.getElementById('btn-add-label');
+
+        switch(tab) {
+            case 'academic_year':
+                titleEl.innerText = "Danh sách Niên khóa (Academic Years)";
+                descEl.innerText = "Quản lý khóa đào tạo đại học (2023-2027, 2024-2028...).";
+                btnAddLabel.innerText = "Thêm Niên Khóa";
+                loadAcademicYears();
+                break;
+            case 'school_year':
+                titleEl.innerText = "Danh sách Năm học (School Years)";
+                descEl.innerText = "Quản lý năm đào tạo và mốc thời gian (2024-2025, 2025-2026...).";
+                btnAddLabel.innerText = "Thêm Năm Học";
+                loadSchoolYears();
+                break;
+            case 'semester':
+                titleEl.innerText = "Danh sách Học kỳ (Semesters)";
+                descEl.innerText = "Quản lý các học kỳ trong năm học (HK1, HK2, Học kỳ hè...).";
+                btnAddLabel.innerText = "Thêm Học Kỳ";
+                loadSemesters();
+                break;
+            case 'course_section':
+                titleEl.innerText = "Danh sách Lớp học phần (Course Sections)";
+                descEl.innerText = "Quản lý các lớp học phần mở đăng ký, sĩ số và trạng thái.";
+                btnAddLabel.innerText = "Thêm Lớp HP";
+                loadCourseSections();
+                break;
+            case 'registration':
+                titleEl.innerText = "Danh sách Đăng ký học phần (Student Registrations)";
+                descEl.innerText = "Theo dõi sinh viên đăng ký môn, sĩ số và kết quả ghi danh.";
+                btnAddLabel.innerText = "Đăng Ký Học Phần";
+                loadRegistrations();
+                break;
+            case 'assignment':
+                titleEl.innerText = "Danh sách Phân công giảng viên (Lecturer Assignments)";
+                descEl.innerText = "Phân công giảng viên giảng dạy lớp học phần theo học kỳ.";
+                btnAddLabel.innerText = "Thêm Phân Công";
+                loadAssignments();
+                break;
+            case 'student':
+                titleEl.innerText = "Danh sách Sinh viên (Students)";
+                descEl.innerText = "Hồ sơ sinh viên tham gia học tập và đăng ký đào tạo.";
+                btnAddLabel.innerText = "Thêm Sinh Viên";
+                loadStudents();
+                break;
+        }
+    }
+
+    // --- 1. NIÊN KHÓA ---
+    async function loadAcademicYears() {
+        document.getElementById('tableHead').innerHTML = `
+            <tr>
+                <th>Mã</th>
+                <th>Tên Niên Khóa</th>
+                <th>Khóa</th>
+                <th>Bắt Đầu</th>
+                <th>Kết Thúc</th>
+                <th>Trạng Thái</th>
+                <th class="text-end">Thao Tác</th>
+            </tr>`;
+        try {
+            const res = await fetch(API.ACADEMIC_YEARS);
+            rawData = await res.json();
+            renderAcademicYears(rawData);
+        } catch (e) {
+            document.getElementById('tableBody').innerHTML = `<tr><td colspan="7" class="text-danger text-center">Lỗi tải dữ liệu niên khóa!</td></tr>`;
+        }
+    }
+
+    function renderAcademicYears(data) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">Chưa có bản ghi nào</td></tr>`;
+            return;
+        }
+        data.forEach(item => {
+            const activeBadge = item.isActive ? `<span class="badge badge-active">Đang hoạt động</span>` : `<span class="badge badge-inactive">Đã khóa</span>`;
+            tbody.innerHTML += `
+                <tr>
+                    <td class="fw-bold text-primary">${escapeHtml(item.code || '')}</td>
+                    <td>${escapeHtml(item.name || '')}</td>
+                    <td><span class="badge bg-secondary">${escapeHtml(item.year || 'N/A')}</span></td>
+                    <td>${item.startDate || '—'}</td>
+                    <td>${item.endDate || '—'}</td>
+                    <td>${activeBadge}</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-primary btn-action-icon me-1" title="Sửa" onclick="openEditAcademicYear('${item.id}')"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-outline-warning btn-action-icon me-1" title="Đổi trạng thái" onclick="toggleActive('${API.ACADEMIC_YEARS}', '${item.id}', ${!item.isActive})"><i class="bi bi-power"></i></button>
+                        <button class="btn btn-sm btn-outline-danger btn-action-icon" title="Xóa" onclick="deleteItem('${API.ACADEMIC_YEARS}', '${item.id}')"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>`;
+        });
+    }
+
+    // --- 2. NĂM HỌC ---
+    async function loadSchoolYears() {
+        document.getElementById('tableHead').innerHTML = `
+            <tr>
+                <th>Mã</th>
+                <th>Tên Năm Học</th>
+                <th>Chi Tiết</th>
+                <th>Bắt Đầu</th>
+                <th>Kết Thúc</th>
+                <th>Trạng Thái</th>
+                <th class="text-end">Thao Tác</th>
+            </tr>`;
+        try {
+            const res = await fetch(API.SCHOOL_YEARS);
+            rawData = await res.json();
+            cachedSchoolYears = rawData;
+            renderSchoolYears(rawData);
+        } catch (e) {
+            document.getElementById('tableBody').innerHTML = `<tr><td colspan="7" class="text-danger text-center">Lỗi tải dữ liệu năm học!</td></tr>`;
+        }
+    }
+
+    function renderSchoolYears(data) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">Chưa có bản ghi nào</td></tr>`;
+            return;
+        }
+        data.forEach(item => {
+            const activeBadge = item.isActive ? `<span class="badge badge-active">Đang hoạt động</span>` : `<span class="badge badge-inactive">Đã khóa</span>`;
+            tbody.innerHTML += `
+                <tr>
+                    <td class="fw-bold text-primary">${escapeHtml(item.code || '')}</td>
+                    <td class="fw-semibold">${escapeHtml(item.name || '')}</td>
+                    <td>${escapeHtml(item.description || item.note || '—')}</td>
+                    <td>${item.startDate || '—'}</td>
+                    <td>${item.endDate || '—'}</td>
+                    <td>${activeBadge}</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-primary btn-action-icon me-1" title="Sửa" onclick="openEditSchoolYear('${item.id}')"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-outline-warning btn-action-icon me-1" title="Đổi trạng thái" onclick="toggleActive('${API.SCHOOL_YEARS}', '${item.id}', ${!item.isActive})"><i class="bi bi-power"></i></button>
+                        <button class="btn btn-sm btn-outline-danger btn-action-icon" title="Xóa" onclick="deleteItem('${API.SCHOOL_YEARS}', '${item.id}')"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>`;
+        });
+    }
+
+    // --- 3. HỌC KỲ ---
+    async function loadSemesters() {
+        document.getElementById('tableHead').innerHTML = `
+            <tr>
+                <th>Mã</th>
+                <th>Tên Học Kỳ</th>
+                <th>Năm Học</th>
+                <th>Bắt Đầu</th>
+                <th>Kết Thúc</th>
+                <th>Trạng Thái</th>
+                <th class="text-end">Thao Tác</th>
+            </tr>`;
+        try {
+            const res = await fetch(API.SEMESTERS);
+            rawData = await res.json();
+            cachedSemesters = rawData;
+            renderSemesters(rawData);
+        } catch (e) {
+            document.getElementById('tableBody').innerHTML = `<tr><td colspan="7" class="text-danger text-center">Lỗi tải dữ liệu học kỳ!</td></tr>`;
+        }
+    }
+
+    function renderSemesters(data) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">Chưa có bản ghi nào</td></tr>`;
+            return;
+        }
+        data.forEach(item => {
+            const syName = item.schoolYear?.name || item.schoolYearName || '—';
+            const activeBadge = item.isActive ? `<span class="badge badge-active">Đang hoạt động</span>` : `<span class="badge badge-inactive">Đã khóa</span>`;
+            tbody.innerHTML += `
+                <tr>
+                    <td class="fw-bold text-primary">${escapeHtml(item.code || '')}</td>
+                    <td class="fw-semibold">${escapeHtml(item.name || '')}</td>
+                    <td><span class="badge bg-light text-dark border">${escapeHtml(syName)}</span></td>
+                    <td>${item.startDate || '—'}</td>
+                    <td>${item.endDate || '—'}</td>
+                    <td>${activeBadge}</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-primary btn-action-icon me-1" title="Sửa" onclick="openEditSemester('${item.id}')"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-outline-warning btn-action-icon me-1" title="Đổi trạng thái" onclick="toggleActive('${API.SEMESTERS}', '${item.id}', ${!item.isActive})"><i class="bi bi-power"></i></button>
+                        <button class="btn btn-sm btn-outline-danger btn-action-icon" title="Xóa" onclick="deleteItem('${API.SEMESTERS}', '${item.id}')"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>`;
+        });
+    }
+
+    // --- 4. LỚP HỌC PHẦN ---
+    async function loadCourseSections() {
+        document.getElementById('tableHead').innerHTML = `
+            <tr>
+                <th>Mã Lớp HP</th>
+                <th>Tên Lớp Học Phần</th>
+                <th>Học Kỳ</th>
+                <th>Loại Lớp</th>
+                <th>Sĩ Số (Min - Max)</th>
+                <th>Trạng Thái</th>
+                <th class="text-end">Thao Tác</th>
+            </tr>`;
+        try {
+            const res = await fetch(API.COURSE_SECTIONS);
+            rawData = await res.json();
+            cachedCourseSections = rawData;
+            renderCourseSections(rawData);
+        } catch (e) {
+            document.getElementById('tableBody').innerHTML = `<tr><td colspan="7" class="text-danger text-center">Lỗi tải dữ liệu lớp học phần!</td></tr>`;
+        }
+    }
+
+    function renderCourseSections(data) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">Chưa có bản ghi nào</td></tr>`;
+            return;
+        }
+        data.forEach(item => {
+            const semName = item.semester?.name || '—';
+            let statusBadge = `<span class="badge badge-open">Đang mở</span>`;
+            if (item.status && (item.status.includes('closed') || item.status.includes('đóng'))) {
+                statusBadge = `<span class="badge badge-closed">Đã đóng</span>`;
+            } else if (item.status === 'canceled') {
+                statusBadge = `<span class="badge bg-secondary">Đã hủy</span>`;
+            }
+            tbody.innerHTML += `
+                <tr>
+                    <td class="fw-bold text-primary">${escapeHtml(item.code || '')}</td>
+                    <td class="fw-semibold">${escapeHtml(item.name || '')}</td>
+                    <td><span class="badge bg-light text-dark border">${escapeHtml(semName)}</span></td>
+                    <td>${escapeHtml(item.classType || 'Lý thuyết')}</td>
+                    <td><b class="text-success">${item.minStudents || 15}</b> - <b class="text-primary">${item.maxStudents || 50}</b></td>
+                    <td>${statusBadge}</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-primary btn-action-icon me-1" title="Sửa" onclick="openEditCourseSection('${item.id}')"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-outline-warning btn-action-icon me-1" title="Đổi trạng thái" onclick="toggleActive('${API.COURSE_SECTIONS}', '${item.id}', ${!item.isActive})"><i class="bi bi-power"></i></button>
+                        <button class="btn btn-sm btn-outline-danger btn-action-icon" title="Xóa" onclick="deleteItem('${API.COURSE_SECTIONS}', '${item.id}')"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>`;
+        });
+    }
+
+    // --- 5. ĐĂNG KÝ HỌC PHẦN ---
+    async function loadRegistrations() {
+        document.getElementById('tableHead').innerHTML = `
+            <tr>
+                <th>Sinh Viên</th>
+                <th>Lớp Học Phần</th>
+                <th>Ngày Đăng Ký</th>
+                <th>Loại Đăng Ký</th>
+                <th>Trạng Thái</th>
+                <th class="text-end">Thao Tác</th>
+            </tr>`;
+        try {
+            const res = await fetch(API.REGISTRATIONS);
+            rawData = await res.json();
+            renderRegistrations(rawData);
+        } catch (e) {
+            document.getElementById('tableBody').innerHTML = `<tr><td colspan="6" class="text-danger text-center">Lỗi tải dữ liệu đăng ký!</td></tr>`;
+        }
+    }
+
+    function renderRegistrations(data) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Chưa có đăng ký nào</td></tr>`;
+            return;
+        }
+        data.forEach(item => {
+            const studentDisplay = item.studentName || item.studentCode || item.studentId || 'Chưa xác định';
+            const sectionName = item.courseSection?.name ? `${item.courseSection.code} - ${item.courseSection.name}` : (item.courseSection?.code || 'N/A');
+            const regDate = item.registrationDate ? new Date(item.registrationDate).toLocaleDateString('vi-VN') : '—';
+            tbody.innerHTML += `
+                <tr>
+                    <td class="fw-semibold"><i class="bi bi-person me-1 text-primary"></i>${escapeHtml(studentDisplay)}</td>
+                    <td class="text-primary fw-semibold">${escapeHtml(sectionName)}</td>
+                    <td>${regDate}</td>
+                    <td><span class="badge bg-light text-dark border">${escapeHtml(item.registrationType || 'Học lần đầu')}</span></td>
+                    <td><span class="badge badge-active">${escapeHtml(item.status || 'REGISTERED')}</span></td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-warning btn-action-icon me-1" title="Đổi trạng thái" onclick="toggleActive('${API.REGISTRATIONS}', '${item.id}', ${!item.isActive})"><i class="bi bi-power"></i></button>
+                        <button class="btn btn-sm btn-outline-danger btn-action-icon" title="Hủy / Xóa" onclick="deleteItem('${API.REGISTRATIONS}', '${item.id}')"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>`;
+        });
+    }
+
+    // --- 6. PHÂN CÔNG GIẢNG VIÊN ---
+    async function loadAssignments() {
+        document.getElementById('tableHead').innerHTML = `
+            <tr>
+                <th>Lớp Học Phần</th>
+                <th>Học Kỳ</th>
+                <th>Giảng Viên</th>
+                <th>Vai Trò</th>
+                <th>Trạng Thái</th>
+                <th class="text-end">Thao Tác</th>
+            </tr>`;
+        try {
+            const res = await fetch(API.ASSIGNMENTS);
+            rawData = await res.json();
+            renderAssignments(rawData);
+        } catch (e) {
+            document.getElementById('tableBody').innerHTML = `<tr><td colspan="6" class="text-danger text-center">Lỗi tải dữ liệu phân công!</td></tr>`;
+        }
+    }
+
+    function renderAssignments(data) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Chưa có phân công nào</td></tr>`;
+            return;
+        }
+        data.forEach(item => {
+            const sectionDisplay = item.courseSection ? `${item.courseSection.code} - ${item.courseSection.name}` : (item.courseClassName || 'N/A');
+            const semDisplay = item.courseSection?.semester?.name || '—';
+            const lecturerDisplay = item.employeeName || item.employeeId || 'Chưa chỉ định';
+            tbody.innerHTML += `
+                <tr>
+                    <td class="fw-semibold text-primary">${escapeHtml(sectionDisplay)}</td>
+                    <td><span class="badge bg-light text-dark border">${escapeHtml(semDisplay)}</span></td>
+                    <td class="fw-bold"><i class="bi bi-person-badge me-1 text-warning"></i>${escapeHtml(lecturerDisplay)}</td>
+                    <td><span class="badge bg-info text-dark">${escapeHtml(item.role || 'Giảng viên chính')}</span></td>
+                    <td>${item.isActive ? '<span class="badge badge-active">Hoạt động</span>' : '<span class="badge badge-inactive">Đã khóa</span>'}</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-warning btn-action-icon me-1" title="Đổi trạng thái" onclick="toggleActive('${API.ASSIGNMENTS}', '${item.id}', ${!item.isActive})"><i class="bi bi-power"></i></button>
+                        <button class="btn btn-sm btn-outline-danger btn-action-icon" title="Xóa" onclick="deleteItem('${API.ASSIGNMENTS}', '${item.id}')"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>`;
+        });
+    }
+
+    // --- 7. SINH VIÊN ---
+    async function loadStudents() {
+        document.getElementById('tableHead').innerHTML = `
+            <tr>
+                <th>Mã SV</th>
+                <th>Họ và Tên</th>
+                <th>Email</th>
+                <th>Số Điện Thoại</th>
+                <th>Lớp Sinh Hoạt</th>
+                <th class="text-end">Thao Tác</th>
+            </tr>`;
+        try {
+            const res = await fetch(API.STUDENTS);
+            rawData = await res.json();
+            cachedStudents = rawData;
+            renderStudents(rawData);
+        } catch (e) {
+            document.getElementById('tableBody').innerHTML = `<tr><td colspan="6" class="text-danger text-center">Lỗi tải danh sách sinh viên!</td></tr>`;
+        }
+    }
+
+    function renderStudents(data) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Chưa có sinh viên nào</td></tr>`;
+            return;
+        }
+        data.forEach(item => {
+            tbody.innerHTML += `
+                <tr>
+                    <td class="fw-bold text-primary">${escapeHtml(item.studentCode || '')}</td>
+                    <td class="fw-semibold">${escapeHtml(item.fullName || '')}</td>
+                    <td>${escapeHtml(item.email || '—')}</td>
+                    <td>${escapeHtml(item.phone || '—')}</td>
+                    <td><span class="badge bg-light text-dark border">${escapeHtml(item.className || '—')}</span></td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-primary btn-action-icon me-1" title="Sửa" onclick="openEditStudent('${item.id}')"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-outline-danger btn-action-icon" title="Xóa" onclick="deleteItem('${API.STUDENTS}', '${item.id}')"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>`;
+        });
+    }
+
+    // --- BỘ LỌC & TÌM KIẾM ---
+    function applyFilter() {
+        const keyword = document.getElementById('searchInput').value.toLowerCase().trim();
+        const status = document.getElementById('statusFilter').value;
+
+        const filtered = rawData.filter(item => {
+            let matchText = false;
+            if (keyword === '') {
+                matchText = true;
+            } else {
+                const fullStr = JSON.stringify(item).toLowerCase();
+                matchText = fullStr.includes(keyword);
+            }
+
+            let matchStatus = true;
+            if (status === 'active') matchStatus = item.isActive === true;
+            if (status === 'inactive') matchStatus = item.isActive === false;
+
+            return matchText && matchStatus;
+        });
+
+        switch(currentTab) {
+            case 'academic_year': renderAcademicYears(filtered); break;
+            case 'school_year': renderSchoolYears(filtered); break;
+            case 'semester': renderSemesters(filtered); break;
+            case 'course_section': renderCourseSections(filtered); break;
+            case 'registration': renderRegistrations(filtered); break;
+            case 'assignment': renderAssignments(filtered); break;
+            case 'student': renderStudents(filtered); break;
+        }
+    }
+
+    // --- MỞ MODAL THÊM MỚI ---
+    async function openCreateModal() {
+        if (currentTab === 'academic_year') {
+            document.getElementById('formAcademicYear').reset();
+            document.getElementById('ay-id').value = '';
+            document.getElementById('titleAcademicYear').innerText = 'Thêm Niên Khóa';
+            new bootstrap.Modal(document.getElementById('modalAcademicYear')).show();
+        } else if (currentTab === 'school_year') {
+            document.getElementById('formSchoolYear').reset();
+            document.getElementById('sy-id').value = '';
+            document.getElementById('titleSchoolYear').innerText = 'Thêm Năm Học';
+            new bootstrap.Modal(document.getElementById('modalSchoolYear')).show();
+        } else if (currentTab === 'semester') {
+            document.getElementById('formSemester').reset();
+            document.getElementById('sem-id').value = '';
+            document.getElementById('titleSemester').innerText = 'Thêm Học Kỳ';
+            await populateSchoolYearSelect('sem-school-year');
+            new bootstrap.Modal(document.getElementById('modalSemester')).show();
+        } else if (currentTab === 'course_section') {
+            document.getElementById('formCourseSection').reset();
+            document.getElementById('cs-id').value = '';
+            document.getElementById('titleCourseSection').innerText = 'Thêm Lớp Học Phần';
+            await populateSemesterSelect('cs-semester');
+            new bootstrap.Modal(document.getElementById('modalCourseSection')).show();
+        } else if (currentTab === 'registration') {
+            document.getElementById('formRegistration').reset();
+            document.getElementById('reg-id').value = '';
+            document.getElementById('titleRegistration').innerText = 'Đăng Ký Học Phần';
+            await populateStudentSelect('reg-student');
+            await populateCourseSectionSelect('reg-section');
+            new bootstrap.Modal(document.getElementById('modalRegistration')).show();
+        } else if (currentTab === 'assignment') {
+            document.getElementById('formAssignment').reset();
+            document.getElementById('as-id').value = '';
+            document.getElementById('titleAssignment').innerText = 'Phân Công Giảng Viên';
+            await populateCourseSectionSelect('as-section');
+            new bootstrap.Modal(document.getElementById('modalAssignment')).show();
+        } else if (currentTab === 'student') {
+            document.getElementById('formStudent').reset();
+            document.getElementById('st-id').value = '';
+            document.getElementById('titleStudent').innerText = 'Thêm Sinh Viên';
+            new bootstrap.Modal(document.getElementById('modalStudent')).show();
+        }
+    }
+
+    // --- CÁC HÀM SỬA DỮ LIỆU ---
+    function openEditAcademicYear(id) {
+        const item = rawData.find(i => i.id === id);
+        if (!item) return;
+        document.getElementById('ay-id').value = item.id;
+        document.getElementById('ay-code').value = item.code || '';
+        document.getElementById('ay-name').value = item.name || '';
+        document.getElementById('ay-year').value = item.year || '';
+        document.getElementById('ay-start').value = item.startDate || '';
+        document.getElementById('ay-end').value = item.endDate || '';
+        document.getElementById('ay-desc').value = item.description || '';
+        document.getElementById('titleAcademicYear').innerText = 'Chỉnh Sửa Niên Khóa';
+        new bootstrap.Modal(document.getElementById('modalAcademicYear')).show();
+    }
+
+    function openEditSchoolYear(id) {
+        const item = rawData.find(i => i.id === id);
+        if (!item) return;
+        document.getElementById('sy-id').value = item.id;
+        document.getElementById('sy-code').value = item.code || '';
+        document.getElementById('sy-name').value = item.name || '';
+        document.getElementById('sy-start').value = item.startDate || '';
+        document.getElementById('sy-end').value = item.endDate || '';
+        document.getElementById('sy-desc').value = item.description || '';
+        document.getElementById('sy-note').value = item.note || '';
+        document.getElementById('titleSchoolYear').innerText = 'Chỉnh Sửa Năm Học';
+        new bootstrap.Modal(document.getElementById('modalSchoolYear')).show();
+    }
+
+    async function openEditSemester(id) {
+        const item = rawData.find(i => i.id === id);
+        if (!item) return;
+        await populateSchoolYearSelect('sem-school-year', item.schoolYear?.id);
+        document.getElementById('sem-id').value = item.id;
+        document.getElementById('sem-code').value = item.code || '';
+        document.getElementById('sem-name').value = item.name || '';
+        document.getElementById('sem-start').value = item.startDate || '';
+        document.getElementById('sem-end').value = item.endDate || '';
+        document.getElementById('titleSemester').innerText = 'Chỉnh Sửa Học Kỳ';
+        new bootstrap.Modal(document.getElementById('modalSemester')).show();
+    }
+
+    async function openEditCourseSection(id) {
+        const item = rawData.find(i => i.id === id);
+        if (!item) return;
+        await populateSemesterSelect('cs-semester', item.semester?.id);
+        document.getElementById('cs-id').value = item.id;
+        document.getElementById('cs-code').value = item.code || '';
+        document.getElementById('cs-name').value = item.name || '';
+        document.getElementById('cs-type').value = item.classType || 'Lý thuyết';
+        document.getElementById('cs-max').value = item.maxStudents || 50;
+        document.getElementById('cs-min').value = item.minStudents || 15;
+        document.getElementById('cs-status').value = item.status || 'open';
+        document.getElementById('cs-note').value = item.note || '';
+        document.getElementById('titleCourseSection').innerText = 'Chỉnh Sửa Lớp Học Phần';
+        new bootstrap.Modal(document.getElementById('modalCourseSection')).show();
+    }
+
+    function openEditStudent(id) {
+        const item = rawData.find(i => i.id === id);
+        if (!item) return;
+        document.getElementById('st-id').value = item.id;
+        document.getElementById('st-code').value = item.studentCode || '';
+        document.getElementById('st-name').value = item.fullName || '';
+        document.getElementById('st-email').value = item.email || '';
+        document.getElementById('st-phone').value = item.phone || '';
+        document.getElementById('st-class').value = item.className || '';
+        document.getElementById('titleStudent').innerText = 'Chỉnh Sửa Sinh Viên';
+        new bootstrap.Modal(document.getElementById('modalStudent')).show();
+    }
+
+    // --- FORM SUBMITS ---
+    async function handleSaveAcademicYear(e) {
+        e.preventDefault();
+        const id = document.getElementById('ay-id').value;
+        const payload = {
+            code: document.getElementById('ay-code').value,
+            name: document.getElementById('ay-name').value,
+            year: document.getElementById('ay-year').value,
+            startDate: document.getElementById('ay-start').value || null,
+            endDate: document.getElementById('ay-end').value || null,
+            description: document.getElementById('ay-desc').value
+        };
+        await saveEntity(API.ACADEMIC_YEARS, id, payload, 'modalAcademicYear', loadAcademicYears);
+    }
+
+    async function handleSaveSchoolYear(e) {
+        e.preventDefault();
+        const id = document.getElementById('sy-id').value;
+        const payload = {
+            code: document.getElementById('sy-code').value,
+            name: document.getElementById('sy-name').value,
+            startDate: document.getElementById('sy-start').value || null,
+            endDate: document.getElementById('sy-end').value || null,
+            description: document.getElementById('sy-desc').value,
+            note: document.getElementById('sy-note').value
+        };
+        await saveEntity(API.SCHOOL_YEARS, id, payload, 'modalSchoolYear', loadSchoolYears);
+    }
+
+    async function handleSaveSemester(e) {
+        e.preventDefault();
+        const id = document.getElementById('sem-id').value;
+        const schoolYearId = document.getElementById('sem-school-year').value;
+        const payload = {
+            code: document.getElementById('sem-code').value,
+            name: document.getElementById('sem-name').value,
+            startDate: document.getElementById('sem-start').value || null,
+            endDate: document.getElementById('sem-end').value || null
+        };
+        const url = id ? `${API.SEMESTERS}/${id}?schoolYearId=${schoolYearId}` : `${API.SEMESTERS}?schoolYearId=${schoolYearId}`;
+        await saveEntityCustom(url, id ? 'PUT' : 'POST', payload, 'modalSemester', loadSemesters);
+    }
+
+    async function handleSaveCourseSection(e) {
+        e.preventDefault();
+        const id = document.getElementById('cs-id').value;
+        const semesterId = document.getElementById('cs-semester').value;
+        const payload = {
+            code: document.getElementById('cs-code').value,
+            name: document.getElementById('cs-name').value,
+            classType: document.getElementById('cs-type').value,
+            maxStudents: parseInt(document.getElementById('cs-max').value) || 50,
+            minStudents: parseInt(document.getElementById('cs-min').value) || 15,
+            status: document.getElementById('cs-status').value,
+            note: document.getElementById('cs-note').value
+        };
+        const url = id ? `${API.COURSE_SECTIONS}/${id}?semesterId=${semesterId}` : `${API.COURSE_SECTIONS}?semesterId=${semesterId}`;
+        await saveEntityCustom(url, id ? 'PUT' : 'POST', payload, 'modalCourseSection', loadCourseSections);
+    }
+
+    async function handleSaveRegistration(e) {
+        e.preventDefault();
+        const studentId = document.getElementById('reg-student').value;
+        const sectionId = document.getElementById('reg-section').value;
+        const payload = {
+            studentId: studentId,
+            registrationType: document.getElementById('reg-type').value,
+            status: document.getElementById('reg-status').value,
+            note: document.getElementById('reg-note').value
+        };
+        const url = `${API.REGISTRATIONS}?courseSectionId=${sectionId}`;
+        await saveEntityCustom(url, 'POST', payload, 'modalRegistration', loadRegistrations);
+    }
+
+    async function handleSaveAssignment(e) {
+        e.preventDefault();
+        const sectionId = document.getElementById('as-section').value;
+        const payload = {
+            employeeName: document.getElementById('as-lecturer-name').value,
+            employeeId: document.getElementById('as-lecturer-id').value || null,
+            role: document.getElementById('as-role').value,
+            note: document.getElementById('as-note').value
+        };
+        const url = `${API.ASSIGNMENTS}?courseSectionId=${sectionId}`;
+        await saveEntityCustom(url, 'POST', payload, 'modalAssignment', loadAssignments);
+    }
+
+    async function handleSaveStudent(e) {
+        e.preventDefault();
+        const id = document.getElementById('st-id').value;
+        const payload = {
+            studentCode: document.getElementById('st-code').value,
+            fullName: document.getElementById('st-name').value,
+            email: document.getElementById('st-email').value,
+            phone: document.getElementById('st-phone').value,
+            className: document.getElementById('st-class').value
+        };
+        await saveEntity(API.STUDENTS, id, payload, 'modalStudent', loadStudents);
+    }
+
+    // --- REUSABLE HTTP METHODS ---
+    async function saveEntity(endpoint, id, payload, modalId, refreshFn) {
+        const url = id ? `${endpoint}/${id}` : endpoint;
+        const method = id ? 'PUT' : 'POST';
+        await saveEntityCustom(url, method, payload, modalId, refreshFn);
+    }
+
+    async function saveEntityCustom(url, method, payload, modalId, refreshFn) {
+        try {
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.message || 'Lỗi xử lý yêu cầu!');
+            }
+            showToast('Lưu dữ liệu thành công!');
+            bootstrap.Modal.getInstance(document.getElementById(modalId)).hide();
+            loadStats();
+            refreshFn();
+        } catch (err) {
+            showToast(err.message, true);
+        }
+    }
+
+    async function toggleActive(endpoint, id, newState) {
+        try {
+            const res = await fetch(`${endpoint}/${id}/active`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isActive: newState })
+            });
+            if (!res.ok) throw new Error('Không thể đổi trạng thái');
+            showToast('Cập nhật trạng thái thành công!');
+            loadStats();
+            selectTab(currentTab);
+        } catch (e) {
+            showToast(e.message, true);
+        }
+    }
+
+    async function deleteItem(endpoint, id) {
+        if (!confirm('Bạn có chắc chắn muốn xóa bản ghi này?')) return;
+        try {
+            const res = await fetch(`${endpoint}/${id}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Không thể xóa bản ghi');
+            showToast('Đã xóa thành công!');
+            loadStats();
+            selectTab(currentTab);
+        } catch (e) {
+            showToast(e.message, true);
+        }
+    }
+
+    // --- DROPDOWN POPULATORS ---
+    async function populateSchoolYearSelect(elemId, selectedId = null) {
+        if (cachedSchoolYears.length === 0) {
+            cachedSchoolYears = await fetch(API.SCHOOL_YEARS).then(r => r.json()).catch(() => []);
+        }
+        const sel = document.getElementById(elemId);
+        sel.innerHTML = '<option value="">-- Chọn năm học --</option>';
+        cachedSchoolYears.forEach(sy => {
+            const opt = document.createElement('option');
+            opt.value = sy.id;
+            opt.text = `${sy.code} - ${sy.name}`;
+            if (selectedId && sy.id === selectedId) opt.selected = true;
+            sel.appendChild(opt);
+        });
+    }
+
+    async function populateSemesterSelect(elemId, selectedId = null) {
+        if (cachedSemesters.length === 0) {
+            cachedSemesters = await fetch(API.SEMESTERS).then(r => r.json()).catch(() => []);
+        }
+        const sel = document.getElementById(elemId);
+        sel.innerHTML = '<option value="">-- Chọn học kỳ --</option>';
+        cachedSemesters.forEach(sem => {
+            const opt = document.createElement('option');
+            opt.value = sem.id;
+            opt.text = `${sem.code} - ${sem.name} (${sem.schoolYear?.name || 'Năm học'})`;
+            if (selectedId && sem.id === selectedId) opt.selected = true;
+            sel.appendChild(opt);
+        });
+    }
+
+    async function populateCourseSectionSelect(elemId, selectedId = null) {
+        if (cachedCourseSections.length === 0) {
+            cachedCourseSections = await fetch(API.COURSE_SECTIONS).then(r => r.json()).catch(() => []);
+        }
+        const sel = document.getElementById(elemId);
+        sel.innerHTML = '<option value="">-- Chọn lớp học phần --</option>';
+        cachedCourseSections.forEach(cs => {
+            const opt = document.createElement('option');
+            opt.value = cs.id;
+            opt.text = `${cs.code} - ${cs.name} (${cs.status || 'open'})`;
+            if (selectedId && cs.id === selectedId) opt.selected = true;
+            sel.appendChild(opt);
+        });
+    }
+
+    async function populateStudentSelect(elemId, selectedId = null) {
+        if (cachedStudents.length === 0) {
+            cachedStudents = await fetch(API.STUDENTS).then(r => r.json()).catch(() => []);
+        }
+        const sel = document.getElementById(elemId);
+        sel.innerHTML = '<option value="">-- Chọn sinh viên --</option>';
+        cachedStudents.forEach(st => {
+            const opt = document.createElement('option');
+            opt.value = st.id;
+            opt.text = `${st.studentCode} - ${st.fullName} (${st.className || 'Lớp'})`;
+            if (selectedId && st.id === selectedId) opt.selected = true;
+            sel.appendChild(opt);
+        });
+    }
+
+    function refreshAll() {
+        loadStats();
+        selectTab(currentTab);
+        showToast('Đã làm mới dữ liệu!');
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Init on load
+    document.addEventListener('DOMContentLoaded', () => {
+        loadStats();
+        selectTab('academic_year');
+    });
+</script>
+
 </body>
 </html>

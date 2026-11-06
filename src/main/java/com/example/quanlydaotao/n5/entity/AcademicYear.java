@@ -1,30 +1,18 @@
 package com.example.quanlydaotao.n5.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "academic_years")
-@Getter
-@Setter
-public class AcademicYear {
-
-    @Id
-    @Column(name = "id", nullable = false)
-    private UUID id;
-
+public class AcademicYear extends BaseEntity {
     @Column(name = "code", length = 100)
     private String code;
 
     @Column(name = "name", length = 100)
     private String name;
 
-    @Column(name = "year", length = 20)
+    @Column(name = "`year`", length = 20)
     private String year;
 
     @Column(name = "description", length = 255)
@@ -36,24 +24,22 @@ public class AcademicYear {
     @Column(name = "end_date")
     private LocalDate endDate;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    // Getters & Setters
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    @Column(name = "created_by")
-    private UUID createdBy;
+    public String getYear() { return year; }
+    public void setYear(String year) { this.year = year; }
 
-    @Column(name = "updated_by")
-    private UUID updatedBy;
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    public LocalDate getStartDate() { return startDate; }
+    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
 
-    @Column(name = "deleted_by")
-    private UUID deletedBy;
-
-    @Column(name = "is_active")
-    private Boolean isActive;
+    public LocalDate getEndDate() { return endDate; }
+    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
 }

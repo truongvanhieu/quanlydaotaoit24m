@@ -2,10 +2,7 @@ package com.example.quanlydaotao.n5.service;
 
 import com.example.quanlydaotao.n5.entity.AcademicYear;
 import com.example.quanlydaotao.n5.repository.AcademicYearRepository;
-
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,131 +10,48 @@ import java.util.UUID;
 
 @Service
 public class AcademicYearService {
+    private final AcademicYearRepository repo;
 
-    private final AcademicYearRepository repository;
-
-    public AcademicYearService(AcademicYearRepository repository) {
-        this.repository = repository;
+    public AcademicYearService(AcademicYearRepository repo) {
+        this.repo = repo;
     }
 
-    // Lấy danh sách năm học chưa bị xóa
-    public List<AcademicYear> getAll() {
-        return repository.findByDeletedAtIsNullOrderByStartDateDesc();
+    public List<AcademicYear> findAll(Boolean isActive) {
+        if (isActive != null) {
+            return repo.findByIsActiveAndDeletedAtIsNull(isActive);
+        }
+        return repo.findByDeletedAtIsNull();
     }
 
-    // Lấy danh sách theo trạng thái
-    public List<AcademicYear> getAll(Boolean isActive) {
-        if (isActive == null) {
-            return getAll();
-        }
-
-        return repository
-                .findByDeletedAtIsNullAndIsActiveOrderByStartDateDesc(
-                        isActive);
+    public AcademicYear findById(UUID id) {
+        return repo.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy niên khóa với ID: " + id));
     }
 
-    // Lấy chi tiết năm học
-    public AcademicYear getById(UUID id) {
-        AcademicYear academicYear = repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Không tìm thấy năm học"));
-
-        if (academicYear.getDeletedAt() != null) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "Năm học không tồn tại");
-        }
-
-        return academicYear;
+    public AcademicYear save(AcademicYear e) {
+        return repo.save(e);
     }
 
-    // Thêm năm học
-    public AcademicYear create(AcademicYear academicYear) {
-        if (academicYear.getStartDate() != null
-                && academicYear.getEndDate() != null
-                && academicYear.getStartDate()
-                    .isAfter(academicYear.getEndDate())) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Ngày bắt đầu không được sau ngày kết thúc");
-        }
-
-        if (academicYear.getCode() != null
-                && repository.existsByCodeAndDeletedAtIsNull(
-                        academicYear.getCode())) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT, "Mã năm học đã tồn tại");
-        }
-
-        academicYear.setId(UUID.randomUUID());
-
-        LocalDateTime now = LocalDateTime.now();
-        academicYear.setCreatedAt(now);
-        academicYear.setUpdatedAt(now);
-        academicYear.setDeletedAt(null);
-        academicYear.setDeletedBy(null);
-
-        if (academicYear.getIsActive() == null) {
-            academicYear.setIsActive(true);
-        }
-
-        return repository.save(academicYear);
+    public AcademicYear update(UUID id, AcademicYear updateData) {
+        AcademicYear existing = findById(id);
+        if (updateData.getCode() != null) existing.setCode(updateData.getCode());
+        if (updateData.getName() != null) existing.setName(updateData.getName());
+        if (updateData.getYear() != null) existing.setYear(updateData.getYear());
+        if (updateData.getDescription() != null) existing.setDescription(updateData.getDescription());
+        if (updateData.getStartDate() != null) existing.setStartDate(updateData.getStartDate());
+        if (updateData.getEndDate() != null) existing.setEndDate(updateData.getEndDate());
+        if (updateData.getIsActive() != null) existing.setIsActive(updateData.getIsActive());
+        return repo.save(existing);
     }
 
-    // Cập nhật năm học
-    public AcademicYear update(UUID id, AcademicYear request) {
-        AcademicYear existing = getById(id);
-
-        if (request.getStartDate() != null
-                && request.getEndDate() != null
-                && request.getStartDate()
-                    .isAfter(request.getEndDate())) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Ngày bắt đầu không được sau ngày kết thúc");
-        }
-
-        if (request.getCode() != null
-                && !request.getCode().equals(existing.getCode())
-                && repository.existsByCodeAndDeletedAtIsNull(
-                        request.getCode())) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT, "Mã năm học đã tồn tại");
-        }
-
-        existing.setCode(request.getCode());
-        existing.setName(request.getName());
-        existing.setYear(request.getYear());
-        existing.setDescription(request.getDescription());
-        existing.setStartDate(request.getStartDate());
-        existing.setEndDate(request.getEndDate());
-        existing.setUpdatedBy(request.getUpdatedBy());
-        existing.setUpdatedAt(LocalDateTime.now());
-
-        if (request.getIsActive() != null) {
-            existing.setIsActive(request.getIsActive());
-        }
-
-        return repository.save(existing);
+    public AcademicYear toggleActive(UUID id, Boolean isActive) {
+        AcademicYear existing = findById(id);
+        existing.setIsActive(isActive != null ? isActive : !existing.getIsActive());
+        return repo.save(existing);
     }
 
-    // Xóa mềm năm học
-    public void delete(UUID id, UUID deletedBy) {
-        AcademicYear academicYear = getById(id);
-
-        academicYear.setDeletedAt(LocalDateTime.now());
-        academicYear.setDeletedBy(deletedBy);
-        academicYear.setUpdatedAt(LocalDateTime.now());
-
-        repository.save(academicYear);
-    }
-
-    // Bật hoặc tắt trạng thái năm học
-    public AcademicYear updateActive(UUID id, Boolean isActive) {
-        AcademicYear academicYear = getById(id);
-
-        academicYear.setIsActive(isActive);
-        academicYear.setUpdatedAt(LocalDateTime.now());
-
-        return repository.save(academicYear);
+    public void delete(UUID id) {
+        AcademicYear existing = findById(id);
+        existing.setDeletedAt(LocalDateTime.now());
+        repo.save(existing);
     }
 }

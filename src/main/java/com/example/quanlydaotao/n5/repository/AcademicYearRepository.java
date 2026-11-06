@@ -1,4 +1,3 @@
-
 package com.example.quanlydaotao.n5.repository;
 
 import com.example.quanlydaotao.n5.entity.AcademicYear;
@@ -9,13 +8,8 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface AcademicYearRepository
-        extends JpaRepository<AcademicYear, UUID> {
-
-    List<AcademicYear> findByDeletedAtIsNullOrderByStartDateDesc();
-
-    List<AcademicYear> findByDeletedAtIsNullAndIsActiveOrderByStartDateDesc(
-            Boolean isActive);
-
+public interface AcademicYearRepository extends JpaRepository<AcademicYear, UUID> {
+    List<AcademicYear> findByDeletedAtIsNull();
+    List<AcademicYear> findByIsActiveAndDeletedAtIsNull(Boolean isActive);
     boolean existsByCodeAndDeletedAtIsNull(String code);
 }

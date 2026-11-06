@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: quanlydaotao-it24m-n5
+    env: docker
+    plan: free
+    region: singapore
+    dockerfilePath: Dockerfile
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: SPRING_PROFILES_ACTIVE
+        value: render

@@ -1,73 +1,58 @@
 package com.example.quanlydaotao.n5.controller;
 
 import com.example.quanlydaotao.n5.entity.StudentCourseSection;
-import com.example.quanlydaotao.n5.dto.StudentCourseSectionDetails;
 import com.example.quanlydaotao.n5.service.StudentCourseSectionService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/student-course-sections")
-@RequiredArgsConstructor
+@CrossOrigin("*")
 public class StudentCourseSectionController {
-
     private final StudentCourseSectionService service;
 
-    @GetMapping("/details")
-    public ResponseEntity<List<StudentCourseSectionDetails>> getDetails(
-            @RequestParam(required = false) UUID studentId,
-            @RequestParam(required = false) UUID courseSectionId,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) Boolean isActive) {
-        return ResponseEntity.ok(service.getDetails(studentId, courseSectionId, status, isActive));
+    public StudentCourseSectionController(StudentCourseSectionService service) {
+        this.service = service;
     }
 
     @GetMapping
-    public ResponseEntity<List<StudentCourseSection>> getAll(
-            @RequestParam(required = false) UUID studentId,
-            @RequestParam(required = false) UUID courseSectionId,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String registrationType,
-            @RequestParam(required = false) Boolean isActive) {
-        return ResponseEntity.ok(service.getAll(studentId, courseSectionId, status, registrationType, isActive));
+    public List<StudentCourseSection> getAll(@RequestParam(required = false) Boolean isActive) {
+        return service.findAll(isActive);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<StudentCourseSection> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(service.getById(id));
+    public StudentCourseSection getById(@PathVariable UUID id) {
+        return service.findById(id);
     }
 
     @PostMapping
-    public ResponseEntity<StudentCourseSection> create(@RequestBody StudentCourseSection registration) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(registration));
+    public StudentCourseSection create(@RequestBody StudentCourseSection e, @RequestParam(required = false) UUID courseSectionId) {
+        return service.save(e, courseSectionId);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<StudentCourseSection> update(
-            @PathVariable UUID id,
-            @RequestBody StudentCourseSection registration) {
-        return ResponseEntity.ok(service.update(id, registration));
+    public StudentCourseSection update(@PathVariable UUID id, @RequestBody StudentCourseSection e, @RequestParam(required = false) UUID courseSectionId) {
+        return service.update(id, e, courseSectionId);
+    }
+
+    @PatchMapping("/{id}/active")
+    public StudentCourseSection updateActive(@PathVariable UUID id, @RequestBody(required = false) Map<String, Boolean> body) {
+        Boolean isActive = body != null ? body.get("isActive") : null;
+        return service.toggleActive(id, isActive);
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<Void> updateStatus(
-            @PathVariable UUID id,
-            @RequestParam String status,
-            @RequestParam(required = false) UUID updatedBy) {
-        service.updateStatus(id, status, updatedBy);
-        return ResponseEntity.ok().build();
+    public StudentCourseSection updateStatus(@PathVariable UUID id, @RequestParam(required = false) Boolean isActive) {
+        return service.toggleActive(id, isActive);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(
-            @PathVariable UUID id,
-            @RequestParam(required = false) UUID deletedBy) {
-        service.softDelete(id, deletedBy);
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        service.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

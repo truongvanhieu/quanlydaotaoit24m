@@ -2,7 +2,6 @@ package com.example.quanlydaotao.n5.controller;
 
 import com.example.quanlydaotao.n5.entity.CourseClassInstructor;
 import com.example.quanlydaotao.n5.service.CourseClassInstructorService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,10 +11,13 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/course-class-instructors")
-@RequiredArgsConstructor
 public class CourseClassInstructorController {
 
     private final CourseClassInstructorService service;
+
+    public CourseClassInstructorController(CourseClassInstructorService service) {
+        this.service = service;
+    }
 
     @GetMapping
     public ResponseEntity<List<CourseClassInstructor>> getAll(
@@ -25,8 +27,7 @@ public class CourseClassInstructorController {
             @RequestParam(required = false) String courseClassName,
             @RequestParam(required = false) String role,
             @RequestParam(required = false) Boolean isActive) {
-        return ResponseEntity.ok(service.getAll(
-                employeeId, courseClassId, employeeName, courseClassName, role, isActive));
+        return ResponseEntity.ok(service.getAll(employeeId, courseClassId, employeeName, courseClassName, role, isActive));
     }
 
     @GetMapping("/{id}")
@@ -42,8 +43,8 @@ public class CourseClassInstructorController {
     @PutMapping("/{id}")
     public ResponseEntity<CourseClassInstructor> update(
             @PathVariable UUID id,
-            @RequestBody CourseClassInstructor instructor) {
-        return ResponseEntity.ok(service.update(id, instructor));
+            @RequestBody CourseClassInstructor request) {
+        return ResponseEntity.ok(service.update(id, request));
     }
 
     @PatchMapping("/{id}/status")
@@ -52,7 +53,7 @@ public class CourseClassInstructorController {
             @RequestParam Boolean isActive,
             @RequestParam(required = false) UUID updatedBy) {
         service.updateStatus(id, isActive, updatedBy);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
