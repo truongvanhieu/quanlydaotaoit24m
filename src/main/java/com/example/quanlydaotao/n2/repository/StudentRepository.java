@@ -9,7 +9,9 @@ import com.example.quanlydaotao.n2.entity.Student;
 
 public interface StudentRepository extends JpaRepository<Student, UUID> {
 
-    List<Student> findByStudentCodeContainingIgnoreCaseOrFullNameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrPhoneContainingIgnoreCase(
+    List<Student> findAllByOrderBySttAsc();
+
+    List<Student> findByStudentCodeContainingIgnoreCaseOrFullNameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrPhoneContainingIgnoreCaseOrderBySttAsc(
             String studentCode,
             String fullName,
             String email,

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <title id="pageTitle">
-        Quản lý sinh viên | AdminLTE 4
+        Quản lý sinh viên | School Manager
     </title>
     <meta name="color-scheme" content="light dark" />
 
@@ -17,41 +17,53 @@
 
 <body class="layout-fixed sidebar-expand-lg sidebar-open bg-body-tertiary">
 <div class="app-wrapper">
-    <nav class="app-header navbar navbar-expand bg-body">
+    <!-- Navbar -->
+    <nav class="app-header navbar navbar-expand bg-white border-bottom shadow-xs">
         <div class="container-fluid">
             <ul class="navbar-nav">
                 <li class="nav-item">
                     <a class="nav-link" data-lte-toggle="sidebar" href="#" role="button">
-                        <i class="bi bi-list"></i>
+                        <i class="bi bi-list fs-5"></i>
                     </a>
                 </li>
                 <li class="nav-item d-none d-md-block">
-                    <span class="nav-link fw-semibold">
-                        Quản lý đào tạo
+                    <span class="nav-link fw-bold text-primary">
+                        <i class="bi bi-mortarboard-fill me-1"></i>HỆ THỐNG QUẢN LÝ ĐÀO TẠO
+                    </span>
+                </li>
+            </ul>
+            <ul class="navbar-nav ms-auto align-items-center">
+                <li class="nav-item me-2">
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill">
+                        <i class="bi bi-shield-check me-1"></i>Nhóm 8 - IT24M
                     </span>
                 </li>
             </ul>
         </div>
     </nav>
-    <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
-        <div class="sidebar-brand">
-            <a href="index.html" class="brand-link">
-                <img src="/adminlte/assets/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image opacity-75 shadow" />
-                <span class="brand-text fw-light">
-                    School Manager
-                </span>
+
+    <!-- Sidebar -->
+    <aside class="app-sidebar bg-dark shadow" data-bs-theme="dark">
+        <div class="sidebar-brand py-3 border-bottom border-secondary">
+            <a href="index.html" class="brand-link text-decoration-none">
+                <img src="/adminlte/assets/img/AdminLTELogo.png" alt="Logo" class="brand-image opacity-75 shadow rounded-circle me-2" />
+                <span class="brand-text fw-bold text-white">School Manager</span>
             </a>
         </div>
 
         <div class="sidebar-wrapper">
-            <nav class="mt-2">
-                <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="navigation" data-accordion="false">
+            <nav class="mt-3">
+                <ul class="nav sidebar-menu flex-column gap-1" data-lte-toggle="treeview" role="navigation" data-accordion="false">
                     <li class="nav-item">
-                        <a href="index.html" class="nav-link active">
-                            <i class="nav-icon bi bi-people-fill"></i>
-                            <p>
-                                Sinh viên
-                            </p>
+                        <a href="index.html" class="nav-link active rounded-3">
+                            <i class="nav-icon bi bi-people-fill text-primary"></i>
+                            <p class="fw-semibold">Quản lý Sinh viên</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="grades.html" class="nav-link rounded-3">
+                            <i class="nav-icon bi bi-clipboard-data text-info"></i>
+                            <p class="fw-semibold">Điểm - Đánh giá</p>
                         </a>
                     </li>
                 </ul>
@@ -59,92 +71,124 @@
         </div>
     </aside>
 
+    <!-- Main Content -->
     <main class="app-main">
+        <!-- Toast Container -->
+        <div id="toastContainer"></div>
+
+        <!-- ============================================================== -->
+        <!-- TRANG DANH SÁCH SINH VIÊN                                      -->
+        <!-- ============================================================== -->
         <div id="page-list">
-            <!-- Page Header -->
-            <div class="app-content-header">
+            <div class="app-content-header py-3">
                 <div class="container-fluid">
                     <div class="row align-items-center">
                         <div class="col-sm-6">
-                            <h3 class="mb-0">
-                                Quản lý sinh viên
+                            <h3 class="mb-0 fw-bold text-dark">
+                                <i class="bi bi-people me-2 text-primary"></i>Quản lý sinh viên
                             </h3>
+                            <p class="text-muted small mb-0 mt-1">Hồ sơ danh sách sinh viên toàn trường</p>
                         </div>
                         <div class="col-sm-6">
                             <ol class="breadcrumb float-sm-end mb-0">
-                                <li class="breadcrumb-item">
-                                    <a href="index.html">
-                                        Trang chủ
-                                    </a>
-                                </li>
-                                <li class="breadcrumb-item active" aria-current="page">
-                                    Sinh viên
-                                </li>
+                                <li class="breadcrumb-item"><a href="index.html" class="text-decoration-none">Trang chủ</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Sinh viên</li>
                             </ol>
                         </div>
                     </div>
                 </div>
             </div>
-            <!-- Content -->
-            <div class="app-content">
+
+            <div class="app-content pb-4">
                 <div class="container-fluid">
-                    <div class="card shadow-sm border-0">
-                        <!-- Card Header -->
-                        <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
-                            <h3 class="card-title mb-0">
-                                Danh sách sinh viên
+                    <!-- Stats Row -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-6 col-xl-4">
+                            <div class="stat-card">
+                                <div class="stat-icon primary">
+                                    <i class="bi bi-person-badge-fill"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <div class="stat-value" id="statTotalStudents">--</div>
+                                    <div class="stat-label">Tổng số sinh viên</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-4">
+                            <div class="stat-card">
+                                <div class="stat-icon success">
+                                    <i class="bi bi-mortarboard-fill"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <div class="stat-value" id="statTotalClasses">--</div>
+                                    <div class="stat-label">Số lớp sinh hoạt</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-12 col-xl-4">
+                            <div class="stat-card">
+                                <div class="stat-icon purple">
+                                    <i class="bi bi-magic"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <div class="stat-value font-monospace" id="statNextCode">SV...</div>
+                                    <div class="stat-label">Mã SV tiếp theo (Tự động)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Student List Table Card -->
+                    <div class="modern-card">
+                        <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
+                            <h3 class="card-title mb-0 d-flex align-items-center gap-2">
+                                <span>Danh sách sinh viên</span>
+                                <span class="badge bg-secondary-subtle text-secondary rounded-pill" id="tableCountBadge">0</span>
                             </h3>
                             <div class="d-flex flex-wrap align-items-center gap-2">
-                                <!-- Search -->
+                                <!-- Search Form -->
                                 <form id="searchForm" class="d-flex gap-2 align-items-center">
-                                    <div class="input-group input-group-sm" style="width: 320px;">
-                                        <span class="input-group-text">
-                                            <i class="bi bi-search"></i>
+                                    <div class="input-group" style="width: 320px;">
+                                        <span class="input-group-text bg-light border-end-0">
+                                            <i class="bi bi-search text-muted"></i>
                                         </span>
-                                        <input type="text" id="keyword" name="keyword" class="form-control" placeholder="Tìm theo mã / họ tên / email..." />
+                                        <input type="text" id="keyword" name="keyword" class="form-control border-start-0 ps-0" placeholder="Tìm theo mã, tên, email, SĐT..." />
+                                        <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn" title="Xóa tìm kiếm" style="display: none;">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
                                     </div>
-                                    <button class="btn btn-primary btn-sm" type="submit">
-                                        <i class="bi bi-funnel me-1"></i>
-                                        Tìm kiếm
+                                    <button class="btn btn-primary" type="submit">
+                                        <i class="bi bi-funnel me-1"></i>Tìm kiếm
                                     </button>
                                 </form>
-                                <!-- Create -->
-                                <a class="btn btn-primary btn-sm" href="index.html?page=form">
-                                    <i class="bi bi-plus-circle me-1"></i>
-                                    Thêm sinh viên
+                                <!-- Create Button -->
+                                <a class="btn btn-success fw-semibold shadow-sm" href="index.html?page=form">
+                                    <i class="bi bi-plus-circle me-1"></i>Thêm sinh viên
                                 </a>
                             </div>
                         </div>
-                        <!-- Table -->
+
+                        <!-- Table Body -->
                         <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0">
-                                    <thead class="table-light">
+                                <table class="table student-table align-middle mb-0">
+                                    <thead>
                                     <tr>
-                                        <th style="width: 18%;">
-                                            Mã sinh viên
-                                        </th>
-                                        <th style="width: 24%;">
-                                            Họ và tên
-                                        </th>
-                                        <th style="width: 22%;">
-                                            Email
-                                        </th>
-                                        <th style="width: 16%;">
-                                            Số điện thoại
-                                        </th>
-                                        <th style="width: 12%;">
-                                            Lớp
-                                        </th>
-                                        <th style="width: 8%;" class="text-end">
-                                            Hành động
-                                        </th>
+                                        <th style="width: 5%;" class="text-center">STT</th>
+                                        <th style="width: 12%;">IDSV</th>
+                                        <th style="width: 22%;">Họ và tên</th>
+                                        <th style="width: 13%;">Ngày sinh</th>
+                                        <th style="width: 20%;">Email</th>
+                                        <th style="width: 12%;">Số điện thoại</th>
+                                        <th style="width: 8%;">Lớp SH</th>
+                                        <th style="width: 8%;" class="text-end">Hành động</th>
                                     </tr>
                                     </thead>
                                     <tbody id="studentTableBody">
                                     <tr>
-                                        <td colspan="6" class="text-center text-muted py-4">
-                                            Đang tải dữ liệu...
+                                        <td colspan="8" class="text-center text-muted py-5">
+                                            <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                                            Đang tải dữ liệu sinh viên...
                                         </td>
                                     </tr>
                                     </tbody>
@@ -156,86 +200,127 @@
             </div>
         </div>
 
+        <!-- ============================================================== -->
+        <!-- TRANG FORM THÊM / SỬA / XEM SINH VIÊN                          -->
+        <!-- ============================================================== -->
         <div id="page-form" style="display: none;">
-            <!-- Page Header -->
-            <div class="app-content-header">
+            <div class="app-content-header py-3">
                 <div class="container-fluid">
                     <div class="row align-items-center">
                         <div class="col-sm-6">
-                            <h3 class="mb-0" id="pageHeading">
-                                Thêm sinh viên
+                            <h3 class="mb-0 fw-bold text-dark" id="pageHeading">
+                                Thêm sinh viên mới
                             </h3>
+                            <p class="text-muted small mb-0 mt-1">Nhập thông tin hồ sơ sinh viên</p>
                         </div>
                         <div class="col-sm-6">
                             <ol class="breadcrumb float-sm-end mb-0">
-                                <li class="breadcrumb-item">
-                                    <a href="index.html">
-                                        Danh sách
-                                    </a>
-                                </li>
-                                <li class="breadcrumb-item active" aria-current="page" id="breadcrumbTitle">
-                                    Thêm
-                                </li>
+                                <li class="breadcrumb-item"><a href="index.html" class="text-decoration-none">Danh sách</a></li>
+                                <li class="breadcrumb-item active" aria-current="page" id="breadcrumbTitle">Thêm</li>
                             </ol>
                         </div>
                     </div>
                 </div>
             </div>
-            <!-- Content -->
-            <div class="app-content">
+
+            <div class="app-content pb-4">
                 <div class="container-fluid">
-                    <div class="card form-card shadow-sm border-0">
-                        <div class="card-header">
+                    <div class="card form-card">
+                        <div class="form-card-top-accent"></div>
+                        <div class="card-header d-flex justify-content-between align-items-center">
                             <h3 class="card-title mb-0" id="formTitle">
-                                Thêm sinh viên mới
+                                <i class="bi bi-person-plus-fill me-2 text-primary"></i>Thông tin sinh viên
                             </h3>
+                            <span id="formStatusBadge" class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">
+                                Thêm mới
+                            </span>
                         </div>
                         <div class="card-body">
                             <form id="studentForm">
-                                <!-- Student Code -->
                                 <div class="row g-3">
+                                    <!-- Mã sinh viên (Tự động tăng) -->
                                     <div class="col-md-6">
-                                        <label class="form-label">
-                                            Mã sinh viên
+                                        <label class="form-label d-flex justify-content-between align-items-center">
+                                            <span>Mã sinh viên <span class="text-danger">*</span></span>
+                                            <span id="codeAutoBadge" class="badge bg-success-subtle text-success border border-success-subtle">
+                                                <i class="bi bi-magic me-1"></i>Tự động theo thứ tự
+                                            </span>
                                         </label>
-                                        <input type="text" id="studentCode" name="studentCode" class="form-control" />
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-hash"></i></span>
+                                            <input type="text" id="studentCode" name="studentCode" class="form-control font-monospace fw-bold" placeholder="Đang tạo mã..." readonly />
+                                            <button class="btn btn-outline-secondary" type="button" id="refreshCodeBtn" title="Làm mới mã tự động">
+                                                <i class="bi bi-arrow-clockwise"></i>
+                                            </button>
+                                        </div>
+                                        <div class="form-text text-muted small mt-1">
+                                            <i class="bi bi-info-circle me-1"></i>Hệ thống tự động cấp mã SV tiếp theo theo thứ tự tăng dần.
+                                        </div>
                                     </div>
-                                    <!-- Full Name -->
+
+                                    <!-- Họ và tên -->
                                     <div class="col-md-6">
-                                        <label class="form-label">
-                                            Họ và tên
+                                        <label class="form-label" for="fullName">
+                                            Họ và tên <span class="text-danger">*</span>
                                         </label>
-                                        <input type="text" id="fullName" name="fullName" class="form-control" />
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                                            <input type="text" id="fullName" name="fullName" class="form-control" placeholder="Ví dụ: Nguyễn Văn An" required />
+                                        </div>
                                     </div>
+
+                                    <!-- Ngày sinh -->
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="dateOfBirth">
+                                            Ngày sinh <span class="text-danger">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-calendar-event-fill"></i></span>
+                                            <input type="text" id="dateOfBirth" name="dateOfBirth" class="form-control" placeholder="dd/MM/yyyy (Ví dụ: 16/05/2006)" required />
+                                        </div>
+                                    </div>
+
                                     <!-- Email -->
                                     <div class="col-md-6">
-                                        <label class="form-label">
-                                            Email
+                                        <label class="form-label" for="email">
+                                            Email trường / cá nhân <span class="text-danger">*</span>
                                         </label>
-                                        <input type="email" id="email" name="email" class="form-control" />
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-envelope-at-fill"></i></span>
+                                            <input type="email" id="email" name="email" class="form-control" placeholder="Ví dụ: an.nv@donga.edu.vn" required />
+                                        </div>
                                     </div>
-                                    <!-- Phone -->
+
+                                    <!-- Số điện thoại -->
                                     <div class="col-md-6">
-                                        <label class="form-label">
-                                            Số điện thoại
+                                        <label class="form-label" for="phone">
+                                            Số điện thoại <span class="text-danger">*</span>
                                         </label>
-                                        <input type="text" id="phone" name="phone" class="form-control" />
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-telephone-fill"></i></span>
+                                            <input type="text" id="phone" name="phone" class="form-control" placeholder="Ví dụ: 0912345678" required />
+                                        </div>
                                     </div>
-                                    <div class="col-md-12">
-                                        <label class="form-label">
-                                            Lớp
+
+                                    <!-- Lớp sinh hoạt -->
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="className">
+                                            Lớp sinh hoạt <span class="text-danger">*</span>
                                         </label>
-                                        <input type="text" id="className" name="className" class="form-control" />
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-mortarboard-fill"></i></span>
+                                            <input type="text" id="className" name="className" class="form-control" placeholder="Ví dụ: IT24M" required />
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="mt-4 d-flex gap-2">
-                                    <button id="submitButton" type="submit" class="btn btn-primary">
-                                        <i class="bi bi-plus-circle me-1"></i>
-                                        Thêm sinh viên
+
+                                <!-- Action Buttons -->
+                                <div class="mt-4 pt-3 border-top d-flex gap-2">
+                                    <button id="submitButton" type="submit" class="btn btn-primary px-4 fw-semibold shadow-sm">
+                                        <i class="bi bi-check-circle me-1"></i>Thêm sinh viên
                                     </button>
-                                    <a href="index.html" class="btn btn-secondary">
-                                        <i class="bi bi-arrow-left me-1"></i>
-                                        Quay lại
+                                    <a href="index.html" class="btn btn-outline-secondary px-3">
+                                        <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách
                                     </a>
                                 </div>
                             </form>
@@ -246,20 +331,20 @@
         </div>
     </main>
 
-    <footer class="app-footer">
-        <div class="float-end d-none d-sm-inline">
-            School Manager
+    <!-- Footer -->
+    <footer class="app-footer bg-white border-top py-3 text-muted small">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            <div>
+                <strong>Hệ thống Quản lý Đào tạo</strong> &copy; 2026 - Nhóm 8
+            </div>
+            <div>
+                School Manager | AdminLTE 4
+            </div>
         </div>
-        <strong>
-            Quản lý sinh viên | AdminLTE 4
-        </strong>
     </footer>
 </div>
 
-
 <script src="/adminlte/js/adminlte.js"></script>
-
-
-<script type="module" src="/assets/js/student.js"></script>
+<script type="module" src="/assets/js/student.js?v=2.1"></script>
 </body>
 </html>

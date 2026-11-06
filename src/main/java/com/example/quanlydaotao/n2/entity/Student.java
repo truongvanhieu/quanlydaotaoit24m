@@ -24,6 +24,9 @@ public class Student {
     @Column(name = "full_name")
     private String fullName;
 
+    @Column(name = "date_of_birth")
+    private String dateOfBirth;
+
     @Column(name = "email")
     private String email;
 
@@ -33,15 +36,23 @@ public class Student {
     @Column(name = "class_name")
     private String className;
 
+    @Column(name = "stt")
+    private Integer stt;
+
     public Student() {
     }
 
-    public Student(String studentCode, String fullName, String email, String phone, String className) {
+    public Student(String studentCode, String fullName, String dateOfBirth, String email, String phone, String className) {
         this.studentCode = studentCode;
         this.fullName = fullName;
+        this.dateOfBirth = dateOfBirth;
         this.email = email;
         this.phone = phone;
         this.className = className;
+    }
+
+    public Student(String studentCode, String fullName, String email, String phone, String className) {
+        this(studentCode, fullName, null, email, phone, className);
     }
 
     public UUID getId() {
@@ -66,6 +77,14 @@ public class Student {
 
     public void setFullName(String fullName) {
         this.fullName = fullName;
+    }
+
+    public String getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public void setDateOfBirth(String dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
     }
 
     public String getName() {
@@ -98,5 +117,13 @@ public class Student {
 
     public void setClassName(String className) {
         this.className = className;
+    }
+
+    public Integer getStt() {
+        return stt;
+    }
+
+    public void setStt(Integer stt) {
+        this.stt = stt;
     }
 }
