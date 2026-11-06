@@ -271,7 +271,6 @@ function initStudentForm() {
     const mode = urlParams.get('mode') || 'create';
 
     setupFormMode(mode);
-    loadCourseClassCheckboxes(mode, id);
 
     // Nếu là xem / sửa thì lấy dữ liệu từ API
     if ((mode === 'view' || mode === 'edit') && id) {
@@ -509,20 +508,6 @@ async function saveStudent(mode, id = null) {
 
         const savedStudent = await response.json();
 
-        // Tự động đăng ký sinh viên vào các lớp học phần đã chọn
-        const checkedClasses = Array.from(document.querySelectorAll('input[name="selectedCourseClasses"]:checked')).map((cb) => cb.value);
-        for (const classId of checkedClasses) {
-            try {
-                await fetch(`${API_ENDPOINTS.GRADES}/registrations`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ courseClassId: classId, studentId: savedStudent.id }),
-                });
-            } catch (regErr) {
-                console.warn('Lỗi đăng ký lớp học phần:', regErr);
-            }
-        }
-
         console.log(
             'Sinh viên đã lưu:',
             savedStudent
@@ -641,30 +626,4 @@ function escapeHtml(value) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
-}
-
-async function loadCourseClassCheckboxes(mode, studentId) {
-    const container = document.getElementById('courseClassesCheckboxes');
-    if (!container) return;
-
-    try {
-        const response = await fetch(`${API_ENDPOINTS.GRADES}/course-classes`);
-        if (!response.ok) throw new Error('Không thể tải lớp học phần');
-        const classes = await response.json();
-        if (!classes.length) {
-            container.innerHTML = '<span class="text-muted small">Chưa có lớp học phần nào mở.</span>';
-            return;
-        }
-
-        container.innerHTML = classes.map((c) => `
-            <div class="form-check me-3">
-                <input class="form-check-input" type="checkbox" name="selectedCourseClasses" value="${c.id}" id="class_${c.id}" ${mode === 'create' ? 'checked' : ''} ${mode === 'view' ? 'disabled' : ''}>
-                <label class="form-check-label" for="class_${c.id}">
-                    <strong>${escapeHtml(c.classCode)}</strong> <span class="text-muted">(${escapeHtml(c.courseName)})</span>
-                </label>
-            </div>
-        `).join('');
-    } catch (e) {
-        container.innerHTML = '<span class="text-muted small text-danger">Không thể tải danh sách lớp học phần.</span>';
-    }
 }
