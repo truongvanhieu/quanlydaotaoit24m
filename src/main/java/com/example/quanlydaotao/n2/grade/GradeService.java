@@ -520,4 +520,66 @@ public class GradeService {
                 "IT24M",
                 rs.getString("class_name")));
     }
+
+    public List<AvailableStudentOption> getAvailableStudents(UUID courseClassId) {
+        requireCourseClass(courseClassId);
+        return jdbcTemplate.query("""
+                SELECT s.id, s.student_code, s.full_name, s.class_name
+                FROM students s
+                WHERE s.id NOT IN (
+                    SELECT cr.student_id FROM course_registrations cr
+                    WHERE cr.course_class_id = ? AND cr.deleted_at IS NULL
+                )
+                ORDER BY s.student_code, s.full_name
+                """, (rs, rowNum) -> new AvailableStudentOption(
+                uuid(rs, "id"),
+                rs.getString("student_code"),
+                rs.getString("full_name"),
+                rs.getString("class_name")),
+                courseClassId);
+    }
+
+    @Transactional
+    public void registerStudent(UUID courseClassId, UUID studentId) {
+        requireCourseClass(courseClassId);
+        if (studentId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cần chọn sinh viên để thêm vào lớp");
+        }
+
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM students WHERE id = ?", Integer.class, studentId);
+        if (count == null || count == 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sinh viên");
+        }
+
+        jdbcTemplate.update("""
+                IF NOT EXISTS (SELECT 1 FROM students_ WHERE id = ?)
+                BEGIN
+                    INSERT INTO students_ (id, code, full_name, is_active)
+                    SELECT id, student_code, full_name, 1 FROM students WHERE id = ?
+                END
+                """, studentId, studentId);
+
+        Integer regCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM course_registrations WHERE course_class_id = ? AND student_id = ? AND deleted_at IS NULL",
+                Integer.class, courseClassId, studentId);
+        if (regCount != null && regCount > 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sinh viên này đã có trong lớp học phần");
+        }
+
+        UUID regId = UUID.randomUUID();
+        jdbcTemplate.update("""
+                INSERT INTO course_registrations (id, course_class_id, student_id, is_active, created_at)
+                VALUES (?, ?, ?, 1, CURRENT_TIMESTAMP)
+                """, regId, courseClassId, studentId);
+    }
+
+    @Transactional
+    public void removeStudentFromClass(UUID registrationId) {
+        jdbcTemplate.update("""
+                UPDATE course_registrations
+                SET is_active = 0, deleted_at = CURRENT_TIMESTAMP
+                WHERE id = ? AND deleted_at IS NULL
+                """, registrationId);
+    }
 }

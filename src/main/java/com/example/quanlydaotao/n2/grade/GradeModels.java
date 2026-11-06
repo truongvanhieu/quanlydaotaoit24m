@@ -73,4 +73,10 @@ public final class GradeModels {
             boolean gradebookReady,
             String statusMessage) {
     }
+
+    public record CourseRegistrationRequest(UUID courseClassId, UUID studentId) {
+    }
+
+    public record AvailableStudentOption(UUID id, String studentCode, String fullName, String className) {
+    }
 }

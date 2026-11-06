@@ -8,8 +8,10 @@ com\example\quanlydaotao\n2\grade\GradeService$RegistrationRow.class
 com\example\quanlydaotao\n2\grade\GradeCalculator.class
 com\example\quanlydaotao\n2\grade\GradeModels$GradeComponentView.class
 com\example\quanlydaotao\n2\grade\GradeModels$GradeComponentRequest.class
+com\example\quanlydaotao\n2\grade\GradeModels$AvailableStudentOption.class
 com\example\quanlydaotao\QuanlydaotaoApplication.class
 com\example\quanlydaotao\n2\grade\GradeModels$StudentGradeView.class
+com\example\quanlydaotao\n2\grade\GradeModels$CourseRegistrationRequest.class
 com\example\quanlydaotao\n2\grade\GradeModels$GradeBookView.class
 com\example\quanlydaotao\n2\grade\GradeModels$CourseClassOption.class
 com\example\quanlydaotao\n2\repository\StudentRepository.class

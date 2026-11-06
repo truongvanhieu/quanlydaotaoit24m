@@ -74,4 +74,19 @@ public class GradeController {
         gradeService.deleteEntry(id);
     }
 
+    @GetMapping("/available-students")
+    public List<AvailableStudentOption> getAvailableStudents(@RequestParam UUID courseClassId) {
+        return gradeService.getAvailableStudents(courseClassId);
+    }
+
+    @PostMapping("/registrations")
+    public void registerStudent(@RequestBody CourseRegistrationRequest request) {
+        gradeService.registerStudent(request.courseClassId(), request.studentId());
+    }
+
+    @DeleteMapping("/registrations/{id}")
+    public void removeStudentFromClass(@PathVariable UUID id) {
+        gradeService.removeStudentFromClass(id);
+    }
+
 }

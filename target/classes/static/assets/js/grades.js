@@ -8,8 +8,13 @@ const componentTableBody = document.getElementById('componentTableBody');
 const gradeTableHead = document.getElementById('gradeTableHead');
 const gradeTableBody = document.getElementById('gradeTableBody');
 const weightSummary = document.getElementById('weightSummary');
+const addStudentBtn = document.getElementById('addStudentToClassBtn');
+const selectStudent = document.getElementById('selectStudent');
+const confirmAddStudentBtn = document.getElementById('confirmAddStudentBtn');
+const modalAlert = document.getElementById('modalAlert');
 
 let currentGradeBook = null;
+let addStudentModalInstance = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     classSelect.addEventListener('change', loadGradeBook);
@@ -24,6 +29,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     componentTableBody.addEventListener('click', handleComponentAction);
     gradeTableBody.addEventListener('click', handleGradeAction);
     document.getElementById('exportCsvBtn').addEventListener('click', exportCsv);
+    if (addStudentBtn) addStudentBtn.addEventListener('click', openAddStudentModal);
+    if (confirmAddStudentBtn) confirmAddStudentBtn.addEventListener('click', handleConfirmAddStudent);
 
     await loadCourseClasses();
 });
@@ -63,6 +70,7 @@ async function loadGradeBook() {
         weightSummary.textContent = '';
         if (statsRow) statsRow.hidden = true;
         if (exportBtn) exportBtn.disabled = true;
+        if (addStudentBtn) addStudentBtn.disabled = true;
         showAlert('Chọn lớp học phần để xem danh sách điểm.', 'info');
         return;
     }
@@ -75,6 +83,7 @@ async function loadGradeBook() {
         renderComponents(currentGradeBook.components);
         renderStats(currentGradeBook);
         document.getElementById('toggleComponentForm').disabled = false;
+        if (addStudentBtn) addStudentBtn.disabled = false;
         if (exportBtn) exportBtn.disabled = !currentGradeBook.students.length;
         showAlert(currentGradeBook.statusMessage, currentGradeBook.gradebookReady ? 'success' : 'warning');
     } catch (error) {
@@ -82,6 +91,75 @@ async function loadGradeBook() {
         gradeTableBody.innerHTML = emptyRow(2, 'Không thể tải bảng điểm.');
         if (statsRow) statsRow.hidden = true;
         if (exportBtn) exportBtn.disabled = true;
+        if (addStudentBtn) addStudentBtn.disabled = true;
+    }
+}
+
+async function openAddStudentModal() {
+    const courseClassId = classSelect.value;
+    if (!courseClassId) return;
+
+    if (modalAlert) modalAlert.classList.add('d-none');
+    if (selectStudent) selectStudent.innerHTML = '<option value="">Đang tải danh sách...</option>';
+    if (confirmAddStudentBtn) confirmAddStudentBtn.disabled = true;
+
+    if (!addStudentModalInstance && window.bootstrap) {
+        const modalEl = document.getElementById('addStudentModal');
+        if (modalEl) addStudentModalInstance = new bootstrap.Modal(modalEl);
+    }
+    if (addStudentModalInstance) {
+        addStudentModalInstance.show();
+    }
+
+    try {
+        const students = await request(`${API_ENDPOINTS.GRADES}/available-students?courseClassId=${encodeURIComponent(courseClassId)}`);
+        if (!students || !students.length) {
+            selectStudent.innerHTML = '<option value="">Tất cả sinh viên trong trường đã có trong lớp này</option>';
+            confirmAddStudentBtn.disabled = true;
+            return;
+        }
+
+        selectStudent.innerHTML = '<option value="">-- Chọn sinh viên để thêm vào lớp --</option>' + students
+            .map((s) => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.studentCode)} - ${escapeHtml(s.fullName)} (${escapeHtml(s.className || 'Chưa phân lớp')})</option>`)
+            .join('');
+        confirmAddStudentBtn.disabled = false;
+    } catch (error) {
+        if (modalAlert) {
+            modalAlert.textContent = error.message;
+            modalAlert.classList.remove('d-none');
+        }
+        if (selectStudent) selectStudent.innerHTML = '<option value="">Lỗi khi tải danh sách</option>';
+    }
+}
+
+async function handleConfirmAddStudent() {
+    const courseClassId = classSelect.value;
+    const studentId = selectStudent.value;
+    if (!studentId) {
+        if (modalAlert) {
+            modalAlert.textContent = 'Vui lòng chọn một sinh viên!';
+            modalAlert.classList.remove('d-none');
+        }
+        return;
+    }
+
+    try {
+        confirmAddStudentBtn.disabled = true;
+        await request(`${API_ENDPOINTS.GRADES}/registrations`, {
+            method: 'POST',
+            body: JSON.stringify({ courseClassId, studentId }),
+        });
+        if (addStudentModalInstance) {
+            addStudentModalInstance.hide();
+        }
+        showAlert('Đã thêm sinh viên vào lớp học phần thành công!', 'success');
+        await loadGradeBook();
+    } catch (error) {
+        if (modalAlert) {
+            modalAlert.textContent = error.message;
+            modalAlert.classList.remove('d-none');
+        }
+        confirmAddStudentBtn.disabled = false;
     }
 }
 
