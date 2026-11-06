@@ -150,7 +150,7 @@ function renderStudents(students) {
     if (!students || students.length === 0) {
         studentTableBody.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center text-muted py-5">
+                <td colspan="8" class="text-center text-muted py-5">
                     <i class="bi bi-inbox fs-2 d-block text-secondary mb-2"></i>
                     Chưa có dữ liệu sinh viên phù hợp.
                 </td>
@@ -175,8 +175,12 @@ function renderStudents(students) {
 
             return `
                 <tr>
+                    <td class="text-center fw-bold text-secondary">
+                        ${index + 1}
+                    </td>
+
                     <td>
-                        <span class="student-code-badge">
+                        <span class="student-code-badge font-monospace fw-bold text-primary">
                             ${escapeHtml(student.studentCode)}
                         </span>
                     </td>
@@ -187,11 +191,17 @@ function renderStudents(students) {
                                 ${escapeHtml(initials)}
                             </div>
                             <div>
-                                <div class="student-name">
+                                <div class="student-name fw-semibold">
                                     ${escapeHtml(student.fullName)}
                                 </div>
                             </div>
                         </div>
+                    </td>
+
+                    <td>
+                        <span class="badge bg-light text-dark border px-2 py-1">
+                            <i class="bi bi-calendar-event text-primary me-1"></i>${escapeHtml(student.dateOfBirth || '---')}
+                        </span>
                     </td>
 
                     <td>
@@ -352,6 +362,7 @@ function setupFormMode(mode) {
 
     const fields = [
         document.getElementById('fullName'),
+        document.getElementById('dateOfBirth'),
         document.getElementById('email'),
         document.getElementById('phone'),
         document.getElementById('className')
@@ -449,12 +460,14 @@ async function loadStudentDetail(id, mode) {
 function fillStudentForm(student) {
     const studentCode = document.getElementById('studentCode');
     const fullName = document.getElementById('fullName');
+    const dateOfBirth = document.getElementById('dateOfBirth');
     const email = document.getElementById('email');
     const phone = document.getElementById('phone');
     const className = document.getElementById('className');
 
     if (studentCode) studentCode.value = student.studentCode || '';
     if (fullName) fullName.value = student.fullName || '';
+    if (dateOfBirth) dateOfBirth.value = student.dateOfBirth || '';
     if (email) email.value = student.email || '';
     if (phone) phone.value = student.phone || '';
     if (className) className.value = student.className || '';
@@ -523,6 +536,7 @@ function getStudentFormData() {
     return {
         studentCode: getValue('studentCode'),
         fullName: getValue('fullName'),
+        dateOfBirth: getValue('dateOfBirth'),
         email: getValue('email'),
         phone: getValue('phone'),
         className: getValue('className')
@@ -538,6 +552,12 @@ function validateStudent(student) {
     if (!student.fullName) {
         showToast('Vui lòng nhập họ và tên sinh viên', 'warning');
         document.getElementById('fullName')?.focus();
+        return false;
+    }
+
+    if (!student.dateOfBirth) {
+        showToast('Vui lòng nhập ngày sinh của sinh viên (dd/MM/yyyy)', 'warning');
+        document.getElementById('dateOfBirth')?.focus();
         return false;
     }
 

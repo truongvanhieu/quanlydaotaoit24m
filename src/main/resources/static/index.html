@@ -174,17 +174,19 @@
                                 <table class="table student-table align-middle mb-0">
                                     <thead>
                                     <tr>
-                                        <th style="width: 15%;">Mã sinh viên</th>
-                                        <th style="width: 25%;">Họ và tên</th>
-                                        <th style="width: 22%;">Email</th>
-                                        <th style="width: 16%;">Số điện thoại</th>
-                                        <th style="width: 12%;">Lớp sinh hoạt</th>
-                                        <th style="width: 10%;" class="text-end">Hành động</th>
+                                        <th style="width: 5%;" class="text-center">STT</th>
+                                        <th style="width: 12%;">IDSV</th>
+                                        <th style="width: 22%;">Họ và tên</th>
+                                        <th style="width: 13%;">Ngày sinh</th>
+                                        <th style="width: 20%;">Email</th>
+                                        <th style="width: 12%;">Số điện thoại</th>
+                                        <th style="width: 8%;">Lớp SH</th>
+                                        <th style="width: 8%;" class="text-end">Hành động</th>
                                     </tr>
                                     </thead>
                                     <tbody id="studentTableBody">
                                     <tr>
-                                        <td colspan="6" class="text-center text-muted py-5">
+                                        <td colspan="8" class="text-center text-muted py-5">
                                             <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
                                             Đang tải dữ liệu sinh viên...
                                         </td>
@@ -267,6 +269,17 @@
                                         </div>
                                     </div>
 
+                                    <!-- Ngày sinh -->
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="dateOfBirth">
+                                            Ngày sinh <span class="text-danger">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-calendar-event-fill"></i></span>
+                                            <input type="text" id="dateOfBirth" name="dateOfBirth" class="form-control" placeholder="dd/MM/yyyy (Ví dụ: 16/05/2006)" required />
+                                        </div>
+                                    </div>
+
                                     <!-- Email -->
                                     <div class="col-md-6">
                                         <label class="form-label" for="email">
@@ -290,7 +303,7 @@
                                     </div>
 
                                     <!-- Lớp sinh hoạt -->
-                                    <div class="col-md-12">
+                                    <div class="col-md-6">
                                         <label class="form-label" for="className">
                                             Lớp sinh hoạt <span class="text-danger">*</span>
                                         </label>
@@ -332,6 +345,6 @@
 </div>
 
 <script src="/adminlte/js/adminlte.js"></script>
-<script type="module" src="/assets/js/student.js"></script>
+<script type="module" src="/assets/js/student.js?v=2.1"></script>
 </body>
 </html>

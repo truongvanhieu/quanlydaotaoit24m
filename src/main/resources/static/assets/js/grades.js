@@ -319,15 +319,17 @@ function renderStats(gradeBook) {
 function exportCsv() {
     if (!currentGradeBook || !currentGradeBook.students.length) return;
     const components = currentGradeBook.components;
-    const headers = ['Mã sinh viên', 'Họ và tên', ...components.map((c) => `"${c.componentName} (${c.weightPercentage}%)"`), 'Điểm tổng kết', 'Xếp loại', 'Kết quả'];
-    const rows = currentGradeBook.students.map((s) => {
+    const headers = ['STT', 'IDSV', 'Họ và tên', 'Ngày sinh', ...components.map((c) => `"${c.componentName} (${c.weightPercentage}%)"`), 'Điểm tổng kết', 'Xếp loại', 'Kết quả'];
+    const rows = currentGradeBook.students.map((s, idx) => {
         const scores = components.map((c) => {
             const g = s.grades.find((item) => item.componentId === c.id);
             return g && g.score != null ? g.score : '';
         });
         return [
+            idx + 1,
             `"${s.studentCode || ''}"`,
             `"${s.studentName || ''}"`,
+            `"${s.dateOfBirth || ''}"`,
             ...scores,
             s.totalScore != null ? s.totalScore : '',
             `"${s.letterGrade || ''}"`,
@@ -354,9 +356,10 @@ function exportWord() {
 
     const tableHeaderHtml = `
         <tr style="background-color: #f2f2f2;">
-            <th style="border: 1px solid #000; padding: 6px; text-align: center; width: 40px;">STT</th>
-            <th style="border: 1px solid #000; padding: 6px; text-align: center; width: 100px;">Mã SV</th>
-            <th style="border: 1px solid #000; padding: 6px; text-align: left; width: 180px;">Họ và tên</th>
+            <th style="border: 1px solid #000; padding: 6px; text-align: center; width: 35px;">STT</th>
+            <th style="border: 1px solid #000; padding: 6px; text-align: center; width: 85px;">IDSV</th>
+            <th style="border: 1px solid #000; padding: 6px; text-align: left; width: 170px;">Họ và tên</th>
+            <th style="border: 1px solid #000; padding: 6px; text-align: center; width: 95px;">Ngày sinh</th>
             ${components.map((c) => `<th style="border: 1px solid #000; padding: 6px; text-align: center;">${escapeHtml(c.componentName)}<br><small>(${formatNumber(c.weightPercentage)}%)</small></th>`).join('')}
             <th style="border: 1px solid #000; padding: 6px; text-align: center; width: 70px;">Tổng kết</th>
             <th style="border: 1px solid #000; padding: 6px; text-align: center; width: 60px;">Xếp loại</th>
@@ -375,6 +378,7 @@ function exportWord() {
                 <td style="border: 1px solid #000; padding: 6px; text-align: center;">${idx + 1}</td>
                 <td style="border: 1px solid #000; padding: 6px; text-align: center;">${escapeHtml(s.studentCode || '')}</td>
                 <td style="border: 1px solid #000; padding: 6px; text-align: left;">${escapeHtml(s.studentName || '')}</td>
+                <td style="border: 1px solid #000; padding: 6px; text-align: center;">${escapeHtml(s.dateOfBirth || '—')}</td>
                 ${scoresHtml}
                 <td style="border: 1px solid #000; padding: 6px; text-align: center; font-weight: bold;">${s.totalScore != null ? formatNumber(s.totalScore) : '—'}</td>
                 <td style="border: 1px solid #000; padding: 6px; text-align: center;">${escapeHtml(s.letterGrade || '—')}</td>
@@ -483,9 +487,10 @@ function exportPdf() {
 
     const tableHeaderHtml = `
         <tr>
-            <th style="width: 40px; text-align: center;">STT</th>
-            <th style="width: 100px; text-align: center;">Mã sinh viên</th>
+            <th style="width: 35px; text-align: center;">STT</th>
+            <th style="width: 85px; text-align: center;">IDSV</th>
             <th style="text-align: left;">Họ và tên</th>
+            <th style="width: 95px; text-align: center;">Ngày sinh</th>
             ${components.map((c) => `<th style="text-align: center;">${escapeHtml(c.componentName)}<br><small>(${formatNumber(c.weightPercentage)}%)</small></th>`).join('')}
             <th style="width: 80px; text-align: center;">Tổng kết</th>
             <th style="width: 70px; text-align: center;">Xếp loại</th>
@@ -505,6 +510,7 @@ function exportPdf() {
                 <td style="text-align: center;">${idx + 1}</td>
                 <td style="text-align: center; font-weight: 500;">${escapeHtml(s.studentCode || '')}</td>
                 <td style="text-align: left;">${escapeHtml(s.studentName || '')}</td>
+                <td style="text-align: center;">${escapeHtml(s.dateOfBirth || '—')}</td>
                 ${scoresHtml}
                 <td style="text-align: center; font-weight: 700;">${s.totalScore != null ? formatNumber(s.totalScore) : '—'}</td>
                 <td style="text-align: center;">${escapeHtml(s.letterGrade || '—')}</td>
@@ -663,8 +669,10 @@ function renderGradeBook(gradeBook) {
     weightSummary.textContent = `Tổng trọng số: ${formatNumber(gradeBook.configuredWeightTotal)}%`;
     gradeTableHead.innerHTML = `
         <tr>
-            <th>Mã sinh viên</th>
+            <th style="width: 45px; text-align: center;">STT</th>
+            <th style="width: 95px;">IDSV</th>
             <th>Họ và tên</th>
+            <th style="width: 105px; text-align: center;">Ngày sinh</th>
             ${components.map((component) => `<th>${escapeHtml(component.componentName)}<small class="d-block text-muted">${formatNumber(component.weightPercentage)}%</small></th>`).join('')}
             <th>Điểm tổng kết</th>
             <th>Xếp loại</th>
@@ -673,14 +681,16 @@ function renderGradeBook(gradeBook) {
     `;
 
     if (!gradeBook.students.length) {
-        gradeTableBody.innerHTML = emptyRow(components.length + 5, 'Chưa có sinh viên đăng ký lớp học phần này.');
+        gradeTableBody.innerHTML = emptyRow(components.length + 7, 'Chưa có sinh viên đăng ký lớp học phần này.');
         return;
     }
 
-    gradeTableBody.innerHTML = gradeBook.students.map((student) => `
+    gradeTableBody.innerHTML = gradeBook.students.map((student, index) => `
         <tr>
-            <td>${escapeHtml(student.studentCode || '')}</td>
-            <td>${escapeHtml(student.studentName || '')}</td>
+            <td class="text-center fw-semibold text-secondary">${index + 1}</td>
+            <td class="fw-semibold text-primary font-monospace">${escapeHtml(student.studentCode || '')}</td>
+            <td class="fw-medium">${escapeHtml(student.studentName || '')}</td>
+            <td class="text-center text-muted small">${escapeHtml(student.dateOfBirth || '—')}</td>
             ${student.grades.map((grade) => renderGradeCell(student.registrationId, grade, components.find((item) => item.id === grade.componentId))).join('')}
             <td class="fw-semibold">${student.totalScore == null ? '<span class="text-muted">Chưa đủ điểm</span>' : formatNumber(student.totalScore)}</td>
             <td>${student.letterGrade == null ? '—' : `<span class="badge text-bg-primary">${escapeHtml(student.letterGrade)}</span><small class="d-block text-muted">GPA ${formatNumber(student.gpaValue)}</small>`}</td>

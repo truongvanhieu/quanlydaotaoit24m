@@ -58,6 +58,7 @@ public final class GradeModels {
             UUID registrationId,
             String studentCode,
             String studentName,
+            String dateOfBirth,
             List<GradeEntryView> grades,
             BigDecimal totalScore,
             String letterGrade,

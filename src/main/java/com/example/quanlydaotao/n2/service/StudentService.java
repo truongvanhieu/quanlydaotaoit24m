@@ -21,15 +21,15 @@ public class StudentService {
     }
 
     public List<Student> getAll() {
-        return studentRepository.findAll();
+        return studentRepository.findAllByOrderBySttAsc();
     }
 
     public List<Student> search(String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) {
-            return studentRepository.findAll();
+            return studentRepository.findAllByOrderBySttAsc();
         }
         String value = keyword.trim();
-        return studentRepository.findByStudentCodeContainingIgnoreCaseOrFullNameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrPhoneContainingIgnoreCase(
+        return studentRepository.findByStudentCodeContainingIgnoreCaseOrFullNameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrPhoneContainingIgnoreCaseOrderBySttAsc(
                 value, value, value, value);
     }
 
@@ -40,22 +40,36 @@ public class StudentService {
 
     public String getNextStudentCode() {
         List<String> codes = jdbcTemplate.query(
-                "SELECT student_code FROM students WHERE student_code LIKE 'SV%'",
+                "SELECT student_code FROM students",
                 (rs, rowNum) -> rs.getString("student_code"));
-        int maxNum = 0;
+        long maxNum = 0;
+        boolean hasLargeNumeric = false;
         for (String code : codes) {
             if (code != null) {
                 String trimmed = code.trim();
-                if (trimmed.toUpperCase().startsWith("SV")) {
-                    try {
-                        int num = Integer.parseInt(trimmed.substring(2));
-                        if (num > maxNum) {
-                            maxNum = num;
+                try {
+                    long num = Long.parseLong(trimmed);
+                    if (num > maxNum) {
+                        maxNum = num;
+                        if (num >= 100000) {
+                            hasLargeNumeric = true;
                         }
-                    } catch (NumberFormatException ignored) {
+                    }
+                } catch (NumberFormatException ignored) {
+                    if (trimmed.toUpperCase().startsWith("SV")) {
+                        try {
+                            long num = Long.parseLong(trimmed.substring(2));
+                            if (!hasLargeNumeric && num > maxNum) {
+                                maxNum = num;
+                            }
+                        } catch (NumberFormatException ignored2) {
+                        }
                     }
                 }
             }
+        }
+        if (hasLargeNumeric && maxNum > 0) {
+            return String.valueOf(maxNum + 1);
         }
         return String.format("SV%03d", maxNum + 1);
     }
@@ -81,6 +95,11 @@ public class StudentService {
     }
 
     public void delete(UUID id) {
+        try {
+            jdbcTemplate.update("DELETE FROM course_registrations WHERE student_id = ?", id);
+            jdbcTemplate.update("DELETE FROM students_ WHERE id = ?", id);
+        } catch (Exception ignored) {
+        }
         studentRepository.deleteById(id);
     }
 }

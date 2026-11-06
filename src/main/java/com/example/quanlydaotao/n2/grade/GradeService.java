@@ -120,17 +120,19 @@ public class GradeService {
                                 + "%; cần bằng 100% để tính điểm tổng kết.";
 
         List<RegistrationRow> registrations = jdbcTemplate.query("""
-                SELECT cr.id AS registration_id, s.code AS student_code, s.full_name AS student_name
+                SELECT cr.id AS registration_id, s.code AS student_code, s.full_name AS student_name, st.date_of_birth
                 FROM course_registrations cr
                 JOIN students_ s ON s.id = cr.student_id
+                LEFT JOIN students st ON st.id = s.id
                 WHERE cr.course_class_id = ? AND cr.deleted_at IS NULL
                   AND (s.is_active IS NULL OR s.is_active = 1)
-                ORDER BY s.code, s.full_name
+                ORDER BY COALESCE(st.stt, 9999), s.code
                 """,
                 (rs, rowNum) -> new RegistrationRow(
                         uuid(rs, "registration_id"),
                         rs.getString("student_code"),
-                        rs.getString("student_name")),
+                        rs.getString("student_name"),
+                        rs.getString("date_of_birth")),
                 courseClassId);
 
         Map<UUID, Map<UUID, GradeEntryView>> entries = loadEntries(courseClassId);
@@ -159,6 +161,7 @@ public class GradeService {
                     registration.id(),
                     registration.studentCode(),
                     registration.studentName(),
+                    registration.dateOfBirth(),
                     gradeViews,
                     total.orElse(null),
                     scale == null ? null : scale.letterGrade(),
@@ -496,7 +499,7 @@ public class GradeService {
             rs.getBoolean("is_required"),
             (Integer) rs.getObject("input_order"));
 
-    private record RegistrationRow(UUID id, String studentCode, String studentName) {
+    private record RegistrationRow(UUID id, String studentCode, String studentName, String dateOfBirth) {
     }
 
     private record EntryRow(UUID id, UUID registrationId, UUID componentId, BigDecimal score, boolean retake,
@@ -575,7 +578,7 @@ public class GradeService {
                     SELECT cr.student_id FROM course_registrations cr
                     WHERE cr.course_class_id = ? AND cr.deleted_at IS NULL
                 )
-                ORDER BY s.student_code, s.full_name
+                ORDER BY COALESCE(s.stt, 9999), s.student_code
                 """, (rs, rowNum) -> new AvailableStudentOption(
                 uuid(rs, "id"),
                 rs.getString("student_code"),
