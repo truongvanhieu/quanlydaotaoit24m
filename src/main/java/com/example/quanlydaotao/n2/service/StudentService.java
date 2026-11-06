@@ -38,7 +38,33 @@ public class StudentService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sinh viên với id: " + id));
     }
 
+    public String getNextStudentCode() {
+        List<String> codes = jdbcTemplate.query(
+                "SELECT student_code FROM students WHERE student_code LIKE 'SV%'",
+                (rs, rowNum) -> rs.getString("student_code"));
+        int maxNum = 0;
+        for (String code : codes) {
+            if (code != null) {
+                String trimmed = code.trim();
+                if (trimmed.toUpperCase().startsWith("SV")) {
+                    try {
+                        int num = Integer.parseInt(trimmed.substring(2));
+                        if (num > maxNum) {
+                            maxNum = num;
+                        }
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+            }
+        }
+        return String.format("SV%03d", maxNum + 1);
+    }
+
     public Student save(Student student) {
+        if (student.getStudentCode() == null || student.getStudentCode().trim().isEmpty()
+                || "AUTO".equalsIgnoreCase(student.getStudentCode().trim())) {
+            student.setStudentCode(getNextStudentCode());
+        }
         Student saved = studentRepository.save(student);
         try {
             jdbcTemplate.update("""
