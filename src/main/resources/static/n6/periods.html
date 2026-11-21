@@ -1,309 +1,174 @@
-
 <!DOCTYPE html>
 <html lang="vi">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Đợt đăng ký | Quản lý đào tạo</title>
-
-    <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="/n6/n6.css">
 </head>
 
 <body>
-
-    <!-- MENU DOC -->
-
-<aside class="sidebar">
-
-    <a class="brand" href="/n6/index.html">
-        <strong>QUẢN LÝ ĐÀO TẠO</strong>
-        <small>Nhóm 6 - Đăng ký học phần</small>
-    </a>
-
-    <div class="nav-title">
-        ĐIỀU HƯỚNG
-    </div>
-
-    <nav class="nav-menu">
-
-        <a data-nav href="/n6/index.html">
-            <i class="bi bi-speedometer2"></i>
-            <span>Tổng quan N6</span>
+    <aside class="sidebar">
+        <a class="brand" href="/n6/index.html">
+            <strong>QUẢN LÝ ĐÀO TẠO</strong>
+            <small>Nhóm 6 - Đăng ký học phần</small>
         </a>
 
-        <a data-nav href="/n6/periods.html">
-            <i class="bi bi-calendar-week"></i>
-            <span>Đợt đăng ký</span>
-        </a>
+        <div class="nav-title">NHÓM 6</div>
 
-        <a data-nav href="/n6/registrations.html">
-            <i class="bi bi-journal-check"></i>
-            <span>Đăng ký học phần</span>
-        </a>
+        <nav class="nav-menu">
+            <a data-nav href="/n6/index.html">
+                <i class="bi bi-speedometer2"></i>
+                <span>Tổng quan N6</span>
+            </a>
 
-        <a data-nav href="/n6/equivalences.html">
-            <i class="bi bi-arrow-left-right"></i>
-            <span>Môn học tương đương</span>
-        </a>
+            <a data-nav href="/n6/periods.html">
+                <i class="bi bi-calendar-week"></i>
+                <span>Đợt đăng ký</span>
+            </a>
 
-        <a href="/swagger-ui.html"
-           target="_blank"
-           rel="noopener">
-            <i class="bi bi-braces"></i>
-            <span>Swagger API</span>
-        </a>
+            <a data-nav href="/n6/registrations.html">
+                <i class="bi bi-journal-check"></i>
+                <span>Đăng ký học phần</span>
+            </a>
 
-    </nav>
+            <a data-nav href="/n6/equivalences.html">
+                <i class="bi bi-arrow-left-right"></i>
+                <span>Môn học tương đương</span>
+            </a>
+        </nav>
 
-    <div class="sidebar-footer">
-        Spring Boot · SQL Server
-        <br>
-        API dùng chung của dự án
-    </div>
+        <div class="sidebar-footer">
+            Spring Boot · SQL Server
+            <br>
+            Nhóm 6 - Đăng ký học phần
+        </div>
+    </aside>
 
-</aside>
-
-
-    <!-- NOI DUNG -->
     <div class="main">
-
         <header class="topbar">
             <div>
                 <h1>Quản lý đợt đăng ký</h1>
-                <p>Tạo và quản lý các đợt đăng ký học phần.</p>
+                <p>Tạo, cập nhật và tìm kiếm các đợt đăng ký học phần.</p>
             </div>
-
-            <a href="/v3/api-docs" target="_blank" rel="noopener">
-                OpenAPI JSON ↗
-            </a>
         </header>
 
         <main class="content">
+            <div id="message" class="notice" role="status" aria-live="polite"></div>
 
-            <div
-                id="message"
-                class="notice"
-                role="status"
-                aria-live="polite">
-            </div>
-
-            <!-- FORM TAO DOT DANG KY -->
+            <!-- FORM TAO / CAP NHAT DOT DANG KY -->
             <section class="card">
-
-                <h2 id="formHeading">
-                    Tạo đợt đăng ký
-                </h2>
+                <h2 id="formHeading">Tạo đợt đăng ký</h2>
 
                 <form id="periodForm">
-
-                    <input
-                        type="hidden"
-                        name="id"
-                        id="periodId">
+                    <input type="hidden" name="id" id="periodId">
 
                     <div class="grid">
-
                         <div class="field">
-                            <label for="periodName">
-                                Tên đợt đăng ký *
-                            </label>
-
-                            <input
-                                id="periodName"
-                                name="name"
-                                maxlength="200"
-                                required
-                                placeholder="Ví dụ: Đăng ký học phần học kỳ 1">
+                            <label for="periodName">Tên đợt đăng ký *</label>
+                            <input id="periodName" name="name" maxlength="200" required
+                                   placeholder="Ví dụ: Đăng ký học phần học kỳ 1">
                         </div>
 
                         <div class="field">
-                            <label for="semesterId">
-                                Học kỳ *
-                            </label>
-
-                            <select
-                                id="semesterId"
-                                name="semesterId"
-                                required>
-
-                                <option value="">
-                                    Đang tải học kỳ...
-                                </option>
-
+                            <label for="semesterId">Học kỳ *</label>
+                            <select id="semesterId" name="semesterId" required>
+                                <option value="">Đang tải học kỳ...</option>
                             </select>
                         </div>
 
                         <div class="field">
-                            <label for="startTime">
-                                Thời gian bắt đầu *
-                            </label>
-
-                            <input
-                                id="startTime"
-                                name="startTime"
-                                type="datetime-local"
-                                required>
+                            <label for="startTime">Thời gian bắt đầu *</label>
+                            <input id="startTime" name="startTime" type="datetime-local" required>
                         </div>
 
                         <div class="field">
-                            <label for="endTime">
-                                Thời gian kết thúc *
-                            </label>
-
-                            <input
-                                id="endTime"
-                                name="endTime"
-                                type="datetime-local"
-                                required>
+                            <label for="endTime">Thời gian kết thúc *</label>
+                            <input id="endTime" name="endTime" type="datetime-local" required>
                         </div>
 
                         <div class="field">
-                            <label for="minCredits">
-                                Tín chỉ tối thiểu
-                            </label>
-
-                            <input
-                                id="minCredits"
-                                name="minCredits"
-                                type="number"
-                                min="0"
-                                max="255"
-                                value="12"
-                                required>
+                            <label for="minCredits">Tín chỉ tối thiểu</label>
+                            <input id="minCredits" name="minCredits" type="number" min="0" max="255" value="12" required>
                         </div>
 
                         <div class="field">
-                            <label for="maxCredits">
-                                Tín chỉ tối đa
-                            </label>
-
-                            <input
-                                id="maxCredits"
-                                name="maxCredits"
-                                type="number"
-                                min="1"
-                                max="255"
-                                value="25"
-                                required>
+                            <label for="maxCredits">Tín chỉ tối đa</label>
+                            <input id="maxCredits" name="maxCredits" type="number" min="1" max="255" value="25" required>
                         </div>
 
                         <div class="field full">
-                            <label for="targetConfig">
-                                Điều kiện đối tượng (JSON, không bắt buộc)
-                            </label>
-
-                            <textarea
-                                id="targetConfig"
-                                name="targetConfig"
-                                placeholder='Ví dụ: {"departmentIds":["UUID_KHOA"]}'>
-                            </textarea>
-
-                            <span class="muted">
-                                Để trống nếu không giới hạn đối tượng.
-                            </span>
+                            <label for="targetConfig">Điều kiện đối tượng (JSON, không bắt buộc)</label>
+                            <textarea id="targetConfig" name="targetConfig"
+                                      placeholder='Ví dụ: {"departmentIds":["UUID_KHOA"]}'></textarea>
+                            <span class="muted">Để trống nếu không giới hạn đối tượng.</span>
                         </div>
-
                     </div>
 
                     <div class="checks">
-
                         <label>
-                            <input
-                                id="allowRetake"
-                                name="allowRetake"
-                                type="checkbox">
-
+                            <input id="allowRetake" name="allowRetake" type="checkbox">
                             Cho phép học lại/cải thiện
                         </label>
 
                         <label>
-                            <input
-                                id="periodActive"
-                                name="active"
-                                type="checkbox"
-                                checked>
-
+                            <input id="periodActive" name="active" type="checkbox" checked>
                             Đợt đang mở
                         </label>
-
                     </div>
 
                     <div class="actions">
+                        <button id="savePeriodButton" type="submit">Lưu đợt đăng ký</button>
+                        <button id="resetPeriodButton" type="button" class="secondary">Làm mới biểu mẫu</button>
+                    </div>
+                </form>
+            </section>
 
-                        <button
-                            id="savePeriodButton"
-                            type="submit">
+            <!-- DANH SACH + TIM KIEM DOT DANG KY -->
+            <section class="card">
+                <h2>Danh sách đợt đăng ký</h2>
+                <p class="muted">Tìm kiếm theo tên đợt, học kỳ hoặc trạng thái. Dùng nút Sửa để cập nhật, Xóa là xóa mềm.</p>
 
-                            Lưu đợt đăng ký
-
-                        </button>
-
-                        <button
-                            id="resetPeriodButton"
-                            type="button"
-                            class="secondary">
-
-                            Làm mới biểu mẫu
-
-                        </button>
-
+                <div class="filter-grid">
+                    <div class="field">
+                        <label for="periodKeyword">Từ khóa tìm kiếm</label>
+                        <input id="periodKeyword" type="text" placeholder="Nhập tên đợt, tên học kỳ...">
                     </div>
 
-                </form>
+                    <div class="field">
+                        <label for="periodFilterSemester">Lọc theo học kỳ</label>
+                        <select id="periodFilterSemester">
+                            <option value="">Tất cả học kỳ</option>
+                        </select>
+                    </div>
 
-            </section>
+                    <div class="field">
+                        <label for="periodFilterActive">Trạng thái kích hoạt</label>
+                        <select id="periodFilterActive">
+                            <option value="">Tất cả</option>
+                            <option value="true">Đang bật</option>
+                            <option value="false">Đã khóa thủ công</option>
+                        </select>
+                    </div>
 
-            <!-- DANH SACH DOT DANG KY -->
-            <section class="card">
-
-                <h2>Danh sách đợt đăng ký</h2>
-
-                <p class="muted">
-                    Dùng nút Sửa để cập nhật thông tin.
-                    Xóa là xóa mềm đợt đăng ký.
-                </p>
-
-                <div id="periodTable" class="table-wrap">
-                    Đang tải dữ liệu...
+                    <div class="actions" style="margin-top:0">
+                        <button type="button" id="searchPeriodButton">
+                            <i class="bi bi-search"></i> Tìm kiếm
+                        </button>
+                        <button type="button" id="resetPeriodFilterButton" class="secondary">
+                            <i class="bi bi-arrow-clockwise"></i> Đặt lại
+                        </button>
+                    </div>
                 </div>
 
+                <div id="periodTable" class="table-wrap">Đang tải dữ liệu...</div>
             </section>
-
         </main>
-
     </div>
 
     <script src="/n6/n6-common.js"></script>
     <script src="/n6/periods.js"></script>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-
-    const currentPath = window.location.pathname;
-
-    document.querySelectorAll('[data-nav]').forEach(link => {
-
-        const linkPath = new URL(
-            link.href,
-            window.location.origin
-        ).pathname;
-
-        if (linkPath === currentPath) {
-            link.classList.add('active');
-        } else {
-            link.classList.remove('active');
-        }
-
-    });
-
-});
-</script>
-
 </body>
 </html>

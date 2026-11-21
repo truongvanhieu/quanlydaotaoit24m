@@ -1,25 +1,16 @@
-
 <!DOCTYPE html>
 <html lang="vi">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Tổng quan N6 | Quản lý đào tạo</title>
-
-    <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="/n6/n6.css">
 </head>
 
 <body>
-
-    <!-- SIDEBAR N6 -->
     <aside class="sidebar">
-
         <a class="brand" href="/n6/index.html">
             <strong>QUẢN LÝ ĐÀO TẠO</strong>
             <small>Phân hệ Nhóm 6</small>
@@ -28,7 +19,6 @@
         <div class="nav-title">NHÓM 6</div>
 
         <nav class="nav-menu">
-
             <a data-nav href="/n6/index.html">
                 <i class="bi bi-speedometer2"></i>
                 <span>Tổng quan N6</span>
@@ -48,22 +38,6 @@
                 <i class="bi bi-arrow-left-right"></i>
                 <span>Môn học tương đương</span>
             </a>
-
-        </nav>
-
-        <div class="nav-title">HỆ THỐNG</div>
-
-        <nav class="nav-menu">
-
-            <a href="/swagger-ui.html"
-               target="_blank"
-               rel="noopener">
-
-                <i class="bi bi-braces"></i>
-                <span>Swagger API</span>
-
-            </a>
-
         </nav>
 
         <div class="sidebar-footer">
@@ -71,45 +45,20 @@
             <br>
             Nhóm 6 - Đăng ký học phần
         </div>
-
     </aside>
 
-
-    <!-- MAIN -->
     <div class="main">
-
         <header class="topbar">
-
             <div>
                 <h1>Tổng quan Nhóm 6</h1>
-
-                <p>
-                    Quản lý các hoạt động đăng ký học phần.
-                </p>
+                <p>Quản lý đợt đăng ký, đăng ký học phần, danh sách sinh viên theo lớp và môn học tương đương.</p>
             </div>
-
-            <a href="/swagger-ui.html"
-               target="_blank"
-               rel="noopener">
-                Swagger API ↗
-            </a>
-
         </header>
 
-
         <main class="content">
+            <div id="message" class="notice" role="status" aria-live="polite"></div>
 
-            <div
-                id="message"
-                class="notice"
-                role="status"
-                aria-live="polite">
-            </div>
-
-
-            <!-- THONG KE -->
             <section class="stats">
-
                 <div class="stat">
                     <span>Tổng số đợt đăng ký</span>
                     <strong id="periodCount">—</strong>
@@ -124,198 +73,121 @@
                     <span>Tổng quan hệ tương đương</span>
                     <strong id="equivalenceCount">—</strong>
                 </div>
-
             </section>
 
-
-            <!-- CHUC NANG -->
             <section class="card">
-
                 <h2>Các chức năng của Nhóm 6</h2>
-
-                <p>
-                    Chọn chức năng cần sử dụng.
-                </p>
+                <p>Chọn chức năng cần sử dụng.</p>
 
                 <div class="module-grid">
-
                     <article class="card module-card">
-
                         <h2>
                             <i class="bi bi-calendar-week"></i>
                             Đợt đăng ký
                         </h2>
-
-                        <p>
-                            Quản lý thời gian đăng ký,
-                            học kỳ và giới hạn tín chỉ.
-                        </p>
-
-                        <a href="/n6/periods.html" class="button">
-                            Quản lý đợt đăng ký
-                        </a>
-
+                        <p>Quản lý thời gian đăng ký, học kỳ, tìm kiếm đợt và giới hạn tín chỉ.</p>
+                        <a href="/n6/periods.html" class="button">Quản lý đợt đăng ký</a>
                     </article>
 
-
                     <article class="card module-card">
-
                         <h2>
                             <i class="bi bi-journal-check"></i>
                             Đăng ký học phần
                         </h2>
-
-                        <p>
-                            Chọn sinh viên, lớp học phần,
-                            kiểm tra điều kiện và thực hiện đăng ký.
-                        </p>
-
-                        <a href="/n6/registrations.html" class="button">
-                            Đăng ký học phần
-                        </a>
-
+                        <p>Tìm nhanh sinh viên và lớp học phần, kiểm tra điều kiện, đăng ký và xem danh sách sinh viên của từng lớp.</p>
+                        <a href="/n6/registrations.html" class="button">Đăng ký học phần</a>
                     </article>
 
-
                     <article class="card module-card">
-
                         <h2>
                             <i class="bi bi-arrow-left-right"></i>
                             Môn học tương đương
                         </h2>
-
-                        <p>
-                            Quản lý các môn học thay thế
-                            và các môn học tương đương.
-                        </p>
-
-                        <a href="/n6/equivalences.html" class="button">
-                            Quản lý môn tương đương
-                        </a>
-
+                        <p>Quản lý và tìm kiếm các môn học thay thế, môn học tương đương.</p>
+                        <a href="/n6/equivalences.html" class="button">Quản lý môn tương đương</a>
                     </article>
-
                 </div>
-
             </section>
 
-
-            <!-- API -->
             <section class="card">
-
                 <h2>Danh sách API chính</h2>
-
                 <div class="table-wrap">
-
                     <table>
-
                         <thead>
                             <tr>
                                 <th>Chức năng</th>
                                 <th>Endpoint</th>
                             </tr>
                         </thead>
-
                         <tbody>
-
                             <tr>
                                 <td>Đợt đăng ký</td>
                                 <td>/api/registration-periods</td>
                             </tr>
-
                             <tr>
                                 <td>Đăng ký học phần</td>
                                 <td>/api/course-registrations</td>
                             </tr>
-
                             <tr>
                                 <td>Kiểm tra điều kiện</td>
                                 <td>/api/course-registrations/eligibility</td>
                             </tr>
-
                             <tr>
                                 <td>Tổng hợp tín chỉ</td>
                                 <td>/api/course-registrations/summary</td>
                             </tr>
-
+                            <tr>
+                                <td>Danh sách lớp &amp; sinh viên trong lớp</td>
+                                <td>/api/registration-options/course-classes/summary</td>
+                            </tr>
                             <tr>
                                 <td>Môn tương đương</td>
                                 <td>/api/course-equivalences</td>
                             </tr>
-
                         </tbody>
-
                     </table>
-
                 </div>
-
             </section>
-
         </main>
-
     </div>
 
-
-    <!-- SCRIPT CHUNG -->
     <script src="/n6/n6-common.js"></script>
-
-    <!-- SCRIPT THONG KE -->
     <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            const endpoints = [
+                N6.API.periods,
+                N6.API.registrations,
+                N6.API.equivalences
+            ];
+            const elementIds = [
+                'periodCount',
+                'registrationCount',
+                'equivalenceCount'
+            ];
 
-    document.addEventListener('DOMContentLoaded', async function () {
-
-        const endpoints = [
-            N6.API.periods,
-            N6.API.registrations,
-            N6.API.equivalences
-        ];
-
-        const elementIds = [
-            'periodCount',
-            'registrationCount',
-            'equivalenceCount'
-        ];
-
-        const results = await Promise.allSettled(
-            endpoints.map(url => N6.request(url))
-        );
-
-        let hasError = false;
-
-        results.forEach((result, index) => {
-
-            const element = document.getElementById(
-                elementIds[index]
+            const results = await Promise.allSettled(
+                endpoints.map(url => N6.request(url))
             );
 
-            if (
-                result.status === 'fulfilled'
-                && Array.isArray(result.value)
-            ) {
+            let hasError = false;
 
-                element.textContent = result.value.length;
+            results.forEach((result, index) => {
+                const element = document.getElementById(elementIds[index]);
+                if (result.status === 'fulfilled' && Array.isArray(result.value)) {
+                    element.textContent = result.value.length;
+                } else {
+                    element.textContent = '—';
+                    hasError = true;
+                }
+            });
 
-            } else {
-
-                element.textContent = '—';
-                hasError = true;
-
+            if (hasError) {
+                N6.showMessage(
+                    'Một số dữ liệu chưa tải được. Hãy kiểm tra API và database.',
+                    'error'
+                );
             }
-
         });
-
-        if (hasError) {
-
-            N6.showMessage(
-                'Một số dữ liệu chưa tải được. Hãy kiểm tra API và database.',
-                'error'
-            );
-
-        }
-
-    });
-
     </script>
-
 </body>
 </html>

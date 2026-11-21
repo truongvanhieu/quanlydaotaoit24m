@@ -1,4 +1,3 @@
-
 let periodRows = [];
 let semesterRows = [];
 
@@ -6,25 +5,16 @@ const periodForm = document.getElementById('periodForm');
 
 function resetPeriodForm() {
     periodForm.reset();
-
     document.getElementById('periodId').value = '';
-
     document.getElementById('minCredits').value = 12;
     document.getElementById('maxCredits').value = 25;
-
     document.getElementById('allowRetake').checked = false;
     document.getElementById('periodActive').checked = true;
-
-    document.getElementById('formHeading').textContent =
-        'Tạo đợt đăng ký';
-
-    document.getElementById('savePeriodButton').textContent =
-        'Lưu đợt đăng ký';
+    document.getElementById('formHeading').textContent = 'Tạo đợt đăng ký';
+    document.getElementById('savePeriodButton').textContent = 'Lưu đợt đăng ký';
 }
 
 function getPeriodState(row) {
-    // startTime/endTime tu Java LocalDateTime khong kem timezone;
-    // parse theo gio may trinh duyet (nguoi dung tai Viet Nam).
     const now = new Date();
     const start = row.startTime ? new Date(row.startTime) : null;
     const end = row.endTime ? new Date(row.endTime) : null;
@@ -38,7 +28,6 @@ function getPeriodState(row) {
     if (now < start) {
         return { label: 'Chưa mở', css: 'off', detail: 'Chưa đến thời gian bắt đầu' };
     }
-    // Thoi diem end la moc dong: now >= end thi da dong.
     if (now >= end) {
         return { label: 'Đã kết thúc', css: 'off', detail: 'Đã quá thời gian đăng ký' };
     }
@@ -56,7 +45,7 @@ function renderPeriods() {
     const container = document.getElementById('periodTable');
 
     if (!periodRows.length) {
-        container.innerHTML = '<p>Chưa có đợt đăng ký nào.</p>';
+        container.innerHTML = '<p class="muted">Không tìm thấy đợt đăng ký nào phù hợp.</p>';
         return;
     }
 
@@ -81,114 +70,79 @@ function renderPeriods() {
                     <th>Thao tác</th>
                 </tr>
             </thead>
-
             <tbody>
                 ${periodRows.map(row => {
                     const semester = semesterMap.get(String(row.semesterId || '').toLowerCase());
                     const state = getPeriodState(row);
                     return `
                     <tr>
-
                         <td>
                             <strong>${N6.esc(row.name)}</strong>
-                            <div class="muted">
-                                ID: ${N6.esc(row.id)}
-                            </div>
+                            <div class="muted">ID: ${N6.esc(row.id)}</div>
                         </td>
-
                         <td>
                             <strong>${N6.esc(semester ? `${semester.code} — ${semester.name}`.replace(/^ — | — $/g, '') : 'Không tìm thấy học kỳ')}</strong>
-                            <div class="muted">${N6.esc(semester?.id || row.semesterId || '—')}</div>
                         </td>
-
                         <td>
                             ${N6.esc(N6.dateTimeText(row.startTime))}
-                            <br>
-                            đến
-                            <br>
+                            <br>đến<br>
                             ${N6.esc(N6.dateTimeText(row.endTime))}
                         </td>
-
-                        <td>
-                            ${N6.esc(row.minCredits ?? 12)}
-                            –
-                            ${N6.esc(row.maxCredits ?? 25)}
-                        </td>
-
+                        <td>${N6.esc(row.minCredits ?? 12)} – ${N6.esc(row.maxCredits ?? 25)}</td>
                         <td>
                             <span class="badge ${state.css}">${state.label}</span>
                             <div class="muted">${state.detail}</div>
                             <div class="muted">
-                                ${row.allowRetake
-                                    ? 'Cho phép học lại/cải thiện'
-                                    : 'Không cho học lại/cải thiện'}
+                                ${row.allowRetake ? 'Cho phép học lại/cải thiện' : 'Không cho học lại/cải thiện'}
                             </div>
                         </td>
-
                         <td>
-                            <div class="actions">
-
-                                <button
-                                    class="small secondary"
-                                    type="button"
-                                    data-edit="${N6.esc(row.id)}">
-
-                                    Sửa
-
-                                </button>
-
-                                <button
-                                    class="small danger"
-                                    type="button"
-                                    data-delete="${N6.esc(row.id)}">
-
-                                    Xóa
-
-                                </button>
-
+                            <div class="actions" style="margin-top:0">
+                                <button class="small secondary" type="button" data-edit="${N6.esc(row.id)}">Sửa</button>
+                                <button class="small danger" type="button" data-delete="${N6.esc(row.id)}">Xóa</button>
                             </div>
                         </td>
-
-                    </tr>
-                `}).join('')}
+                    </tr>`;
+                }).join('')}
             </tbody>
         </table>
     `;
 }
 
 async function loadPeriods() {
-    periodRows = await N6.request(N6.API.periods);
+    const keyword = (document.getElementById('periodKeyword')?.value || '').trim();
+    const semesterId = document.getElementById('periodFilterSemester')?.value || '';
+    const active = document.getElementById('periodFilterActive')?.value || '';
+
+    const params = new URLSearchParams();
+    if (keyword) params.set('keyword', keyword);
+    if (semesterId) params.set('semesterId', semesterId);
+    if (active !== '') params.set('active', active);
+
+    const url = params.toString()
+        ? `${N6.API.periods}/search?${params}`
+        : N6.API.periods;
+
+    periodRows = await N6.request(url);
     renderPeriods();
 }
 
 async function loadPage() {
     try {
-        semesterRows = await N6.request(
-            N6.API.options + '/semesters'
-        );
+        semesterRows = await N6.request(N6.API.options + '/semesters');
 
-        N6.fillSelect(
-            'semesterId',
-            semesterRows,
-            'Chọn học kỳ',
-            row => `${lookupField(row, 'code') || ''} — ${lookupField(row, 'name') || ''}`
-                .replace(/^ — | — $/g, '')
-        );
+        const semesterLabelFn = row =>
+            `${lookupField(row, 'code') || ''} — ${lookupField(row, 'name') || ''}`
+                .replace(/^ — | — $/g, '');
+
+        N6.fillSelect('semesterId', semesterRows, 'Chọn học kỳ', semesterLabelFn);
+        N6.fillSelect('periodFilterSemester', semesterRows, 'Tất cả học kỳ', semesterLabelFn);
 
         await loadPeriods();
-
         N6.clearMessage();
-
     } catch (error) {
-
-        N6.showMessage(
-            'Không tải được dữ liệu đợt đăng ký/học kỳ.\n'
-            + error.message,
-            'error'
-        );
-
-        document.getElementById('periodTable').textContent =
-            'Không thể tải dữ liệu.';
+        N6.showMessage('Không tải được dữ liệu đợt đăng ký/học kỳ.\n' + error.message, 'error');
+        document.getElementById('periodTable').textContent = 'Không thể tải dữ liệu.';
     }
 }
 
@@ -196,172 +150,111 @@ periodForm.addEventListener('submit', async event => {
     event.preventDefault();
 
     const id = document.getElementById('periodId').value;
-
     const body = {
         name: document.getElementById('periodName').value.trim(),
-
         semesterId: document.getElementById('semesterId').value,
-
         startTime: document.getElementById('startTime').value,
-
         endTime: document.getElementById('endTime').value,
-
-        minCredits: Number(
-            document.getElementById('minCredits').value
-        ),
-
-        maxCredits: Number(
-            document.getElementById('maxCredits').value
-        ),
-
-        targetConfig:
-            document.getElementById('targetConfig').value.trim()
-            || null,
-
-        allowRetake:
-            document.getElementById('allowRetake').checked,
-
-        active:
-            document.getElementById('periodActive').checked
+        minCredits: Number(document.getElementById('minCredits').value),
+        maxCredits: Number(document.getElementById('maxCredits').value),
+        targetConfig: document.getElementById('targetConfig').value.trim() || null,
+        allowRetake: document.getElementById('allowRetake').checked,
+        active: document.getElementById('periodActive').checked
     };
 
     if (body.maxCredits < body.minCredits) {
-        N6.showMessage(
-            'Tín chỉ tối đa phải lớn hơn hoặc bằng tín chỉ tối thiểu.',
-            'error'
-        );
+        N6.showMessage('Tín chỉ tối đa phải lớn hơn hoặc bằng tín chỉ tối thiểu.', 'error');
         return;
     }
-
     if (new Date(body.endTime) <= new Date(body.startTime)) {
-        N6.showMessage(
-            'Thời gian kết thúc phải sau thời gian bắt đầu.',
-            'error'
-        );
+        N6.showMessage('Thời gian kết thúc phải sau thời gian bắt đầu.', 'error');
         return;
     }
 
     try {
-
         await N6.request(
-            id
-                ? `${N6.API.periods}/${encodeURIComponent(id)}`
-                : N6.API.periods,
+            id ? `${N6.API.periods}/${encodeURIComponent(id)}` : N6.API.periods,
             {
                 method: id ? 'PUT' : 'POST',
                 body: JSON.stringify(body)
             }
         );
 
-        N6.showMessage(
-            id
-                ? 'Cập nhật đợt đăng ký thành công.'
-                : 'Tạo đợt đăng ký thành công.',
-            'success'
-        );
-
+        N6.showMessage(id ? 'Cập nhật đợt đăng ký thành công.' : 'Tạo đợt đăng ký thành công.', 'success');
         resetPeriodForm();
-
         await loadPeriods();
-
     } catch (error) {
-
-        N6.showMessage(
-            'Không lưu được đợt đăng ký.\n' + error.message,
-            'error'
-        );
+        N6.showMessage('Không lưu được đợt đăng ký.\n' + error.message, 'error');
     }
 });
 
-document.getElementById('resetPeriodButton')
-    .addEventListener('click', resetPeriodForm);
+document.getElementById('resetPeriodButton').addEventListener('click', resetPeriodForm);
 
-document.getElementById('periodTable')
-    .addEventListener('click', async event => {
+document.getElementById('searchPeriodButton').addEventListener('click', async () => {
+    try {
+        await loadPeriods();
+        N6.clearMessage();
+    } catch (error) {
+        N6.showMessage('Không tìm kiếm được đợt đăng ký.\n' + error.message, 'error');
+    }
+});
 
-        const editButton = event.target.closest('[data-edit]');
-        const deleteButton = event.target.closest('[data-delete]');
+document.getElementById('periodKeyword').addEventListener('keydown', event => {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        document.getElementById('searchPeriodButton').click();
+    }
+});
 
-        if (editButton) {
+document.getElementById('resetPeriodFilterButton').addEventListener('click', async () => {
+    document.getElementById('periodKeyword').value = '';
+    document.getElementById('periodFilterSemester').value = '';
+    document.getElementById('periodFilterActive').value = '';
+    try {
+        await loadPeriods();
+        N6.clearMessage();
+    } catch (error) {
+        N6.showMessage('Không tải lại được danh sách.\n' + error.message, 'error');
+    }
+});
 
-            const row = periodRows.find(
-                item => item.id === editButton.dataset.edit
-            );
+document.getElementById('periodTable').addEventListener('click', async event => {
+    const editButton = event.target.closest('[data-edit]');
+    const deleteButton = event.target.closest('[data-delete]');
 
-            if (!row) return;
+    if (editButton) {
+        const row = periodRows.find(item => item.id === editButton.dataset.edit);
+        if (!row) return;
 
-            document.getElementById('periodId').value = row.id;
+        document.getElementById('periodId').value = row.id;
+        document.getElementById('periodName').value = row.name || '';
+        document.getElementById('semesterId').value = row.semesterId || '';
+        document.getElementById('startTime').value = N6.dateTimeInput(row.startTime);
+        document.getElementById('endTime').value = N6.dateTimeInput(row.endTime);
+        document.getElementById('minCredits').value = row.minCredits ?? 12;
+        document.getElementById('maxCredits').value = row.maxCredits ?? 25;
+        document.getElementById('targetConfig').value = row.targetConfig || '';
+        document.getElementById('allowRetake').checked = Boolean(row.allowRetake);
+        document.getElementById('periodActive').checked = Boolean(row.active);
+        document.getElementById('formHeading').textContent = 'Cập nhật đợt đăng ký';
+        document.getElementById('savePeriodButton').textContent = 'Cập nhật đợt đăng ký';
 
-            document.getElementById('periodName').value =
-                row.name || '';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
-            document.getElementById('semesterId').value =
-                row.semesterId || '';
+    if (deleteButton) {
+        const id = deleteButton.dataset.delete;
+        if (!confirm('Bạn có chắc muốn xóa mềm đợt đăng ký này?')) return;
 
-            document.getElementById('startTime').value =
-                N6.dateTimeInput(row.startTime);
-
-            document.getElementById('endTime').value =
-                N6.dateTimeInput(row.endTime);
-
-            document.getElementById('minCredits').value =
-                row.minCredits ?? 12;
-
-            document.getElementById('maxCredits').value =
-                row.maxCredits ?? 25;
-
-            document.getElementById('targetConfig').value =
-                row.targetConfig || '';
-
-            document.getElementById('allowRetake').checked =
-                Boolean(row.allowRetake);
-
-            document.getElementById('periodActive').checked =
-                Boolean(row.active);
-
-            document.getElementById('formHeading').textContent =
-                'Cập nhật đợt đăng ký';
-
-            document.getElementById('savePeriodButton').textContent =
-                'Cập nhật đợt đăng ký';
-
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
+        try {
+            await N6.request(`${N6.API.periods}/${encodeURIComponent(id)}`, { method: 'DELETE' });
+            N6.showMessage('Đã xóa mềm đợt đăng ký.', 'success');
+            await loadPeriods();
+        } catch (error) {
+            N6.showMessage('Không xóa được đợt đăng ký.\n' + error.message, 'error');
         }
-
-        if (deleteButton) {
-
-            const id = deleteButton.dataset.delete;
-
-            if (!confirm('Bạn có chắc muốn xóa mềm đợt đăng ký này?')) {
-                return;
-            }
-
-            try {
-
-                await N6.request(
-                    `${N6.API.periods}/${encodeURIComponent(id)}`,
-                    { method: 'DELETE' }
-                );
-
-                N6.showMessage(
-                    'Đã xóa mềm đợt đăng ký.',
-                    'success'
-                );
-
-                await loadPeriods();
-
-            } catch (error) {
-
-                N6.showMessage(
-                    'Không xóa được đợt đăng ký.\n' + error.message,
-                    'error'
-                );
-            }
-        }
-    });
+    }
+});
 
 resetPeriodForm();
 loadPage();

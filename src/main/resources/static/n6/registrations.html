@@ -1,81 +1,124 @@
-
 <!DOCTYPE html>
 <html lang="vi">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Đăng ký học phần | Nhóm 6</title>
-
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="/n6/n6.css">
+    <style>
+        .card-head {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .card-head h2 {
+            margin: 0;
+        }
+        .card-collapsed .card-body-wrap {
+            display: none;
+        }
+        .table-footer-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid var(--line);
+        }
+        .quick-summary-bar {
+            margin-top: 14px;
+            padding: 10px 14px;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            background: #f0f7ff;
+            color: #1e3a5f;
+            font-size: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+        }
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 1000;
+        }
+        .modal-overlay.open {
+            display: flex;
+        }
+        .modal-box {
+            background: #ffffff;
+            width: 100%;
+            max-width: 1050px;
+            max-height: 86vh;
+            border-radius: 13px;
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 16px 20px;
+            background: var(--navy);
+            color: #ffffff;
+        }
+        .modal-header h3 {
+            margin: 0;
+            font-size: 17px;
+        }
+        .modal-body {
+            padding: 18px 20px;
+            overflow-y: auto;
+        }
+    </style>
 </head>
 
 <body>
-
     <!-- MENU DOC N6 -->
     <aside class="sidebar">
-
         <a class="brand" href="/n6/index.html">
             <strong>QUẢN LÝ ĐÀO TẠO</strong>
             <small>Nhóm 6 - Đăng ký học phần</small>
         </a>
 
-        <div class="nav-title">
-            NHÓM 6 - ĐĂNG KÝ HỌC PHẦN
-        </div>
+        <div class="nav-title">NHÓM 6</div>
 
         <nav class="nav-menu">
-
             <a data-nav href="/n6/index.html">
-                <span class="nav-icon">
-                    <i class="bi bi-speedometer2"></i>
-                </span>
+                <i class="bi bi-speedometer2"></i>
                 <span>Tổng quan N6</span>
             </a>
 
             <a data-nav href="/n6/periods.html">
-                <span class="nav-icon">
-                    <i class="bi bi-calendar-week"></i>
-                </span>
+                <i class="bi bi-calendar-week"></i>
                 <span>Đợt đăng ký</span>
             </a>
 
             <a data-nav href="/n6/registrations.html">
-                <span class="nav-icon">
-                    <i class="bi bi-journal-check"></i>
-                </span>
+                <i class="bi bi-journal-check"></i>
                 <span>Đăng ký học phần</span>
             </a>
 
             <a data-nav href="/n6/equivalences.html">
-                <span class="nav-icon">
-                    <i class="bi bi-arrow-left-right"></i>
-                </span>
+                <i class="bi bi-arrow-left-right"></i>
                 <span>Môn học tương đương</span>
             </a>
-
-        </nav>
-
-        <div class="nav-title">HỆ THỐNG</div>
-
-        <nav class="nav-menu">
-
-            <a href="/swagger-ui.html"
-               target="_blank"
-               rel="noopener">
-
-                <span class="nav-icon">
-                    <i class="bi bi-braces"></i>
-                </span>
-
-                <span>Swagger API</span>
-
-            </a>
-
         </nav>
 
         <div class="sidebar-footer">
@@ -83,344 +126,241 @@
             <br>
             Nhóm 6 - Đăng ký học phần
         </div>
-
     </aside>
-
 
     <!-- NOI DUNG CHINH -->
     <div class="main">
-
         <header class="topbar">
-
             <div>
                 <h1>Đăng ký học phần</h1>
-
-                <p>
-                    Chọn sinh viên, đợt đăng ký và lớp học phần
-                    để thực hiện đăng ký.
-                </p>
+                <p>Tìm nhanh sinh viên, đợt đăng ký, lớp học phần và xem danh sách sinh viên của từng lớp.</p>
             </div>
-
-            <a href="/swagger-ui.html"
-               target="_blank"
-               rel="noopener">
-                Swagger API ↗
-            </a>
-
         </header>
 
-
         <main class="content">
-
-            <!-- THONG BAO -->
-            <div
-                id="message"
-                class="notice"
-                role="status"
-                aria-live="polite">
-            </div>
-
+            <div id="message" class="notice" role="status" aria-live="polite"></div>
 
             <!-- =====================================
-                 FORM DANG KY HOC PHAN
+                 1. FORM DANG KY HOC PHAN
             ====================================== -->
-
             <section class="card">
-
-                <h2>
-                    <i class="bi bi-journal-plus"></i>
-                    Đăng ký lớp học phần
-                </h2>
+                <div class="card-head">
+                    <h2>
+                        <i class="bi bi-journal-plus"></i>
+                        Đăng ký lớp học phần
+                    </h2>
+                    <button type="button" id="reloadPeriodsButton" class="secondary small">
+                        <i class="bi bi-arrow-clockwise"></i> Tải lại đợt
+                    </button>
+                </div>
 
                 <form id="registerForm">
-
                     <div class="grid">
-
                         <!-- SINH VIEN -->
                         <div class="field">
-
-                            <label for="studentId">
-                                Sinh viên *
-                            </label>
-
+                            <label for="studentId">Sinh viên *</label>
+                            <input id="studentQuickSearch" type="text"
+                                   placeholder="Gõ MSSV hoặc họ tên để lọc nhanh sinh viên...">
                             <select id="studentId" required>
-
-                                <option value="">
-                                    Đang tải danh sách sinh viên...
-                                </option>
-
+                                <option value="">Đang tải danh sách sinh viên...</option>
                             </select>
-
                         </div>
-
 
                         <!-- DOT DANG KY -->
                         <div class="field">
-
-                            <label for="registrationPeriodId">
-                                Đợt đăng ký *
-                            </label>
-
+                            <label for="registrationPeriodId">Đợt đăng ký *</label>
                             <select id="registrationPeriodId" required>
-
-                                <option value="">
-                                    Đang tải danh sách đợt đăng ký...
-                                </option>
-
+                                <option value="">Đang tải danh sách đợt đăng ký...</option>
                             </select>
-
                             <small id="periodHint" class="muted">
                                 Đang kết nối API để lấy danh sách đợt đăng ký.
                             </small>
-
-                            <div class="actions">
-
-                                <a href="/n6/periods.html"
-                                   class="button secondary">
-
-                                    <i class="bi bi-calendar-plus"></i>
-                                    Tạo / quản lý đợt
-
-                                </a>
-
-                                <button
-                                    type="button"
-                                    id="reloadPeriodsButton"
-                                    class="secondary small">
-
-                                    <i class="bi bi-arrow-clockwise"></i>
-                                    Tải lại đợt
-
-                                </button>
-
-                            </div>
-
                         </div>
-
 
                         <!-- LOP HOC PHAN -->
                         <div class="field">
-
-                            <label for="courseClassId">
-                                Lớp học phần *
-                            </label>
-
+                            <label for="courseClassId">Lớp học phần *</label>
+                            <input id="classQuickSearch" type="text"
+                                   placeholder="Gõ mã lớp, mã môn hoặc tên môn để lọc nhanh...">
                             <select id="courseClassId" required>
-
-                                <option value="">
-                                    Đang tải lớp học phần...
-                                </option>
-
+                                <option value="">Đang tải lớp học phần...</option>
                             </select>
-
                             <small class="muted">
-                                Danh sách lớp sẽ được lọc theo học kỳ
-                                của đợt đăng ký đã chọn.
+                                Tự động lọc lớp theo học kỳ của đợt đăng ký đang chọn.
                             </small>
-
                         </div>
 
-
                         <!-- LOAI DANG KY -->
-
-                            <div class="field">
-
-                                <label for="registrationType">
-                                    Loại đăng ký *
-                                </label>
-
-                                <select id="registrationType" required>
-
-                                    <option value="1" selected>
-                                        1 - Học mới
-                                    </option>
-
-                                    <option value="2">
-                                        2 - Học lại
-                                    </option>
-
-                                    <option value="3">
-                                        3 - Cải thiện
-                                    </option>
-
-                                </select>
-
-                            </div>
-
-
-
-                    <!-- BUTTON -->
-                    <div class="actions">
-
-                        <button
-                            type="button"
-                            id="checkEligibility"
-                            class="secondary">
-
-                            <i class="bi bi-shield-check"></i>
-                            Kiểm tra điều kiện
-
-                        </button>
-
-                        <button type="submit">
-
-                            <i class="bi bi-check-circle"></i>
-                            Đăng ký học phần
-
-                        </button>
-
+                        <div class="field">
+                            <label for="registrationType">Loại đăng ký *</label>
+                            <select id="registrationType" required>
+                                <option value="1" selected>1 - Học mới</option>
+                                <option value="2">2 - Học lại</option>
+                                <option value="3">3 - Cải thiện</option>
+                            </select>
+                            <small id="registerTypeHint" class="muted">
+                                Hệ thống tự gợi ý Học lại nếu sinh viên đã học môn này ở kỳ trước.
+                            </small>
+                        </div>
                     </div>
 
+                    <!-- THANH TOM TAT TIN CHI TU DONG -->
+                    <div id="quickSummaryBar" class="quick-summary-bar" style="display:none"></div>
 
-                    <p class="muted">
+                    <div class="actions">
+                        <button type="submit">
+                            <i class="bi bi-check-circle"></i> Đăng ký học phần
+                        </button>
+                        <button type="button" id="checkEligibility" class="secondary">
+                            <i class="bi bi-shield-check"></i> Kiểm tra điều kiện
+                        </button>
+                        <a href="/n6/periods.html" class="button secondary">
+                            <i class="bi bi-calendar-plus"></i> Quản lý đợt
+                        </a>
+                    </div>
+                </form>
 
-                        Hệ thống kiểm tra thời gian đăng ký,
-                        giới hạn tín chỉ, sĩ số, môn tiên quyết,
-                        lịch học và điều kiện học lại/cải thiện.
+                <div id="eligibilityResult" class="notice" role="status" aria-live="polite" style="margin-top:12px"></div>
+            </section>
 
+            <!-- =====================================
+                 2. DANH SACH LOP HOC PHAN & DSSV TUNG LOP
+            ====================================== -->
+            <section class="card" id="classSectionCard">
+                <div class="card-head">
+                    <h2>
+                        <i class="bi bi-people"></i>
+                        Danh sách lớp học phần &amp; Sinh viên theo lớp
+                    </h2>
+                    <button type="button" id="toggleClassSectionBtn" class="secondary small">
+                        <i class="bi bi-chevron-up"></i> Thu gọn mục
+                    </button>
+                </div>
+
+                <div class="card-body-wrap">
+                    <p class="muted" style="margin-top:0">
+                        Bấm <strong>Xem DSSV</strong> để mở danh sách sinh viên của lớp, hoặc bấm <strong>Chọn ĐK</strong> để đưa lớp lên biểu mẫu đăng ký.
                     </p>
 
-                </form>
+                    <div class="filter-grid">
+                        <div class="field">
+                            <label for="classListKeyword">Tìm kiếm lớp học phần</label>
+                            <input id="classListKeyword" type="text"
+                                   placeholder="Nhập mã lớp, mã môn, tên môn hoặc học kỳ...">
+                        </div>
 
+                        <div class="checks" style="margin:0;align-self:end;padding-bottom:8px">
+                            <label>
+                                <input id="classListOnlyCurrentPeriod" type="checkbox">
+                                Chỉ lớp thuộc đợt đang chọn
+                            </label>
+                            <label>
+                                <input id="classListOnlyHasStudents" type="checkbox">
+                                Chỉ lớp đã có SV (&gt; 0)
+                            </label>
+                        </div>
 
-                <!-- KET QUA KIEM TRA -->
-                <div
-                    id="eligibilityResult"
-                    class="notice"
-                    role="status"
-                    aria-live="polite">
-                </div>
-
-            </section>
-
-
-            <!-- =====================================
-                 TONG HOP TIN CHI
-            ====================================== -->
-
-            <section class="card">
-
-                <h2>
-                    <i class="bi bi-calculator"></i>
-                    Tổng hợp tín chỉ theo đợt
-                </h2>
-
-                <form id="summaryForm" class="inline-form">
-
-                    <div class="field">
-
-                        <label for="summaryStudentId">
-                            Sinh viên
-                        </label>
-
-                        <select id="summaryStudentId" required>
-
-                            <option value="">
-                                Chọn sinh viên
-                            </option>
-
-                        </select>
-
+                        <div class="actions" style="margin-top:0">
+                            <button type="button" id="searchClassListButton">
+                                <i class="bi bi-search"></i> Tìm lớp
+                            </button>
+                            <button type="button" id="resetClassListButton" class="secondary">
+                                <i class="bi bi-arrow-clockwise"></i> Đặt lại
+                            </button>
+                        </div>
                     </div>
 
-
-                    <div class="field">
-
-                        <label for="summaryPeriodId">
-                            Đợt đăng ký
-                        </label>
-
-                        <select id="summaryPeriodId" required>
-
-                            <option value="">
-                                Chọn đợt đăng ký
-                            </option>
-
-                        </select>
-
-                    </div>
-
-
-                    <button type="submit">
-
-                        <i class="bi bi-search"></i>
-                        Xem tổng hợp
-
-                    </button>
-
-                </form>
-
-
-                <div
-                    id="summaryResult"
-                    class="muted"
-                    style="margin-top:12px">
-
-                    Chọn sinh viên và đợt đăng ký
-                    để xem số môn và tín chỉ.
-
+                    <div id="classSummaryTable" class="table-wrap">Đang tải danh sách lớp học phần...</div>
+                    <div id="classTableFooter" class="table-footer-bar" style="display:none"></div>
                 </div>
-
             </section>
-
 
             <!-- =====================================
-                 DANH SACH DANG KY
+                 3. DANH SACH DANG KY HOC PHAN + TIM KIEM
             ====================================== -->
-
-            <section class="card">
-
-                <h2>
-                    <i class="bi bi-list-check"></i>
-                    Danh sách đăng ký học phần
-                </h2>
-
-                <p class="muted">
-                    Danh sách hiển thị đầy đủ Học mới, Học lại và Cải thiện.
-                    Mỗi dòng gồm mã và họ tên sinh viên, mã lớp và tên môn học,
-                    số tín chỉ, đợt đăng ký, trạng thái và thanh toán.
-                    Các mã UUID chỉ dùng nội bộ để liên kết dữ liệu.
-                </p>
-
-                <div class="actions"
-                     style="margin-top:0;margin-bottom:15px">
-
-                    <button
-                        type="button"
-                        id="reloadRegistrationsButton"
-                        class="secondary">
-
-                        <i class="bi bi-arrow-clockwise"></i>
-                        Tải lại danh sách
-
+            <section class="card" id="regSectionCard">
+                <div class="card-head">
+                    <h2>
+                        <i class="bi bi-list-check"></i>
+                        Danh sách đăng ký học phần
+                    </h2>
+                    <button type="button" id="toggleRegSectionBtn" class="secondary small">
+                        <i class="bi bi-chevron-up"></i> Thu gọn mục
                     </button>
-
                 </div>
 
-                <div
-                    id="registrationTable"
-                    class="table-wrap">
+                <div class="card-body-wrap">
+                    <div class="filter-grid">
+                        <div class="field">
+                            <label for="regFilterKeyword">Từ khóa tìm kiếm</label>
+                            <input id="regFilterKeyword" type="text"
+                                   placeholder="Nhập MSSV, họ tên, mã lớp, tên môn...">
+                        </div>
 
-                    Đang tải danh sách đăng ký...
+                        <div class="field">
+                            <label for="regFilterPeriod">Lọc theo đợt đăng ký</label>
+                            <select id="regFilterPeriod">
+                                <option value="">Tất cả đợt đăng ký</option>
+                            </select>
+                        </div>
 
+                        <div class="field">
+                            <label for="regFilterStatus">Trạng thái</label>
+                            <select id="regFilterStatus">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="2">Đã đăng ký</option>
+                                <option value="1">Chờ xử lý</option>
+                                <option value="3">Đã hủy</option>
+                            </select>
+                        </div>
+
+                        <div class="actions" style="margin-top:0">
+                            <button type="button" id="searchRegistrationsButton">
+                                <i class="bi bi-search"></i> Tìm kiếm
+                            </button>
+                            <button type="button" id="resetRegFilterButton" class="secondary">
+                                <i class="bi bi-arrow-clockwise"></i> Đặt lại
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="registrationTable" class="table-wrap">Đang tải danh sách đăng ký...</div>
+                    <div id="regTableFooter" class="table-footer-bar" style="display:none"></div>
                 </div>
-
             </section>
-
         </main>
-
     </div>
 
-
     <!-- =====================================
-         SCRIPT CHUNG
-         PHAI TAI TRUOC registrations.js
+         MODAL XEM DANH SACH SINH VIEN CUA LOP
     ====================================== -->
+    <div id="classStudentsModal" class="modal-overlay" role="dialog" aria-modal="true">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="classStudentDetailTitle">Danh sách sinh viên của lớp</h3>
+                <button type="button" id="closeClassDetailButton" class="secondary small">
+                    <i class="bi bi-x-lg"></i> Đóng
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="filter-grid" style="margin-bottom:14px">
+                    <div class="field">
+                        <label for="studentInClassKeyword">Tìm sinh viên trong lớp này</label>
+                        <input id="studentInClassKeyword" type="text"
+                               placeholder="Nhập MSSV, họ tên hoặc lớp sinh hoạt...">
+                    </div>
+                    <div class="actions" style="margin-top:0">
+                        <button type="button" id="searchStudentInClassButton" class="small">
+                            <i class="bi bi-search"></i> Tìm sinh viên
+                        </button>
+                    </div>
+                </div>
+                <div id="classStudentDetailBody" class="table-wrap"></div>
+            </div>
+        </div>
+    </div>
 
     <script src="/n6/n6-common.js"></script>
-
-    <!-- SCRIPT DANG KY HOC PHAN -->
     <script src="/n6/registrations.js"></script>
-
 </body>
 </html>
