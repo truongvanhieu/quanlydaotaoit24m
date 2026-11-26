@@ -42,18 +42,17 @@ const PAGES = {
     },
     statuses: {
         title: 'Trạng thái sinh viên',
-        description: 'Quản lý danh mục trạng thái trong student_status.',
+        description: 'Quản lý danh mục trạng thái dùng chung trong student_status.',
         endpoint: API_ENDPOINTS.STUDENT_STATUSES,
-        lookups: ['students'],
+        lookups: [],
+        statusList: true,
         columns: [
             { key: 'code', label: 'Mã trạng thái' },
             { key: 'name', label: 'Tên trạng thái' },
-            { key: 'studentId', label: 'ID sinh viên', lookup: 'students' },
             { key: 'description', label: 'Mô tả' },
             { key: 'isActive', label: 'Hoạt động', type: 'boolean' }
         ],
         fields: [
-            { key: 'studentId', label: 'Sinh viên (để trống nếu là danh mục dùng chung)', type: 'lookup', lookup: 'students' },
             { key: 'code', label: 'Mã trạng thái', maxLength: 100 },
             { key: 'name', label: 'Tên trạng thái', maxLength: 100 },
             { key: 'description', label: 'Mô tả', type: 'textarea', maxLength: 255 },
@@ -108,7 +107,29 @@ async function initializeManagementPage(config) {
     const selectedClassId = config.classList
         ? new URLSearchParams(window.location.search).get('classId')
         : null;
-    let classStudentRows = null;
+    const selectedStatusId = config.statusList
+        ? new URLSearchParams(window.location.search).get('statusId')
+        : null;
+    let detailStudentRows = null;
+    let sortField = 'startDate';
+    let sortDirection = 'desc';
+
+    if (config.endpoint === API_ENDPOINTS.STUDENT_STATUS_HISTORIES) {
+        const sortGroup = document.createElement('div');
+        sortGroup.className = 'd-flex align-items-center gap-2 flex-shrink-0';
+        sortGroup.innerHTML = `
+            <select id="historySortField" class="form-select form-select-sm" style="width: 170px;" aria-label="Sắp xếp theo">
+                <option value="studentId">Tên sinh viên</option>
+                <option value="statusId">Tên trạng thái</option>
+                <option value="startDate" selected>Ngày bắt đầu</option>
+                <option value="endDate">Ngày kết thúc</option>
+            </select>
+            <select id="historySortDirection" class="form-select form-select-sm" style="width: 125px;" aria-label="Thứ tự sắp xếp">
+                <option value="asc">Tăng dần</option>
+                <option value="desc" selected>Giảm dần</option>
+            </select>`;
+        searchInput.parentElement.insertBefore(sortGroup, searchInput);
+    }
 
     document.getElementById('managementHeading').textContent = config.title;
     document.getElementById('managementDescription').textContent = config.description;
@@ -141,7 +162,7 @@ async function initializeManagementPage(config) {
             lookupData[config.lookups[index]] = await response.json();
         }
         populateReferenceFields(config, lookupData);
-        renderRecords(config, records, lookupData);
+        renderRecords(config, records, lookupData, '', sortField, sortDirection);
     } catch (error) {
         console.error(`Lỗi khi mở trang ${config.title}:`, error);
         tableBody.innerHTML = `<tr><td colspan="${config.columns.length + 1}" class="text-center text-danger py-4">${escapeHtml(error.message || 'Không thể tải dữ liệu')}</td></tr>`;
@@ -152,17 +173,35 @@ async function initializeManagementPage(config) {
     cancelButton.addEventListener('click', closeRecordForm);
     form.addEventListener('submit', (event) => saveRecord(event, config, lookupData));
     tableBody.addEventListener('click', (event) => handleTableAction(event, config, lookupData));
+    const historySortField = document.getElementById('historySortField');
+    const historySortDirection = document.getElementById('historySortDirection');
+    historySortField?.addEventListener('change', () => {
+        sortField = historySortField.value;
+        renderRecords(config, records, lookupData, searchInput.value, sortField, sortDirection);
+    });
+    historySortDirection?.addEventListener('change', () => {
+        sortDirection = historySortDirection.value;
+        renderRecords(config, records, lookupData, searchInput.value, sortField, sortDirection);
+    });
+
     searchInput.addEventListener('input', () => {
-        if (classStudentRows) {
-            renderClassStudents(classStudentRows, searchInput.value);
+        if (detailStudentRows) {
+            if (config.classList) {
+                renderClassStudents(detailStudentRows, searchInput.value);
+            } else if (config.statusList) {
+                renderStatusStudents(detailStudentRows, searchInput.value);
+            }
         } else {
-            renderRecords(config, records, lookupData, searchInput.value);
+            renderRecords(config, records, lookupData, searchInput.value, sortField, sortDirection);
         }
     });
     backToClasses.addEventListener('click', (event) => {
         if (config.classList && selectedClassId) {
             event.preventDefault();
             window.location.href = '/index.html?page=classes';
+        } else if (config.statusList && selectedStatusId) {
+            event.preventDefault();
+            window.location.href = '/index.html?page=statuses';
         }
     });
 
@@ -174,11 +213,28 @@ async function initializeManagementPage(config) {
         } else {
             showClassDetail(selectedClassId, selectedClass);
             try {
-                classStudentRows = await loadClassStudents(selectedClassId);
-                renderClassStudents(classStudentRows);
+                detailStudentRows = await loadClassStudents(selectedClassId);
+                renderClassStudents(detailStudentRows);
             } catch (error) {
                 console.error('Lỗi khi tải danh sách sinh viên của lớp:', error);
                 tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Không thể tải danh sách sinh viên trong lớp.</td></tr>';
+            }
+        }
+    }
+
+    if (selectedStatusId && config.statusList) {
+        const selectedStatus = records.find((item) => item.id === selectedStatusId);
+        if (!selectedStatus) {
+            showStatusDetail(selectedStatusId, null);
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">Không tìm thấy trạng thái sinh viên.</td></tr>';
+        } else {
+            showStatusDetail(selectedStatusId, selectedStatus);
+            try {
+                detailStudentRows = await loadStatusStudents(selectedStatus);
+                renderStatusStudents(detailStudentRows);
+            } catch (error) {
+                console.error('Lỗi khi tải danh sách sinh viên theo trạng thái:', error);
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">Không thể tải danh sách sinh viên theo trạng thái.</td></tr>';
             }
         }
     }
@@ -191,7 +247,7 @@ async function initializeManagementPage(config) {
             }
             records = await response.json();
             window.managementRecords = records;
-            renderRecords(config, records, lookupData, searchInput.value);
+            renderRecords(config, records, lookupData, searchInput.value, sortField, sortDirection);
         } catch (error) {
             console.error(`Lỗi khi tải lại ${config.title}:`, error);
             window.alert('Thao tác đã thực hiện nhưng không thể tải lại danh sách. Vui lòng làm mới trang.');
@@ -234,9 +290,31 @@ function populateReferenceFields(config, lookupData) {
     });
 }
 
-function renderRecords(config, records, lookupData, keyword = '') {
+function sortHistoryRecords(records, lookupData, sortField, sortDirection) {
+    const direction = sortDirection === 'asc' ? 1 : -1;
+    return [...records].sort((left, right) => {
+        const leftValue = sortField === 'studentId' || sortField === 'statusId'
+            ? displayValue(left, { key: sortField, lookup: sortField === 'studentId' ? 'students' : 'statuses' }, lookupData)
+            : left[sortField];
+        const rightValue = sortField === 'studentId' || sortField === 'statusId'
+            ? displayValue(right, { key: sortField, lookup: sortField === 'studentId' ? 'students' : 'statuses' }, lookupData)
+            : right[sortField];
+
+        if (sortField === 'startDate' || sortField === 'endDate') {
+            const leftTime = leftValue ? new Date(leftValue).getTime() : 0;
+            const rightTime = rightValue ? new Date(rightValue).getTime() : 0;
+            return (leftTime - rightTime) * direction;
+        }
+
+        return String(leftValue || '').localeCompare(String(rightValue || ''), 'vi', { sensitivity: 'base' }) * direction;
+    });
+}
+
+function renderRecords(config, records, lookupData, keyword = '', sortField = '', sortDirection = 'asc') {
     const tableBody = document.getElementById('managementTableBody');
-    const filteredRecords = records.filter((record) => {
+    const filteredRecords = (config.endpoint === API_ENDPOINTS.STUDENT_STATUS_HISTORIES && sortField
+        ? sortHistoryRecords(records, lookupData, sortField, sortDirection)
+        : records).filter((record) => {
         const normalized = keyword.trim().toLocaleLowerCase();
         if (!normalized) {
             return true;
@@ -254,7 +332,9 @@ function renderRecords(config, records, lookupData, keyword = '') {
         <tr>
             ${config.columns.map((column) => `<td>${config.classList && column.key === 'name'
                 ? `<a href="/index.html?page=classes&classId=${encodeURIComponent(record.id)}" class="fw-semibold">${escapeHtml(displayValue(record, column, lookupData))}</a>`
-                : escapeHtml(displayValue(record, column, lookupData))}</td>`).join('')}
+                : config.statusList && column.key === 'name'
+                    ? `<a href="/index.html?page=statuses&statusId=${encodeURIComponent(record.id)}" class="fw-semibold">${escapeHtml(displayValue(record, column, lookupData))}</a>`
+                    : escapeHtml(displayValue(record, column, lookupData))}</td>`).join('')}
             <td class="text-end text-nowrap">
                 <div class="table-actions">
                     <button type="button" class="btn btn-warning btn-sm" data-action="edit" data-id="${escapeHtml(record.id)}" title="Sửa"><i class="bi bi-pencil-square"></i></button>
@@ -288,7 +368,18 @@ function showClassDetail(classId, studentClass) {
             <th>Ngày bắt đầu</th>
             <th>Ngày kết thúc</th>
         </tr>`;
+    document.getElementById('managementTableHead').innerHTML = `
+        <tr>
+            <th>Mã sinh viên</th>
+            <th>Họ tên</th>
+            <th>Giới tính</th>
+            <th>Trạng thái</th>
+            <th>Ngày bắt đầu</th>
+            <th>Ngày kết thúc</th>
+            <th class="text-end">Hành động</th>
+        </tr>`;
     document.getElementById('managementTableBody').dataset.classId = classId;
+    setupDetailStudentPicker('class', classId);
 }
 
 async function loadClassStudents(classId) {
@@ -317,7 +408,8 @@ async function loadClassStudents(classId) {
             gender: student?.gender || '-',
             status: section.status || '-',
             startDate: section.startDate || '-',
-            endDate: section.endDate || '-'
+            endDate: section.endDate || '-',
+            sectionId: section.id
         });
     });
 
@@ -335,12 +427,218 @@ async function loadClassStudents(classId) {
                     gender: student.gender || '-',
                     status: student.status || 'studying',
                     startDate: '-',
-                    endDate: '-'
+                    endDate: '-',
+                    sectionId: null
                 });
             }
         });
 
     return Array.from(classStudentsById.values());
+}
+
+function showStatusDetail(statusId, status) {
+    const title = status
+        ? [status.code, status.name].filter(Boolean).join(' - ')
+        : 'Chi tiết trạng thái';
+    document.getElementById('managementHeading').textContent = title;
+    document.getElementById('managementDescription').textContent = 'Danh sách sinh viên đang có trạng thái này.';
+    document.getElementById('managementBreadcrumb').textContent = title;
+    document.getElementById('managementTableTitle').textContent = `Danh sách sinh viên${status?.name ? ` - ${status.name}` : ''}`;
+    document.title = `${title} | AdminLTE 4`;
+    document.getElementById('managementFormCard').style.display = 'none';
+    document.getElementById('addManagementRecord').style.display = 'none';
+    document.getElementById('backToClasses').style.display = '';
+    document.getElementById('backToClasses').innerHTML = '<i class="bi bi-arrow-left me-1"></i>Quay lại trạng thái';
+    document.getElementById('backToClasses').href = '/index.html?page=statuses';
+    document.getElementById('managementSearch').placeholder = 'Tìm theo mã sinh viên / họ tên...';
+    document.getElementById('managementSearch').setAttribute('aria-label', 'Tìm theo mã sinh viên hoặc họ tên');
+    document.getElementById('managementTableHead').innerHTML = `
+        <tr>
+            <th>Mã sinh viên</th>
+            <th>Họ tên</th>
+            <th>Giới tính</th>
+            <th>Lớp hành chính</th>
+            <th>Trạng thái</th>
+        </tr>`;
+    document.getElementById('managementTableHead').innerHTML = `
+        <tr>
+            <th>Mã sinh viên</th>
+            <th>Họ tên</th>
+            <th>Giới tính</th>
+            <th>Lớp hành chính</th>
+            <th>Trạng thái</th>
+            <th class="text-end">Hành động</th>
+        </tr>`;
+    document.getElementById('managementTableBody').dataset.statusId = statusId;
+    setupDetailStudentPicker('status', statusId, status);
+}
+
+function setupDetailStudentPicker(mode, detailId, status = null) {
+    const addButton = document.getElementById('addManagementRecord');
+    if (!addButton) {
+        return;
+    }
+
+    const oldSelect = document.getElementById('detailStudentSelect');
+    oldSelect?.remove();
+
+    const select = document.createElement('select');
+    select.id = 'detailStudentSelect';
+    select.className = 'form-select form-select-sm';
+    select.style.width = '260px';
+    select.innerHTML = '<option value="">-- Chọn sinh viên --</option>';
+    addButton.parentElement.insertBefore(select, addButton);
+
+    const replacement = addButton.cloneNode(true);
+    addButton.replaceWith(replacement);
+    replacement.style.display = '';
+    replacement.innerHTML = mode === 'class'
+        ? '<i class="bi bi-plus-circle me-1"></i>Thêm vào lớp'
+        : '<i class="bi bi-plus-circle me-1"></i>Thêm sinh viên';
+
+    replacement.addEventListener('click', async () => {
+        const studentId = select.value;
+        if (!studentId) {
+            window.alert('Vui lòng chọn sinh viên');
+            return;
+        }
+
+        try {
+            if (mode === 'class') {
+                const response = await fetch(API_ENDPOINTS.STUDENT_CLASSE_SECTIONS, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        studentId,
+                        studentClasseId: detailId,
+                        status: 'studying',
+                        startDate: new Date().toISOString().slice(0, 19),
+                        isActive: true
+                    })
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            } else {
+                const detailResponse = await fetch(`${API_ENDPOINTS.STUDENTS}/${encodeURIComponent(studentId)}`);
+                if (!detailResponse.ok) throw new Error(`HTTP ${detailResponse.status}`);
+                const student = await detailResponse.json();
+                student.status = status.code;
+                const response = await fetch(`${API_ENDPOINTS.STUDENTS}/${encodeURIComponent(studentId)}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(student)
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            }
+            window.location.reload();
+        } catch (error) {
+            console.error('Lỗi khi thêm sinh viên:', error);
+            window.alert('Không thể thêm sinh viên. Vui lòng thử lại.');
+        }
+    });
+
+    Promise.all([
+        fetch(API_ENDPOINTS.STUDENTS),
+        mode === 'class' ? fetch(`${API_ENDPOINTS.STUDENT_CLASSE_SECTIONS}/class/${encodeURIComponent(detailId)}`) : Promise.resolve(null)
+    ]).then(async ([studentsResponse, sectionsResponse]) => {
+        if (!studentsResponse.ok) throw new Error(`HTTP ${studentsResponse.status}`);
+        const students = await studentsResponse.json();
+        let assignedIds = new Set();
+
+        if (mode === 'class' && sectionsResponse) {
+            if (!sectionsResponse.ok) throw new Error(`HTTP ${sectionsResponse.status}`);
+            const sections = await sectionsResponse.json();
+            assignedIds = new Set(sections.filter((section) => section.isActive !== false).map((section) => section.studentId));
+        } else if (mode === 'status') {
+            assignedIds = new Set(students.filter((student) => (
+                student.isActive !== false && String(student.status || '').trim() === status.code
+            )).map((student) => student.id));
+        }
+
+        select.innerHTML = '<option value="">-- Chọn sinh viên --</option>' + students
+            .filter((student) => {
+                if (student.isActive === false) return false;
+                if (mode === 'class') {
+                    return (student.studentClassessId == null || String(student.studentClassessId).trim() === '')
+                        && !assignedIds.has(student.id);
+                }
+                return !assignedIds.has(student.id);
+            })
+            .map((student) => {
+                const label = [student.code || student.studentCode, student.fullName].filter(Boolean).join(' - ') || student.id;
+                return `<option value="${escapeHtml(student.id)}">${escapeHtml(label)}</option>`;
+            })
+            .join('');
+    }).catch((error) => {
+        console.error('Lỗi khi tải danh sách sinh viên:', error);
+    });
+}
+
+async function loadStatusStudents(status) {
+    if (!status.code) {
+        return [];
+    }
+
+    const [studentsResponse, classesResponse] = await Promise.all([
+        fetch(API_ENDPOINTS.STUDENTS),
+        fetch(API_ENDPOINTS.STUDENT_CLASSES)
+    ]);
+    if (!studentsResponse.ok || !classesResponse.ok) {
+        throw new Error(`HTTP ${!studentsResponse.ok ? studentsResponse.status : classesResponse.status}`);
+    }
+
+    const [students, classes] = await Promise.all([
+        studentsResponse.json(),
+        classesResponse.json()
+    ]);
+    const classesById = new Map(classes.map((studentClass) => [studentClass.id, studentClass]));
+
+    return students
+        .filter((student) => (
+            student.isActive !== false
+            && !student.deletedAt
+            && String(student.status || '').trim() === status.code
+        ))
+        .map((student) => {
+            const studentClass = classesById.get(student.studentClassessId);
+            return {
+                code: student.code || student.studentCode || '-',
+                fullName: student.fullName || '-',
+                gender: student.gender || '-',
+                className: studentClass
+                    ? [studentClass.code, studentClass.name].filter(Boolean).join(' - ') || student.studentClassessId
+                    : student.studentClassessId || '-',
+                status: status.name || status.code,
+                studentId: student.id
+            };
+        });
+}
+
+function renderStatusStudents(students, keyword = '') {
+    const tableBody = document.getElementById('managementTableBody');
+    const normalizedKeyword = keyword.trim().toLocaleLowerCase();
+    const filteredStudents = students.filter((student) => (
+        !normalizedKeyword
+        || [student.code, student.fullName, student.gender, student.className]
+            .some((value) => String(value).toLocaleLowerCase().includes(normalizedKeyword))
+    ));
+
+    if (!filteredStudents.length) {
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Chưa có sinh viên thuộc trạng thái này.</td></tr>';
+        return;
+    }
+
+    tableBody.innerHTML = filteredStudents.map((student) => `
+        <tr>
+            <td>${escapeHtml(student.code)}</td>
+            <td>${escapeHtml(student.fullName)}</td>
+            <td>${escapeHtml(student.gender)}</td>
+            <td>${escapeHtml(student.className)}</td>
+            <td>${escapeHtml(student.status)}</td>
+            <td class="text-end text-nowrap">
+                <button type="button" class="btn btn-danger btn-sm" data-action="remove-from-status" data-student-id="${escapeHtml(student.studentId)}" title="Xóa khỏi trạng thái"><i class="bi bi-trash"></i></button>
+            </td>
+        </tr>
+    `).join('');
 }
 
 function renderClassStudents(students, keyword = '') {
@@ -352,7 +650,7 @@ function renderClassStudents(students, keyword = '') {
     ));
 
     if (!filteredStudents.length) {
-        tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Lớp này chưa có sinh viên đang học.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Lớp này chưa có sinh viên đang học.</td></tr>';
         return;
     }
     tableBody.innerHTML = filteredStudents.map((student) => `
@@ -363,6 +661,9 @@ function renderClassStudents(students, keyword = '') {
             <td>${escapeHtml(student.status)}</td>
             <td>${escapeHtml(String(student.startDate).slice(0, 10))}</td>
             <td>${escapeHtml(student.endDate === '-' ? '-' : String(student.endDate).slice(0, 10))}</td>
+            <td class="text-end text-nowrap">
+                ${student.sectionId ? `<button type="button" class="btn btn-danger btn-sm" data-action="remove-from-class" data-section-id="${escapeHtml(student.sectionId)}" title="Xóa khỏi lớp"><i class="bi bi-trash"></i></button>` : ''}
+            </td>
         </tr>
     `).join('');
 }
@@ -474,11 +775,45 @@ async function saveRecord(event, config, lookupData) {
     }
 }
 
-function handleTableAction(event, config, lookupData) {
+async function handleTableAction(event, config, lookupData) {
     const button = event.target.closest('button[data-action]');
     if (!button) {
         return;
     }
+    if (button.dataset.action === 'remove-from-class') {
+        if (!window.confirm('Bạn có chắc muốn xóa sinh viên khỏi lớp hành chính này?')) return;
+        try {
+            const response = await fetch(`${API_ENDPOINTS.STUDENT_CLASSE_SECTIONS}/${encodeURIComponent(button.dataset.sectionId)}`, { method: 'DELETE' });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            window.location.reload();
+        } catch (error) {
+            console.error('Lỗi khi xóa sinh viên khỏi lớp:', error);
+            window.alert('Không thể xóa sinh viên khỏi lớp.');
+        }
+        return;
+    }
+
+    if (button.dataset.action === 'remove-from-status') {
+        if (!window.confirm('Bạn có chắc muốn xóa sinh viên khỏi trạng thái này?')) return;
+        try {
+            const studentResponse = await fetch(`${API_ENDPOINTS.STUDENTS}/${encodeURIComponent(button.dataset.studentId)}`);
+            if (!studentResponse.ok) throw new Error(`HTTP ${studentResponse.status}`);
+            const student = await studentResponse.json();
+            student.status = null;
+            const response = await fetch(`${API_ENDPOINTS.STUDENTS}/${encodeURIComponent(button.dataset.studentId)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(student)
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            window.location.reload();
+        } catch (error) {
+            console.error('Lỗi khi xóa sinh viên khỏi trạng thái:', error);
+            window.alert('Không thể cập nhật trạng thái sinh viên.');
+        }
+        return;
+    }
+
     const record = window.managementRecords?.find((item) => item.id === button.dataset.id);
     if (button.dataset.action === 'edit' && record) {
         openRecordForm(config, lookupData, record);

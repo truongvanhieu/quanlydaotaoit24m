@@ -1,6 +1,7 @@
 import { API_ENDPOINTS } from './config.js';
 
 let studentClassesById = new Map();
+let studentStatusesByCode = new Map();
 let advisorClasses = [];
 let studentPageInitialized = false;
 let advisorPageInitialized = false;
@@ -63,11 +64,13 @@ function initStudentPage() {
     // =========================
     // TRANG DANH SÁCH
     // =========================
-    const classLoad = loadStudentClasses()
-        .catch((error) => console.error('Lỗi khi tải danh sách lớp:', error));
+    const referenceLoad = Promise.all([
+        loadStudentClasses(),
+        loadStudentStatuses()
+    ]).catch((error) => console.error('Lỗi khi tải dữ liệu tham chiếu:', error));
 
     if (studentTableBody) {
-        classLoad.finally(() => loadStudents());
+        referenceLoad.finally(() => loadStudents());
         if (searchForm) {
             searchForm.addEventListener('submit', handleSearch);
         }
@@ -77,7 +80,7 @@ function initStudentPage() {
     // TRANG FORM THÊM / SỬA / XEM
     // =========================
     if (studentForm) {
-        classLoad.finally(initStudentForm);
+        referenceLoad.finally(initStudentForm);
     }
 }
 
@@ -169,7 +172,7 @@ function renderStudents(students) {
 
                     <td>${escapeHtml(student.gender || '-')}</td>
                     <td>${escapeHtml(getStudentClassLabel(student.studentClassessId))}</td>
-                    <td>${escapeHtml(student.status || '-')}</td>
+                    <td>${escapeHtml(getStudentStatusLabel(student.status))}</td>
 
                     <td class="text-end">
                         <div class="table-actions d-flex justify-content-end gap-1">
@@ -669,6 +672,38 @@ async function loadStudentClasses() {
     const classes = await response.json();
     studentClassesById = new Map(classes.map((studentClass) => [studentClass.id, studentClass]));
     setClassOptions(document.getElementById('studentClassessId'), classes);
+}
+
+async function loadStudentStatuses() {
+    const response = await fetch(API_ENDPOINTS.STUDENT_STATUSES);
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+    }
+
+    const statuses = await response.json();
+    const activeStatuses = statuses.filter((status) => status.isActive !== false);
+    studentStatusesByCode = new Map(activeStatuses.map((status) => [status.code, status.name || status.code]));
+    setStatusOptions(document.getElementById('status'), activeStatuses);
+}
+
+function setStatusOptions(select, statuses) {
+    if (!select) {
+        return;
+    }
+
+    const selectedValue = select.value;
+    select.innerHTML = '<option value="">-- Chọn trạng thái --</option>' + statuses
+        .filter((status) => status.code)
+        .map((status) => `<option value="${escapeHtml(status.code)}">${escapeHtml(status.name || status.code)}</option>`)
+        .join('');
+    select.value = selectedValue;
+}
+
+function getStudentStatusLabel(statusCode) {
+    if (!statusCode) {
+        return '-';
+    }
+    return studentStatusesByCode.get(statusCode) || statusCode;
 }
 
 function setClassOptions(select, classes) {

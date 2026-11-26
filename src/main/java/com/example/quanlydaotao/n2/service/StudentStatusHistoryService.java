@@ -7,17 +7,28 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.quanlydaotao.n2.entity.Student;
+import com.example.quanlydaotao.n2.entity.StudentStatus;
 import com.example.quanlydaotao.n2.entity.StudentStatusHistory;
+import com.example.quanlydaotao.n2.repository.StudentRepository;
 import com.example.quanlydaotao.n2.repository.StudentStatusHistoryRepository;
+import com.example.quanlydaotao.n2.repository.StudentStatusRepository;
 
 @Service
 @Transactional
 public class StudentStatusHistoryService {
 
     private final StudentStatusHistoryRepository repository;
+    private final StudentRepository studentRepository;
+    private final StudentStatusRepository studentStatusRepository;
 
-    public StudentStatusHistoryService(StudentStatusHistoryRepository repository) {
+    public StudentStatusHistoryService(
+            StudentStatusHistoryRepository repository,
+            StudentRepository studentRepository,
+            StudentStatusRepository studentStatusRepository) {
         this.repository = repository;
+        this.studentRepository = studentRepository;
+        this.studentStatusRepository = studentStatusRepository;
     }
 
     @Transactional(readOnly = true)
@@ -50,12 +61,35 @@ public class StudentStatusHistoryService {
             history.setCreatedAt(LocalDateTime.now());
         }
         history.setIsActive(true);
+        syncStudentStatus(history);
         return repository.save(history);
     }
 
     public StudentStatusHistory update(UUID id, StudentStatusHistory history) {
         history.setId(id);
+        syncStudentStatus(history);
         return repository.save(history);
+    }
+
+    private void syncStudentStatus(StudentStatusHistory history) {
+        if (history.getStudentId() == null || history.getStatusId() == null) {
+            return;
+        }
+
+        Student student = studentRepository.findById(history.getStudentId())
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sinh viên: " + history.getStudentId()));
+        StudentStatus status = studentStatusRepository.findById(history.getStatusId())
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy trạng thái: " + history.getStatusId()));
+
+        if (status.getIsActive() == false) {
+            throw new IllegalArgumentException("Trạng thái sinh viên đã ngừng hoạt động");
+        }
+        if (status.getCode() == null || status.getCode().trim().isEmpty()) {
+            throw new IllegalArgumentException("Trạng thái sinh viên chưa có mã");
+        }
+
+        student.setStatus(status.getCode().trim());
+        studentRepository.save(student);
     }
 
     public void delete(UUID id) {
