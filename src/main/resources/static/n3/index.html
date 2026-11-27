@@ -202,7 +202,7 @@
      aria-hidden="true">
 
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
+        <form id="dataForm" class="modal-content">
 
             <div class="modal-header">
                 <h5 class="modal-title" id="modalTitle">
@@ -216,28 +216,26 @@
                 </button>
             </div>
 
-            <form id="dataForm">
-                <div class="modal-body">
-                    <div id="formFields" class="row g-3"></div>
-                </div>
+            <div class="modal-body">
+                <div id="formFields" class="row g-3"></div>
+            </div>
 
-                <div class="modal-footer">
-                    <button type="button"
-                            class="btn btn-secondary"
-                            data-bs-dismiss="modal">
-                        Đóng
-                    </button>
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Đóng
+                </button>
 
-                    <button id="saveBtn"
-                            type="submit"
-                            class="btn btn-primary">
-                        <i class="bi bi-check-lg"></i>
-                        Lưu thông tin
-                    </button>
-                </div>
-            </form>
+                <button id="saveBtn"
+                        type="submit"
+                        class="btn btn-primary">
+                    <i class="bi bi-check-lg"></i>
+                    Lưu thông tin
+                </button>
+            </div>
 
-        </div>
+        </form>
     </div>
 </div>
 
