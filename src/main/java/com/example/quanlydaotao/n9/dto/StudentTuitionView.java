@@ -27,6 +27,7 @@ public record StudentTuitionView(
         BigDecimal netAmount,
         BigDecimal paidAmount,
         BigDecimal debtAmount,
+        BigDecimal overpaidAmount,
         Integer status,
         String statusName,
         LocalDate deadline,

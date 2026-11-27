@@ -1,7 +1,8 @@
-import { API_ENDPOINTS, buildHeaders } from './config.js';
+import { API_ENDPOINTS, buildHeaders } from './config.js?v=20261128-build-headers-v1';
 
 // Lưu cache danh sách học phí sinh viên để phục vụ nút "Thu tiền"
 let studentTuitionItems = [];
+let adjustmentItems = [];
 let originalTuitionFeePrice = null;
 let originalTuitionFeeBase = null;
 
@@ -16,10 +17,12 @@ document.addEventListener('DOMContentLoaded', () => {
 function initTuitionPage() {
     const feeSearchForm = document.getElementById('feeSearchForm');
     const studentTuitionFilterForm = document.getElementById('studentTuitionFilterForm');
+    const adjustmentFilterForm = document.getElementById('adjustmentFilterForm');
     const paymentFilterForm = document.getElementById('paymentFilterForm');
 
     const tuitionFeeForm = document.getElementById('tuitionFeeForm');
     const studentTuitionForm = document.getElementById('studentTuitionForm');
+    const adjustmentForm = document.getElementById('adjustmentForm');
     const paymentForm = document.getElementById('paymentForm');
 
     const addTuitionFeeButton = document.getElementById('addTuitionFeeButton');
@@ -76,6 +79,21 @@ function initTuitionPage() {
     if (studentTuitionForm) {
         studentTuitionForm.addEventListener('submit', saveStudentTuition);
     }
+
+    if (adjustmentFilterForm) {
+        adjustmentFilterForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            loadAdjustments();
+        });
+    }
+
+    if (adjustmentForm) {
+        adjustmentForm.addEventListener('submit', saveAdjustments);
+    }
+
+    ['adjustmentScholarship', 'adjustmentExemption'].forEach((id) => {
+        document.getElementById(id)?.addEventListener('input', updateAdjustmentPreview);
+    });
 
     if (addStudentTuitionButton) {
         addStudentTuitionButton.addEventListener('click', () => {
@@ -197,6 +215,7 @@ function initTuitionPage() {
     loadLookupOptions();
     loadTuitionFees();
     loadStudentTuitions();
+    loadAdjustments();
     loadPayments();
     loadSummary();
     loadSemesterReports();
@@ -223,9 +242,11 @@ async function loadLookupOptions() {
 
         populateSelect('studentId', students, 'Tất cả sinh viên', studentLabel);
         populateSelect('stStudentId', students, '-- Chọn sinh viên --', studentLabel);
+        populateSelect('adjustmentStudentId', students, 'Tất cả sinh viên', studentLabel);
 
         populateSelect('semesterId', semesters, 'Tất cả học kỳ', semesterLabel);
         populateSelect('stSemesterId', semesters, '-- Chọn học kỳ --', semesterLabel);
+        populateSelect('adjustmentSemesterId', semesters, 'Tất cả học kỳ', semesterLabel);
 
         populateSelect('feeProgramId', programs, '-- Chọn chương trình đào tạo --', programLabel);
         populateSelect('stTuitionFeeId', tuitionFees, '-- Chọn định mức học phí --', tuitionFeeLabel);
@@ -765,6 +786,243 @@ function renderStudentTuitions(items) {
         .join('');
 }
 
+async function loadAdjustments() {
+    const tableBody = document.getElementById('adjustmentTableBody');
+
+    if (!tableBody) {
+        return;
+    }
+
+    try {
+        tableBody.innerHTML = renderLoadingRow(11);
+
+        const params = new URLSearchParams();
+        const studentId = getValue('adjustmentStudentId');
+        const semesterId = getValue('adjustmentSemesterId');
+
+        if (studentId) {
+            params.append('studentId', studentId);
+        }
+        if (semesterId) {
+            params.append('semesterId', semesterId);
+        }
+
+        const query = params.toString();
+        const url = query
+            ? `${API_ENDPOINTS.STUDENT_TUITIONS}?${query}`
+            : API_ENDPOINTS.STUDENT_TUITIONS;
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            const message = await readErrorMessage(response, `HTTP ${response.status}`);
+            throw new Error(message);
+        }
+
+        const items = await response.json();
+        adjustmentItems = Array.isArray(items) ? items : [];
+
+        const visibleItems = getValue('adjustmentType') === 'has-adjustment'
+            ? adjustmentItems.filter((item) =>
+                Number(item.scholarshipDeduction || 0) > 0
+                || Number(item.exemptionAmount || 0) > 0)
+            : adjustmentItems;
+
+        renderAdjustmentSummary(visibleItems);
+        renderAdjustments(visibleItems);
+    } catch (error) {
+        console.error('Lỗi khi tải học bổng và miễn giảm:', error);
+        renderAdjustmentSummary([]);
+        tableBody.innerHTML = renderErrorRow(11, error.message || 'Không thể tải danh sách ưu đãi');
+    }
+}
+
+function renderAdjustmentSummary(items) {
+    const container = document.getElementById('adjustmentSummary');
+
+    if (!container) {
+        return;
+    }
+
+    const scholarshipTotal = items.reduce(
+        (sum, item) => sum + Number(item.scholarshipDeduction || 0),
+        0
+    );
+    const exemptionTotal = items.reduce(
+        (sum, item) => sum + Number(item.exemptionAmount || 0),
+        0
+    );
+    const adjustedCount = items.filter((item) =>
+        Number(item.scholarshipDeduction || 0) > 0
+        || Number(item.exemptionAmount || 0) > 0).length;
+
+    const cards = [
+        { label: 'Hồ sơ có ưu đãi', value: formatNumber(adjustedCount), icon: 'bi-award', color: 'primary' },
+        { label: 'Tổng học bổng', value: `${formatCurrency(scholarshipTotal)} đ`, icon: 'bi-mortarboard', color: 'success' },
+        { label: 'Tổng miễn giảm', value: `${formatCurrency(exemptionTotal)} đ`, icon: 'bi-shield-check', color: 'info' },
+        { label: 'Tổng giá trị ưu đãi', value: `${formatCurrency(scholarshipTotal + exemptionTotal)} đ`, icon: 'bi-cash-stack', color: 'warning' }
+    ];
+
+    container.innerHTML = cards.map((card) => `
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card stat-card stat-${card.color} h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <span class="stat-icon"><i class="bi ${card.icon}"></i></span>
+                    <div>
+                        <div class="stat-label">${card.label}</div>
+                        <div class="stat-value">${card.value}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderAdjustments(items) {
+    const tableBody = document.getElementById('adjustmentTableBody');
+
+    if (!tableBody) {
+        return;
+    }
+
+    if (!items.length) {
+        tableBody.innerHTML = renderEmptyRow(11);
+        return;
+    }
+
+    tableBody.innerHTML = items.map((item) => {
+        const scholarship = Number(item.scholarshipDeduction || 0);
+        const exemption = Number(item.exemptionAmount || 0);
+        const status = item.statusName || item.status;
+
+        return `
+            <tr>
+                <td>${renderStudentLink(item)}</td>
+                <td>${escapeHtml(item.semesterName || '-')}</td>
+                <td>${formatCurrency(item.rawAmount)} đ</td>
+                <td>${formatCurrency(scholarship)} đ</td>
+                <td>${formatCurrency(exemption)} đ</td>
+                <td class="fw-semibold">${formatCurrency(scholarship + exemption)} đ</td>
+                <td>${formatCurrency(item.netAmount)} đ</td>
+                <td>${formatCurrency(item.paidAmount)} đ</td>
+                <td>${formatCurrency(item.debtAmount)} đ</td>
+                <td>${renderStudentStatusBadge(status)}</td>
+                <td class="text-end">
+                    <button
+                        type="button"
+                        class="btn btn-outline-primary btn-sm"
+                        title="Cập nhật học bổng và miễn giảm"
+                        onclick="editTuitionAdjustment('${escapeHtml(item.id)}')"
+                    >
+                        <i class="bi bi-pencil-square me-1"></i>Cập nhật
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+window.editTuitionAdjustment = function (id) {
+    const item = adjustmentItems.find((row) => String(row.id) === String(id));
+
+    if (!item) {
+        alert('Không tìm thấy khoản học phí cần cập nhật');
+        return;
+    }
+
+    setValue('adjustmentTuitionId', item.id);
+    document.getElementById('adjustmentStudentLabel').textContent =
+        `${item.studentName || 'Sinh viên'}${item.studentCode ? ` (${item.studentCode})` : ''}`;
+    document.getElementById('adjustmentSemesterLabel').textContent = item.semesterName || 'Chưa rõ học kỳ';
+    document.getElementById('adjustmentRawAmount').textContent = `${formatCurrency(item.rawAmount)} đ`;
+    setValue('adjustmentScholarship', item.scholarshipDeduction || 0);
+    setValue('adjustmentExemption', item.exemptionAmount || 0);
+    updateAdjustmentPreview();
+    showModal('adjustmentModal');
+};
+
+function updateAdjustmentPreview() {
+    const item = adjustmentItems.find(
+        (row) => String(row.id) === String(getValue('adjustmentTuitionId'))
+    );
+
+    if (!item) {
+        return;
+    }
+
+    const rawAmount = Number(item.rawAmount || 0);
+    const scholarship = Number(getValue('adjustmentScholarship') || 0);
+    const exemption = Number(getValue('adjustmentExemption') || 0);
+    const netAmount = Math.max(0, rawAmount - scholarship - exemption);
+    const preview = document.getElementById('adjustmentNetPreview');
+
+    if (preview) {
+        preview.textContent = `${formatCurrency(netAmount)} đ`;
+    }
+}
+
+async function saveAdjustments(event) {
+    event.preventDefault();
+
+    const id = getValue('adjustmentTuitionId');
+    const item = adjustmentItems.find((row) => String(row.id) === String(id));
+    const scholarshipDeduction = toNumberOrNull(getValue('adjustmentScholarship'));
+    const exemptionAmount = toNumberOrNull(getValue('adjustmentExemption'));
+
+    if (!id || !item) {
+        alert('Vui lòng chọn khoản học phí hợp lệ');
+        return;
+    }
+    if (scholarshipDeduction === null || exemptionAmount === null
+        || scholarshipDeduction < 0 || exemptionAmount < 0) {
+        alert('Số tiền học bổng và miễn giảm phải là số không âm');
+        return;
+    }
+    if (scholarshipDeduction + exemptionAmount > Number(item.rawAmount || 0)) {
+        alert('Tổng học bổng và miễn giảm không được vượt quá tiền gốc');
+        return;
+    }
+
+    const button = document.getElementById('adjustmentSubmitButton');
+    if (button) {
+        button.disabled = true;
+    }
+
+    try {
+        const response = await fetch(
+            `${API_ENDPOINTS.STUDENT_TUITIONS}/${encodeURIComponent(id)}/adjustments`,
+            {
+                method: 'PATCH',
+                headers: buildHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify({ scholarshipDeduction, exemptionAmount })
+            }
+        );
+
+        if (!response.ok) {
+            const message = await readErrorMessage(response, `HTTP ${response.status}`);
+            throw new Error(message);
+        }
+
+        closeModal('adjustmentModal');
+        alert('Cập nhật học bổng và miễn giảm thành công');
+        await Promise.all([
+            loadAdjustments(),
+            loadStudentTuitions(),
+            loadSummary(),
+            loadDashboard(),
+            loadDebtors(),
+            loadSemesterReports(),
+            loadLookupOptions()
+        ]);
+    } catch (error) {
+        console.error('Lỗi khi cập nhật học bổng và miễn giảm:', error);
+        alert(error.message || 'Cập nhật học bổng và miễn giảm thất bại');
+    } finally {
+        if (button) {
+            button.disabled = false;
+        }
+    }
+}
+
 function openStudentTuitionModal(item) {
     const form = document.getElementById('studentTuitionForm');
 
@@ -1230,6 +1488,7 @@ function openPaymentModal(item, preset) {
             idField.value = '';
         }
 
+        setValue('payPaymentDate', getLocalDateTimeInputValue());
         setValue('payPaymentStatus', 'SUCCESS');
 
         if (isActiveField) {
@@ -3081,6 +3340,13 @@ function formatDateTime(value) {
     return escapeHtml(
         String(value).slice(0, 16).replace('T', ' ')
     );
+}
+
+function getLocalDateTimeInputValue(date = new Date()) {
+    const pad = (value) => String(value).padStart(2, '0');
+
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+        + `T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 /** Rút gọn mã UUID (dùng cho mã giao dịch trên biên lai). */

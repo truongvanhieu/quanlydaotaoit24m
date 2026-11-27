@@ -12,6 +12,7 @@ public record TuitionSummary(
         BigDecimal totalNet,
         BigDecimal totalPaid,
         BigDecimal totalDebt,
+        BigDecimal totalOverpaid,
         BigDecimal collectionRate
 ) {
 }

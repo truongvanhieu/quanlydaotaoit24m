@@ -26,6 +26,8 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import com.example.quanlydaotao.n9.dto.DashboardStats;
+import com.example.quanlydaotao.n9.dto.DebtorView;
 import com.example.quanlydaotao.n9.dto.PaymentReceipt;
 import com.example.quanlydaotao.n9.dto.SemesterDebtReport;
 import com.example.quanlydaotao.n9.dto.TuitionSummary;
@@ -56,7 +58,9 @@ public class TuitionReportService {
                        ISNULL(SUM(CASE WHEN status IN (3, 4) THEN 1 ELSE 0 END), 0) AS debtor_count,
                        ISNULL(SUM(net_amount), 0)  AS total_net,
                        ISNULL(SUM(paid_amount), 0) AS total_paid,
-                       ISNULL(SUM(debt_amount), 0) AS total_debt
+                       ISNULL(SUM(CASE WHEN debt_amount > 0 THEN debt_amount ELSE 0 END), 0) AS total_debt,
+                       ISNULL(SUM(CASE WHEN paid_amount > net_amount
+                                       THEN paid_amount - net_amount ELSE 0 END), 0) AS total_overpaid
                 FROM student_tuition
                 WHERE deleted_at IS NULL AND is_active = 1
                 """;
@@ -64,6 +68,7 @@ public class TuitionReportService {
         return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
             BigDecimal totalNet = rs.getBigDecimal("total_net");
             BigDecimal totalPaid = rs.getBigDecimal("total_paid");
+            BigDecimal totalOverpaid = rs.getBigDecimal("total_overpaid");
             return new TuitionSummary(
                     rs.getLong("total_records"),
                     rs.getLong("paid_count"),
@@ -71,7 +76,8 @@ public class TuitionReportService {
                     totalNet,
                     totalPaid,
                     rs.getBigDecimal("total_debt"),
-                    collectionRate(totalPaid, totalNet));
+                    totalOverpaid,
+                    collectionRate(totalPaid.subtract(totalOverpaid), totalNet));
         });
     }
 
@@ -87,7 +93,8 @@ public class TuitionReportService {
                        ISNULL(SUM(CASE WHEN st.status IN (3, 4) THEN 1 ELSE 0 END), 0) AS debtor_count,
                        ISNULL(SUM(st.net_amount), 0)  AS total_net,
                        ISNULL(SUM(st.paid_amount), 0) AS total_paid,
-                       ISNULL(SUM(st.debt_amount), 0) AS total_debt
+                       ISNULL(SUM(CASE WHEN st.debt_amount > 0
+                                       THEN st.debt_amount ELSE 0 END), 0) AS total_debt
                 FROM semesters s
                 LEFT JOIN student_tuition st
                        ON st.semester_id = s.id
@@ -106,6 +113,98 @@ public class TuitionReportService {
                 rs.getBigDecimal("total_net"),
                 rs.getBigDecimal("total_paid"),
                 rs.getBigDecimal("total_debt")));
+    }
+
+    /** Dữ liệu biểu đồ doanh thu, phương thức thanh toán và công nợ theo học kỳ. */
+    public DashboardStats getDashboard() {
+        return new DashboardStats(
+                getSummary(),
+                getMonthlyRevenue(),
+                getPaymentMethodStats(),
+                getReportBySemester());
+    }
+
+    private List<DashboardStats.MonthlyRevenue> getMonthlyRevenue() {
+        String sql = """
+                SELECT CONVERT(varchar(7), p.payment_date, 120) AS ym,
+                       ISNULL(SUM(p.amount_paid), 0) AS amount
+                FROM payments p
+                WHERE p.deleted_at IS NULL AND p.is_active = 1
+                  AND p.payment_status = 'SUCCESS'
+                GROUP BY CONVERT(varchar(7), p.payment_date, 120)
+                ORDER BY ym
+                """;
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            String yearMonth = rs.getString("ym");
+            return new DashboardStats.MonthlyRevenue(
+                    formatMonthLabel(yearMonth),
+                    rs.getBigDecimal("amount"));
+        });
+    }
+
+    private List<DashboardStats.PaymentMethodStat> getPaymentMethodStats() {
+        String sql = """
+                SELECT p.payment_method AS method,
+                       COUNT(*) AS quantity,
+                       ISNULL(SUM(p.amount_paid), 0) AS amount
+                FROM payments p
+                WHERE p.deleted_at IS NULL AND p.is_active = 1
+                  AND p.payment_status = 'SUCCESS'
+                GROUP BY p.payment_method
+                ORDER BY p.payment_method
+                """;
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> new DashboardStats.PaymentMethodStat(
+                paymentMethodName(getInteger(rs, "method")),
+                rs.getLong("quantity"),
+                rs.getBigDecimal("amount")));
+    }
+
+    /** Danh sách công nợ còn lại/quá hạn kèm thông tin liên hệ sinh viên. */
+    public List<DebtorView> getDebtors() {
+        String sql = """
+                SELECT st.id AS student_tuition_id, st.student_id,
+                       sv.code AS student_code, sv.full_name AS student_name,
+                       u.email, u.phone,
+                       sem.name AS semester_name,
+                       st.net_amount, st.paid_amount, st.debt_amount,
+                       st.deadline, st.status
+                FROM student_tuition st
+                LEFT JOIN students_ sv ON sv.id = st.student_id
+                LEFT JOIN users u ON u.id = sv.user_id
+                LEFT JOIN semesters sem ON sem.id = st.semester_id
+                WHERE st.deleted_at IS NULL AND st.is_active = 1
+                  AND st.debt_amount > 0
+                  AND st.status IN (3, 4)
+                ORDER BY st.debt_amount DESC
+                """;
+
+        LocalDate today = LocalDate.now();
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            Integer status = getInteger(rs, "status");
+            java.sql.Date deadline = rs.getDate("deadline");
+            LocalDate deadlineDate = deadline == null ? null : deadline.toLocalDate();
+            Long daysOverdue = deadlineDate != null && deadlineDate.isBefore(today)
+                    ? java.time.temporal.ChronoUnit.DAYS.between(deadlineDate, today)
+                    : null;
+
+            return new DebtorView(
+                    UUID.fromString(rs.getString("student_tuition_id")),
+                    toUuid(rs.getString("student_id")),
+                    rs.getString("student_code"),
+                    rs.getString("student_name"),
+                    rs.getString("email"),
+                    rs.getString("phone"),
+                    rs.getString("semester_name"),
+                    rs.getBigDecimal("net_amount"),
+                    rs.getBigDecimal("paid_amount"),
+                    rs.getBigDecimal("debt_amount"),
+                    deadlineDate,
+                    daysOverdue,
+                    status,
+                    StudentTuition.statusName(status));
+        });
     }
 
     // =========================
@@ -440,5 +539,16 @@ public class TuitionReportService {
 
     private static LocalDate toLocalDate(java.sql.Date date) {
         return date == null ? null : date.toLocalDate();
+    }
+
+    private static UUID toUuid(String value) {
+        return value == null ? null : UUID.fromString(value);
+    }
+
+    private static String formatMonthLabel(String yearMonth) {
+        if (yearMonth == null || yearMonth.length() < 7) {
+            return yearMonth;
+        }
+        return yearMonth.substring(5, 7) + "/" + yearMonth.substring(0, 4);
     }
 }

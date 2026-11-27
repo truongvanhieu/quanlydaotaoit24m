@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.quanlydaotao.n9.dto.StudentTuitionView;
+import com.example.quanlydaotao.n9.dto.TuitionAdjustmentRequest;
 import com.example.quanlydaotao.n9.entity.StudentTuition;
 import com.example.quanlydaotao.n9.service.StudentTuitionService;
 
@@ -56,6 +58,14 @@ public class StudentTuitionController {
             @RequestBody StudentTuition studentTuition) {
 
         return studentTuitionService.update(id, studentTuition);
+    }
+
+    @PatchMapping("/{id}/adjustments")
+    public StudentTuition updateAdjustments(
+            @PathVariable UUID id,
+            @RequestBody TuitionAdjustmentRequest request) {
+
+        return studentTuitionService.updateAdjustments(id, request);
     }
 
     @DeleteMapping("/{id}")

@@ -8,3 +8,12 @@ export const API_ENDPOINTS = {
     TUITION_REPORTS: `${BASE_URL}/tuition-reports`,
     TUITION_LOOKUPS: `${BASE_URL}/tuition-lookups`,
 };
+
+export const DEFAULT_USER_ID = '8e12d3e1-1034-4142-bf7f-0a541d6abb20';
+
+export function buildHeaders(extra = {}) {
+    return {
+        'X-User-Id': DEFAULT_USER_ID,
+        ...extra,
+    };
+}

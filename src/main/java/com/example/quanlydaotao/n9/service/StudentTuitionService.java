@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.quanlydaotao.n9.dto.StudentTuitionView;
+import com.example.quanlydaotao.n9.dto.TuitionAdjustmentRequest;
 import com.example.quanlydaotao.n9.entity.StudentTuition;
 import com.example.quanlydaotao.n9.entity.TuitionFee;
 import com.example.quanlydaotao.n9.exception.BusinessException;
@@ -30,7 +31,9 @@ public class StudentTuitionService {
                    tp.name AS program_name, tf.course_year,
                    tf.price_per_credit, tf.base_tuition,
                    st.total_credits, st.raw_amount, st.scholarship_deduction, st.exemption_amount,
-                   st.net_amount, st.paid_amount, st.debt_amount, st.status, st.deadline, st.is_active
+                   st.net_amount, st.paid_amount, st.debt_amount, st.status, st.deadline, st.is_active,
+                   CASE WHEN st.paid_amount > st.net_amount
+                        THEN st.paid_amount - st.net_amount ELSE 0 END AS overpaid_amount
               FROM student_tuition st
               LEFT JOIN students_ sv ON sv.id = st.student_id
               LEFT JOIN semesters sem ON sem.id = st.semester_id
@@ -57,6 +60,7 @@ public class StudentTuitionService {
             rs.getBigDecimal("net_amount"),
             rs.getBigDecimal("paid_amount"),
             rs.getBigDecimal("debt_amount"),
+            rs.getBigDecimal("overpaid_amount"),
             getInteger(rs, "status"),
             StudentTuition.statusName(getInteger(rs, "status")),
             rs.getDate("deadline") == null ? null : rs.getDate("deadline").toLocalDate(),
@@ -174,6 +178,22 @@ public class StudentTuitionService {
     }
 
     @Transactional
+    public StudentTuition updateAdjustments(UUID id, TuitionAdjustmentRequest request) {
+        if (request == null) {
+            throw new BusinessException("Vui lòng nhập thông tin học bổng và miễn giảm");
+        }
+
+        StudentTuition studentTuition = getById(id);
+        studentTuition.setScholarshipDeduction(request.scholarshipDeduction());
+        studentTuition.setExemptionAmount(request.exemptionAmount());
+
+        calculateAmounts(studentTuition);
+        refreshPaymentState(studentTuition);
+
+        return studentTuitionRepository.save(studentTuition);
+    }
+
+    @Transactional
     public void delete(UUID id) {
         StudentTuition studentTuition = getById(id);
 
@@ -212,14 +232,19 @@ public class StudentTuitionService {
                 .multiply(BigDecimal.valueOf(totalCredits))
                 .add(zeroIfNull(tuitionFee.getBaseTuition()));
 
-        BigDecimal netAmount = rawAmount
-                .subtract(zeroIfNull(studentTuition.getScholarshipDeduction()))
-                .subtract(zeroIfNull(studentTuition.getExemptionAmount()));
+        BigDecimal scholarshipDeduction = zeroIfNull(studentTuition.getScholarshipDeduction());
+        BigDecimal exemptionAmount = zeroIfNull(studentTuition.getExemptionAmount());
 
-        if (netAmount.signum() < 0) {
-            netAmount = BigDecimal.ZERO;
+        if (scholarshipDeduction.signum() < 0 || exemptionAmount.signum() < 0) {
+            throw new BusinessException("Số tiền học bổng và miễn giảm không được âm");
         }
 
+        BigDecimal totalAdjustment = scholarshipDeduction.add(exemptionAmount);
+        if (totalAdjustment.compareTo(rawAmount) > 0) {
+            throw new BusinessException("Tổng học bổng và miễn giảm không được vượt quá tiền gốc");
+        }
+
+        BigDecimal netAmount = rawAmount.subtract(totalAdjustment);
         studentTuition.setRawAmount(rawAmount);
         studentTuition.setNetAmount(netAmount);
     }
@@ -235,7 +260,7 @@ public class StudentTuitionService {
         BigDecimal netAmount = zeroIfNull(studentTuition.getNetAmount());
 
         studentTuition.setPaidAmount(paidAmount);
-        studentTuition.setDebtAmount(netAmount.subtract(paidAmount));
+        studentTuition.setDebtAmount(netAmount.subtract(paidAmount).max(BigDecimal.ZERO));
         studentTuition.setStatus(computeStatus(netAmount, paidAmount, studentTuition.getDeadline()));
     }
 

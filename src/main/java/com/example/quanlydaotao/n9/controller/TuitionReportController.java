@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.quanlydaotao.n9.dto.DashboardStats;
+import com.example.quanlydaotao.n9.dto.DebtorView;
 import com.example.quanlydaotao.n9.dto.PaymentReceipt;
 import com.example.quanlydaotao.n9.dto.SemesterDebtReport;
 import com.example.quanlydaotao.n9.dto.TuitionSummary;
@@ -43,6 +45,16 @@ public class TuitionReportController {
     @GetMapping("/by-semester")
     public List<SemesterDebtReport> getReportBySemester() {
         return tuitionReportService.getReportBySemester();
+    }
+
+    @GetMapping("/dashboard")
+    public DashboardStats getDashboard() {
+        return tuitionReportService.getDashboard();
+    }
+
+    @GetMapping("/debtors")
+    public List<DebtorView> getDebtors() {
+        return tuitionReportService.getDebtors();
     }
 
     /** Dữ liệu in biên lai thu tiền của một giao dịch. */
