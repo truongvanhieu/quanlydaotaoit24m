@@ -71,9 +71,13 @@
 
                 F("dateOfBirth", "Ngày sinh", "date"),
 
-                F("email", "Email", "email"),
+                F("email", "Email", "email", {
+                    maxlength: 100
+                }),
 
-                F("phone", "Số điện thoại"),
+                F("phone", "Số điện thoại", "tel", {
+                    maxlength: 15
+                }),
 
                 F("departmentId", "Khoa / viện", "department", {
                     required: true
@@ -208,10 +212,12 @@
                 F("departmentId", "Khoa / viện", "department"),
 
                 // SQL employees.position_id = NVARCHAR(100)
-                // Vi du: GV
-                F("positionId", "Mã vị trí hiện tại (ví dụ: GV)", "text", {
+                // Cho phep chon ma chuc vu tu bang positions hoac nhap ma (vi du: GV)
+                F("positionId", "Chức vụ chính (mã vị trí)", "positionCode", {
                     maxlength: 100
                 }),
+
+                F("userId", "Tài khoản liên kết (user_id)", "user"),
 
                 F("hireDate", "Ngày tuyển dụng", "datetime-local"),
 
@@ -301,12 +307,15 @@
     const data = Object.fromEntries(
         types.map(kind => [kind, []])
     );
+    data.users = [];
 
     const errors = {};
 
     let editId = null;
     let mode = "add";
     let busy = false;
+    let selectedEmployeeId = "";
+    let employeeHistoryRows = null;
 
     const modal = bootstrap.Modal.getOrCreateInstance(
         $("formModal")
@@ -425,6 +434,12 @@
             ).trim();
         }
 
+        if (kind === "users") {
+            return (
+                `${row.username || ""}${row.fullName ? " - " + row.fullName : ""}`
+            ).trim() || String(id);
+        }
+
         return row.name || row.code || id;
     }
 
@@ -450,6 +465,10 @@
             return related("employees", value);
         }
 
+        if (key === "userId") {
+            return related("users", value);
+        }
+
         if (
             key === "positionId" &&
             tab !== "employees"
@@ -466,7 +485,7 @@
                 .slice(0, 19);
         }
 
-        return String(value);
+        return String(value).trim() || "—";
     }
 
     function label(key) {
@@ -524,11 +543,26 @@
             cfg.title.replace("Quản lý", "Danh sách")
         );
 
-        const rows = data[tab].filter(row => {
+        const sourceRows = (
+            tab === "employee-positions" &&
+            selectedEmployeeId &&
+            Array.isArray(employeeHistoryRows)
+        )
+            ? employeeHistoryRows
+            : data[tab];
+
+        const searchKeys = Array.from(
+            new Set([
+                ...cfg.columns,
+                ...cfg.fields.map(field => field.name)
+            ])
+        );
+
+        const rows = sourceRows.filter(row => {
 
             if (!query) return true;
 
-            return cfg.columns.some(key =>
+            return searchKeys.some(key =>
                 display(key, row[key])
                     .toLocaleLowerCase("vi")
                     .includes(query)
@@ -537,7 +571,7 @@
 
         text(
             "recordCount",
-            `${rows.length} / ${data[tab].length} bản ghi`
+            `${rows.length} / ${sourceRows.length} bản ghi`
         );
 
         // Header
@@ -620,7 +654,7 @@
     // 8. DU LIEU CHO SELECT
     // ===================================
 
-    function optionList(field) {
+    function optionList(field, selectedDeptId = "") {
 
         if (field.type === "status") {
             return [
@@ -633,11 +667,15 @@
             return [
                 ["Nam", "Nam"],
                 ["Nữ", "Nữ"],
-                ["Khác", "Khác"],
-                ["1", "1 - Nam"],
-                ["2", "2 - Nữ"],
-                ["0", "0 - Khác"]
+                ["Khác", "Khác"]
             ];
+        }
+
+        if (field.type === "user") {
+            return (data.users || []).map(row => [
+                row.id,
+                `${row.username || ""}${row.fullName ? " - " + row.fullName : ""}`.trim()
+            ]);
         }
 
         const map = {
@@ -647,8 +685,21 @@
         };
 
         const kind = map[field.type];
+        let items = data[kind] || [];
 
-        return (data[kind] || []).map(row => {
+        // Loc chuc danh theo khoa khi them/sua giang vien
+        if (
+            tab === "lecturers" &&
+            field.type === "position" &&
+            selectedDeptId
+        ) {
+            items = items.filter(row =>
+                !row.departmentId ||
+                String(row.departmentId) === String(selectedDeptId)
+            );
+        }
+
+        return items.map(row => {
 
             const name = kind === "employees"
                 ? `${row.code || ""} - ${row.fullName || ""}`
@@ -661,11 +712,41 @@
         });
     }
 
+    function renderSelectOptions(field, value, selectedDeptId = "") {
+        const options = optionList(field, selectedDeptId);
+        return `
+            ${field.type === "status"
+                ? ""
+                : '<option value="">-- Chọn --</option>'}
+
+            ${options.map(([v, name]) => `
+                <option value="${escapeHTML(v)}"
+                    ${String(v) === value ? "selected" : ""}>
+                    ${escapeHTML(name)}
+                </option>
+            `).join("")}
+
+            ${
+                value &&
+                !options.some(
+                    ([v]) => String(v) === value
+                )
+                    ? `
+                        <option selected
+                                value="${escapeHTML(value)}">
+                            ${escapeHTML(value)} (đã lưu)
+                        </option>
+                    `
+                    : ""
+            }
+        `;
+    }
+
     // ===================================
     // 9. TAO FORM DONG
     // ===================================
 
-    function control(field, raw, readonly) {
+    function control(field, raw, readonly, row = null) {
 
         const value = raw == null
             ? (
@@ -673,7 +754,7 @@
                     ? "true"
                     : ""
             )
-            : String(raw);
+            : String(raw).trim();
 
         const required =
             field.required && !readonly
@@ -694,43 +775,42 @@
             "gender",
             "department",
             "position",
-            "employee"
+            "employee",
+            "user"
         ].includes(field.type)) {
 
-            const options = optionList(field);
+            const selectedDeptId = row?.departmentId
+                ? String(row.departmentId)
+                : "";
 
             html = `
                 <select name="${field.name}"
                         class="form-select"
                         ${required}
                         ${disabled}>
-
-                    ${field.type === "status"
-                        ? ""
-                        : '<option value="">-- Chọn --</option>'}
-
-                    ${options.map(([v, name]) => `
-                        <option value="${escapeHTML(v)}"
-                            ${String(v) === value ? "selected" : ""}>
-                            ${escapeHTML(name)}
-                        </option>
-                    `).join("")}
-
-                    ${
-                        value &&
-                        !options.some(
-                            ([v]) => String(v) === value
-                        )
-                            ? `
-                                <option selected
-                                        value="${escapeHTML(value)}">
-                                    ${escapeHTML(value)} (đã lưu)
-                                </option>
-                            `
-                            : ""
-                    }
-
+                    ${renderSelectOptions(field, value, selectedDeptId)}
                 </select>
+            `;
+
+        } else if (field.type === "positionCode") {
+
+            const positionOptions = (data.positions || []).map(p => {
+                const code = (p.code || "").trim();
+                const name = (p.name || "").trim();
+                return `<option value="${escapeHTML(code)}">${escapeHTML(code)}${name ? " - " + escapeHTML(name) : ""}</option>`;
+            }).join("");
+
+            html = `
+                <input name="${field.name}"
+                       type="text"
+                       list="positionCodeList"
+                       value="${escapeHTML(value)}"
+                       placeholder="Chọn hoặc nhập mã chức vụ (VD: GV, TBM...)"
+                       class="form-control"
+                       ${required}
+                       ${disabled}
+                       ${max}>
+                <datalist id="positionCodeList">${positionOptions}</datalist>
             `;
 
         } else if (field.type === "textarea") {
@@ -813,9 +893,27 @@
                 control(
                     field,
                     row?.[field.name],
-                    nextMode === "view"
+                    nextMode === "view",
+                    row
                 )
             ).join("");
+
+        // Dong bo loc chuc danh theo khoa tren form giang vien
+        if (tab === "lecturers" && nextMode !== "view") {
+            const deptSelect = $("formFields").querySelector('select[name="departmentId"]');
+            const posSelect = $("formFields").querySelector('select[name="positionId"]');
+            const posField = C.lecturers.fields.find(f => f.name === "positionId");
+
+            if (deptSelect && posSelect && posField) {
+                deptSelect.addEventListener("change", () => {
+                    const deptId = deptSelect.value;
+                    const currentPos = posSelect.value;
+                    const validIds = optionList(posField, deptId).map(([v]) => String(v));
+                    const nextPos = validIds.includes(currentPos) ? currentPos : "";
+                    posSelect.innerHTML = renderSelectOptions(posField, nextPos, deptId);
+                });
+            }
+        }
 
         $("saveBtn").hidden =
             nextMode === "view";
@@ -888,12 +986,54 @@
     // 12. TAI DU LIEU
     // ===================================
 
+    function syncEmployeeFilter() {
+        const filter = $("employeeFilter");
+        if (!filter) return;
+
+        filter.style.display =
+            tab === "employee-positions" ? "" : "none";
+
+        const options = (data.employees || []).map(emp => `
+            <option value="${escapeHTML(emp.id)}"
+                ${String(emp.id) === String(selectedEmployeeId) ? "selected" : ""}>
+                ${escapeHTML((`${emp.code || ""} - ${emp.fullName || ""}`).trim())}
+            </option>
+        `).join("");
+
+        filter.innerHTML =
+            '<option value="">-- Lọc lịch sử theo nhân viên (Tất cả) --</option>' +
+            options;
+    }
+
+    async function loadEmployeeHistory(empId) {
+        selectedEmployeeId = empId || "";
+
+        if (!selectedEmployeeId) {
+            employeeHistoryRows = null;
+            render();
+            notice("");
+            return;
+        }
+
+        try {
+            const rows = await api("employee-positions/employee/" + selectedEmployeeId);
+            employeeHistoryRows = Array.isArray(rows) ? rows : [];
+            render();
+            notice("");
+        } catch (error) {
+            employeeHistoryRows = [];
+            render();
+            notice(error.message);
+        }
+    }
+
     async function loadAll() {
 
         // Mot API loi khong lam cac API khac mat du lieu
-        const results = await Promise.allSettled(
-            types.map(kind => api(kind))
-        );
+        const [results, usersResult] = await Promise.all([
+            Promise.allSettled(types.map(kind => api(kind))),
+            api("users").catch(() => [])
+        ]);
 
         results.forEach((result, index) => {
 
@@ -918,6 +1058,19 @@
             }
         });
 
+        data.users = Array.isArray(usersResult) ? usersResult : [];
+
+        if (selectedEmployeeId) {
+            try {
+                const rows = await api("employee-positions/employee/" + selectedEmployeeId);
+                employeeHistoryRows = Array.isArray(rows) ? rows : [];
+            } catch {
+                selectedEmployeeId = "";
+                employeeHistoryRows = null;
+            }
+        }
+
+        syncEmployeeFilter();
         counters();
         render();
 
@@ -944,6 +1097,7 @@
         tab = next;
 
         $("searchInput").value = "";
+        syncEmployeeFilter();
 
         // Menu N3 rieng
         document.querySelectorAll(
@@ -1018,6 +1172,13 @@
         "input",
         render
     );
+
+    if ($("employeeFilter")) {
+        $("employeeFilter").addEventListener(
+            "change",
+            event => loadEmployeeHistory(event.target.value)
+        );
+    }
 
     // ===================================
     // 17. LUU DU LIEU
@@ -1129,11 +1290,15 @@
 
             if (action === "delete") {
 
-                const name =
-                    row.code ||
-                    row.fullName ||
-                    row.name ||
-                    row.id;
+                const name = tab === "employee-positions"
+                    ? `${related("employees", row.employeeId)} - ${related("positions", row.positionId)}`
+                    : (
+                        row.code ||
+                        row.lecturerCode ||
+                        row.fullName ||
+                        row.name ||
+                        row.id
+                    );
 
                 if (!confirm(
                     `Bạn có chắc muốn xóa bản ghi ${name}?`

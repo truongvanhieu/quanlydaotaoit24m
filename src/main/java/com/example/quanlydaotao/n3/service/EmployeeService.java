@@ -1,9 +1,12 @@
 
 package com.example.quanlydaotao.n3.service;
 
+import com.example.quanlydaotao.n3.entity.Department;
 import com.example.quanlydaotao.n3.entity.Employee;
+import com.example.quanlydaotao.n3.entity.N3User;
 import com.example.quanlydaotao.n3.repository.DepartmentRepository;
 import com.example.quanlydaotao.n3.repository.EmployeeRepository;
+import com.example.quanlydaotao.n3.repository.N3UserRepository;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -22,13 +25,16 @@ public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final DepartmentRepository departmentRepository;
+    private final N3UserRepository userRepository;
 
     public EmployeeService(
             EmployeeRepository employeeRepository,
-            DepartmentRepository departmentRepository) {
+            DepartmentRepository departmentRepository,
+            N3UserRepository userRepository) {
 
         this.employeeRepository = employeeRepository;
         this.departmentRepository = departmentRepository;
+        this.userRepository = userRepository;
     }
 
     // GET danh sach va tim kiem
@@ -99,7 +105,7 @@ public class EmployeeService {
 
         validate(input);
 
-        if (employeeRepository.existsByCodeIgnoreCase(
+        if (employeeRepository.existsByCodeIgnoreCaseAndDeletedAtIsNull(
                 input.getCode().trim())) {
 
             throw new ResponseStatusException(
@@ -131,7 +137,7 @@ public class EmployeeService {
         String newCode = input.getCode().trim();
 
         if (!newCode.equalsIgnoreCase(employee.getCode())
-                && employeeRepository.existsByCodeIgnoreCase(newCode)) {
+                && employeeRepository.existsByCodeIgnoreCaseAndDeletedAtIsNull(newCode)) {
 
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
@@ -237,14 +243,40 @@ public class EmployeeService {
             }
         }
 
-        if (employee.getDepartmentId() != null
-                && !departmentRepository.existsById(
-                        employee.getDepartmentId())) {
+        if (employee.getDepartmentId() != null) {
+            Department department = departmentRepository
+                    .findById(employee.getDepartmentId())
+                    .orElseThrow(() ->
+                            new ResponseStatusException(
+                                    HttpStatus.BAD_REQUEST,
+                                    "Khoa / vien khong ton tai"
+                            )
+                    );
 
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Khoa / vien khong ton tai"
-            );
+            if (department.getDeletedAt() != null) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Khoa / vien da bi xoa"
+                );
+            }
+        }
+
+        if (employee.getUserId() != null) {
+            N3User user = userRepository
+                    .findById(employee.getUserId())
+                    .orElseThrow(() ->
+                            new ResponseStatusException(
+                                    HttpStatus.BAD_REQUEST,
+                                    "Tai khoan lien ket khong ton tai"
+                            )
+                    );
+
+            if (user.getDeletedAt() != null) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Tai khoan lien ket da bi xoa"
+                );
+            }
         }
     }
 }

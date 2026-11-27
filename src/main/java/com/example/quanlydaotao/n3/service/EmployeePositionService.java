@@ -3,6 +3,7 @@ package com.example.quanlydaotao.n3.service;
 
 import com.example.quanlydaotao.n3.entity.Employee;
 import com.example.quanlydaotao.n3.entity.EmployeePosition;
+import com.example.quanlydaotao.n3.entity.Position;
 
 import com.example.quanlydaotao.n3.repository.EmployeeRepository;
 import com.example.quanlydaotao.n3.repository.EmployeePositionRepository;
@@ -175,12 +176,20 @@ public class EmployeePositionService {
             );
         }
 
-        if (!positionRepository.existsById(
-                input.getPositionId())) {
+        Position position = positionRepository
+                .findById(input.getPositionId())
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.BAD_REQUEST,
+                                "Chuc vu khong ton tai"
+                        )
+                );
+
+        if (position.getDeletedAt() != null) {
 
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Chuc vu khong ton tai"
+                    "Chuc vu da bi xoa"
             );
         }
 

@@ -56,23 +56,48 @@ public class DepartmentService {
         }
     }
 
+    private void ensureUniqueCode(String code, UUID excludeId) {
+        boolean duplicated = repository.findAll().stream()
+                .filter(item -> item.getDeletedAt() == null)
+                .filter(item -> excludeId == null || !excludeId.equals(item.getId()))
+                .anyMatch(item -> item.getCode() != null
+                        && item.getCode().trim().equalsIgnoreCase(code));
+
+        if (duplicated) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Mã khoa đã tồn tại");
+        }
+    }
+
     public Department create(Department d) {
         validate(d);
+        String code = d.getCode().trim();
+        ensureUniqueCode(code, null);
+
         d.setId(null);
+        d.setCode(code);
+        d.setName(d.getName().trim());
         d.setCreatedAt(null);
         d.setDeletedAt(null);
-        d.setIsActive(true);
+        if (d.getIsActive() == null) {
+            d.setIsActive(true);
+        }
         return repository.save(d);
     }
 
     public Department update(UUID id, Department data) {
         validate(data);
         Department old = getById(id);
+        String code = data.getCode().trim();
+        ensureUniqueCode(code, id);
 
-        old.setCode(data.getCode());
-        old.setName(data.getName());
+        old.setCode(code);
+        old.setName(data.getName().trim());
         old.setDescription(data.getDescription());
         old.setEstablishedYear(data.getEstablishedYear());
+        if (data.getIsActive() != null) {
+            old.setIsActive(data.getIsActive());
+        }
 
         return repository.save(old);
     }

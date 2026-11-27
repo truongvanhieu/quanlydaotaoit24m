@@ -19,4 +19,6 @@ public interface EmployeeRepository
     );
 
     boolean existsByCodeIgnoreCase(String code);
+
+    boolean existsByCodeIgnoreCaseAndDeletedAtIsNull(String code);
 }

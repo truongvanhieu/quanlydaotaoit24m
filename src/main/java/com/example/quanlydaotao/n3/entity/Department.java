@@ -40,8 +40,12 @@ public class Department {
 
     @PrePersist
     public void beforeInsert() {
-        createdAt = LocalDateTime.now();
-        isActive = true;
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+        if (isActive == null) {
+            isActive = true;
+        }
     }
 
     @PreUpdate

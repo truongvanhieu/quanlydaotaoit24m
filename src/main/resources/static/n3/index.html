@@ -155,8 +155,15 @@
                     <i class="bi bi-search"></i>
                     <input id="searchInput"
                            type="search"
-                           placeholder="Tìm theo mã, tên...">
+                           placeholder="Tìm theo mã, tên, email, chuyên môn...">
                 </div>
+
+                <select id="employeeFilter"
+                        class="form-select"
+                        style="max-width: 300px; display: none;"
+                        aria-label="Lọc lịch sử công tác theo nhân viên">
+                    <option value="">-- Tất cả nhân viên --</option>
+                </select>
 
                 <button id="refreshBtn"
                         type="button"

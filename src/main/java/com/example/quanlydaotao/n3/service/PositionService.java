@@ -30,10 +30,19 @@ public class PositionService {
 
         return repository.findAll().stream()
                 .filter(p -> p.getDeletedAt() == null)
+                .peek(this::normalizeLevel)
                 .filter(p -> q.isEmpty()
                         || contains(p.getCode(), q)
-                        || contains(p.getName(), q))
+                        || contains(p.getName(), q)
+                        || contains(p.getLevel(), q))
                 .toList();
+    }
+
+    private void normalizeLevel(Position p) {
+        if (p.getLevel() != null) {
+            String trimmed = p.getLevel().trim();
+            p.setLevel(trimmed.isEmpty() ? null : trimmed);
+        }
     }
 
     private boolean contains(String text, String q) {
@@ -49,6 +58,7 @@ public class PositionService {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND, "Chức danh đã bị xóa");
         }
+        normalizeLevel(p);
         return p;
     }
 
@@ -65,12 +75,33 @@ public class PositionService {
         }
     }
 
+    private void ensureUniqueCode(String code, UUID excludeId) {
+        boolean duplicated = repository.findAll().stream()
+                .filter(item -> item.getDeletedAt() == null)
+                .filter(item -> excludeId == null || !excludeId.equals(item.getId()))
+                .anyMatch(item -> item.getCode() != null
+                        && item.getCode().trim().equalsIgnoreCase(code));
+
+        if (duplicated) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Mã chức danh đã tồn tại");
+        }
+    }
+
     public Position create(Position p) {
         validate(p);
+        String code = p.getCode().trim();
+        ensureUniqueCode(code, null);
+
         p.setId(null);
+        p.setCode(code);
+        p.setName(p.getName().trim());
+        normalizeLevel(p);
         p.setCreatedAt(null);
         p.setDeletedAt(null);
-        p.setIsActive(true);
+        if (p.getIsActive() == null) {
+            p.setIsActive(true);
+        }
 
         return repository.save(p);
     }
@@ -78,12 +109,18 @@ public class PositionService {
     public Position update(UUID id, Position data) {
         validate(data);
         Position old = getById(id);
+        String code = data.getCode().trim();
+        ensureUniqueCode(code, id);
 
-        old.setCode(data.getCode());
-        old.setName(data.getName());
+        old.setCode(code);
+        old.setName(data.getName().trim());
         old.setDescription(data.getDescription());
         old.setLevel(data.getLevel());
+        normalizeLevel(old);
         old.setDepartmentId(data.getDepartmentId());
+        if (data.getIsActive() != null) {
+            old.setIsActive(data.getIsActive());
+        }
 
         return repository.save(old);
     }
