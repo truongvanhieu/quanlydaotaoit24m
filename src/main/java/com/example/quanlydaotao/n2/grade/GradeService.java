@@ -623,6 +623,43 @@ public class GradeService {
     }
 
     @Transactional
+    public int registerStudentsBatch(UUID courseClassId, List<UUID> studentIds) {
+        requireCourseClass(courseClassId);
+        if (studentIds == null || studentIds.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Vui lòng chọn ít nhất một sinh viên");
+        }
+        int added = 0;
+        for (UUID studentId : studentIds) {
+            if (studentId == null) {
+                continue;
+            }
+            Integer exists = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM students WHERE id = ?", Integer.class, studentId);
+            if (exists == null || exists == 0) {
+                continue;
+            }
+            jdbcTemplate.update("""
+                    IF NOT EXISTS (SELECT 1 FROM students_ WHERE id = ?)
+                    BEGIN
+                        INSERT INTO students_ (id, code, full_name, is_active)
+                        SELECT id, student_code, full_name, 1 FROM students WHERE id = ?
+                    END
+                    """, studentId, studentId);
+            Integer regCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM course_registrations WHERE course_class_id = ? AND student_id = ? AND deleted_at IS NULL",
+                    Integer.class, courseClassId, studentId);
+            if (regCount == null || regCount == 0) {
+                jdbcTemplate.update("""
+                        INSERT INTO course_registrations (id, course_class_id, student_id, is_active, created_at)
+                        VALUES (?, ?, ?, 1, CURRENT_TIMESTAMP)
+                        """, UUID.randomUUID(), courseClassId, studentId);
+                added++;
+            }
+        }
+        return added;
+    }
+
+    @Transactional
     public int registerAllAvailableStudents(UUID courseClassId) {
         requireCourseClass(courseClassId);
         jdbcTemplate.update("""

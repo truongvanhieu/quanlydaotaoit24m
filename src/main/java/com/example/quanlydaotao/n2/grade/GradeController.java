@@ -89,6 +89,12 @@ public class GradeController {
         gradeService.registerStudent(request.courseClassId(), request.studentId());
     }
 
+    @PostMapping("/registrations/batch")
+    public java.util.Map<String, Integer> registerStudentsBatch(@RequestBody BatchRegistrationRequest request) {
+        int addedCount = gradeService.registerStudentsBatch(request.courseClassId(), request.studentIds());
+        return java.util.Map.of("addedCount", addedCount);
+    }
+
     @PostMapping("/registrations/all")
     public java.util.Map<String, Integer> registerAllStudents(@RequestParam UUID courseClassId) {
         int addedCount = gradeService.registerAllAvailableStudents(courseClassId);

@@ -78,6 +78,9 @@ public final class GradeModels {
     public record CourseRegistrationRequest(UUID courseClassId, UUID studentId) {
     }
 
+    public record BatchRegistrationRequest(UUID courseClassId, List<UUID> studentIds) {
+    }
+
     public record AvailableStudentOption(UUID id, String studentCode, String fullName, String className) {
     }
 

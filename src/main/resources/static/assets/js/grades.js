@@ -9,10 +9,15 @@ const gradeTableHead = document.getElementById('gradeTableHead');
 const gradeTableBody = document.getElementById('gradeTableBody');
 const weightSummary = document.getElementById('weightSummary');
 const addStudentBtn = document.getElementById('addStudentToClassBtn');
-const selectStudent = document.getElementById('selectStudent');
+const availableStudentsList = document.getElementById('availableStudentsList');
+const filterAvailableStudents = document.getElementById('filterAvailableStudents');
+const selectAllAvailableCheck = document.getElementById('selectAllAvailableCheck');
+const selectedStudentCount = document.getElementById('selectedStudentCount');
 const confirmAddStudentBtn = document.getElementById('confirmAddStudentBtn');
 const addAllStudentsBtn = document.getElementById('addAllStudentsBtn');
 const modalAlert = document.getElementById('modalAlert');
+
+let availableStudentsCache = [];
 
 const openCreateClassModalBtn = document.getElementById('openCreateClassModalBtn');
 const confirmCreateClassBtn = document.getElementById('confirmCreateClassBtn');
@@ -45,6 +50,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (addStudentBtn) addStudentBtn.addEventListener('click', openAddStudentModal);
     if (confirmAddStudentBtn) confirmAddStudentBtn.addEventListener('click', handleConfirmAddStudent);
     if (addAllStudentsBtn) addAllStudentsBtn.addEventListener('click', handleAddAllStudents);
+    if (filterAvailableStudents) filterAvailableStudents.addEventListener('input', renderAvailableStudentsChecklist);
+    if (selectAllAvailableCheck) selectAllAvailableCheck.addEventListener('change', handleToggleSelectAllAvailable);
+    if (availableStudentsList) availableStudentsList.addEventListener('change', updateSelectedStudentCount);
     if (openCreateClassModalBtn) openCreateClassModalBtn.addEventListener('click', openCreateClassModal);
     if (confirmCreateClassBtn) confirmCreateClassBtn.addEventListener('click', handleConfirmCreateClass);
 
@@ -187,7 +195,10 @@ async function openAddStudentModal() {
     if (!courseClassId) return;
 
     if (modalAlert) modalAlert.classList.add('d-none');
-    if (selectStudent) selectStudent.innerHTML = '<option value="">Đang tải danh sách...</option>';
+    if (filterAvailableStudents) filterAvailableStudents.value = '';
+    if (selectAllAvailableCheck) selectAllAvailableCheck.checked = false;
+    if (selectedStudentCount) selectedStudentCount.textContent = 'Đã chọn: 0';
+    if (availableStudentsList) availableStudentsList.innerHTML = '<div class="text-center text-muted py-3">Đang tải danh sách sinh viên...</div>';
     if (confirmAddStudentBtn) confirmAddStudentBtn.disabled = true;
     if (addAllStudentsBtn) addAllStudentsBtn.disabled = true;
 
@@ -195,25 +206,74 @@ async function openAddStudentModal() {
 
     try {
         const students = await request(`${API_ENDPOINTS.GRADES}/available-students?courseClassId=${encodeURIComponent(courseClassId)}`);
-        if (!students || !students.length) {
-            selectStudent.innerHTML = '<option value="">Tất cả sinh viên trong trường đã có trong lớp này</option>';
-            confirmAddStudentBtn.disabled = true;
+        availableStudentsCache = Array.isArray(students) ? students : [];
+        if (!availableStudentsCache.length) {
+            if (availableStudentsList) {
+                availableStudentsList.innerHTML = '<div class="text-center text-muted py-3">Tất cả sinh viên trong trường đã có trong lớp này.</div>';
+            }
+            if (confirmAddStudentBtn) confirmAddStudentBtn.disabled = true;
             if (addAllStudentsBtn) addAllStudentsBtn.disabled = true;
             return;
         }
 
-        selectStudent.innerHTML = '<option value="">-- Chọn sinh viên để thêm vào lớp --</option>' + students
-            .map((s) => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.studentCode)} - ${escapeHtml(s.fullName)} (${escapeHtml(s.className || 'Chưa phân lớp')})</option>`)
-            .join('');
-        confirmAddStudentBtn.disabled = false;
+        renderAvailableStudentsChecklist();
         if (addAllStudentsBtn) addAllStudentsBtn.disabled = false;
     } catch (error) {
         if (modalAlert) {
             modalAlert.textContent = error.message;
             modalAlert.classList.remove('d-none');
         }
-        if (selectStudent) selectStudent.innerHTML = '<option value="">Lỗi khi tải danh sách</option>';
+        if (availableStudentsList) {
+            availableStudentsList.innerHTML = '<div class="text-center text-danger py-3">Lỗi khi tải danh sách sinh viên.</div>';
+        }
     }
+}
+
+function renderAvailableStudentsChecklist() {
+    if (!availableStudentsList) return;
+    const keyword = (filterAvailableStudents?.value || '').trim().toLowerCase();
+    const filtered = availableStudentsCache.filter((s) => {
+        if (!keyword) return true;
+        return (s.studentCode || '').toLowerCase().includes(keyword)
+            || (s.fullName || '').toLowerCase().includes(keyword)
+            || (s.className || '').toLowerCase().includes(keyword);
+    });
+
+    if (!filtered.length) {
+        availableStudentsList.innerHTML = '<div class="text-center text-muted py-3">Không tìm thấy sinh viên phù hợp.</div>';
+        updateSelectedStudentCount();
+        return;
+    }
+
+    availableStudentsList.innerHTML = filtered.map((s) => `
+        <div class="form-check py-1 border-bottom">
+            <input class="form-check-input available-student-checkbox" type="checkbox" value="${escapeHtml(s.id)}" id="avail_${escapeHtml(s.id)}">
+            <label class="form-check-label d-flex justify-content-between align-items-center w-100" for="avail_${escapeHtml(s.id)}" style="cursor: pointer;">
+                <span><strong class="font-monospace text-primary">${escapeHtml(s.studentCode)}</strong> — ${escapeHtml(s.fullName)}</span>
+                <span class="badge bg-light text-secondary border">${escapeHtml(s.className || 'Chưa phân lớp')}</span>
+            </label>
+        </div>
+    `).join('');
+
+    if (selectAllAvailableCheck) selectAllAvailableCheck.checked = false;
+    updateSelectedStudentCount();
+}
+
+function handleToggleSelectAllAvailable() {
+    if (!availableStudentsList || !selectAllAvailableCheck) return;
+    const checked = selectAllAvailableCheck.checked;
+    availableStudentsList.querySelectorAll('.available-student-checkbox').forEach((chk) => {
+        chk.checked = checked;
+    });
+    updateSelectedStudentCount();
+}
+
+function updateSelectedStudentCount() {
+    const checkedCount = availableStudentsList
+        ? availableStudentsList.querySelectorAll('.available-student-checkbox:checked').length
+        : 0;
+    if (selectedStudentCount) selectedStudentCount.textContent = `Đã chọn: ${checkedCount}`;
+    if (confirmAddStudentBtn) confirmAddStudentBtn.disabled = checkedCount === 0;
 }
 
 async function handleAddAllStudents() {
@@ -236,16 +296,18 @@ async function handleAddAllStudents() {
             modalAlert.classList.remove('d-none');
         }
         if (addAllStudentsBtn) addAllStudentsBtn.disabled = false;
-        if (confirmAddStudentBtn) confirmAddStudentBtn.disabled = false;
+        updateSelectedStudentCount();
     }
 }
 
 async function handleConfirmAddStudent() {
     const courseClassId = classSelect.value;
-    const studentId = selectStudent.value;
-    if (!studentId) {
+    const studentIds = availableStudentsList
+        ? Array.from(availableStudentsList.querySelectorAll('.available-student-checkbox:checked')).map((el) => el.value)
+        : [];
+    if (!studentIds.length) {
         if (modalAlert) {
-            modalAlert.textContent = 'Vui lòng chọn một sinh viên!';
+            modalAlert.textContent = 'Vui lòng tích chọn ít nhất một sinh viên!';
             modalAlert.classList.remove('d-none');
         }
         return;
@@ -253,12 +315,14 @@ async function handleConfirmAddStudent() {
 
     try {
         confirmAddStudentBtn.disabled = true;
-        await request(`${API_ENDPOINTS.GRADES}/registrations`, {
+        if (addAllStudentsBtn) addAllStudentsBtn.disabled = true;
+        const result = await request(`${API_ENDPOINTS.GRADES}/registrations/batch`, {
             method: 'POST',
-            body: JSON.stringify({ courseClassId, studentId }),
+            body: JSON.stringify({ courseClassId, studentIds }),
         });
         closeModal('addStudentModal');
-        showAlert('Đã thêm sinh viên vào lớp học phần thành công!', 'success');
+        const count = result?.addedCount ?? studentIds.length;
+        showAlert(`Đã thêm ${count} sinh viên đã chọn vào lớp học phần thành công!`, 'success');
         await loadGradeBook();
     } catch (error) {
         if (modalAlert) {
@@ -266,6 +330,7 @@ async function handleConfirmAddStudent() {
             modalAlert.classList.remove('d-none');
         }
         confirmAddStudentBtn.disabled = false;
+        if (addAllStudentsBtn) addAllStudentsBtn.disabled = false;
     }
 }
 
@@ -706,11 +771,12 @@ function renderGradeBook(gradeBook) {
             <th>Điểm tổng kết</th>
             <th>Xếp loại</th>
             <th>Kết quả</th>
+            <th style="width: 70px; text-align: center;">Xóa SV</th>
         </tr>
     `;
 
     if (!gradeBook.students.length) {
-        gradeTableBody.innerHTML = emptyRow(components.length + 7, 'Chưa có sinh viên đăng ký lớp học phần này.');
+        gradeTableBody.innerHTML = emptyRow(components.length + 8, 'Chưa có sinh viên đăng ký lớp học phần này.');
         return;
     }
 
@@ -724,6 +790,11 @@ function renderGradeBook(gradeBook) {
             <td class="fw-semibold">${student.totalScore == null ? '<span class="text-muted">Chưa đủ điểm</span>' : formatNumber(student.totalScore)}</td>
             <td>${student.letterGrade == null ? '—' : `<span class="badge text-bg-primary">${escapeHtml(student.letterGrade)}</span><small class="d-block text-muted">GPA ${formatNumber(student.gpaValue)}</small>`}</td>
             <td>${student.result == null ? '—' : `<span class="badge ${student.result === 'Đạt' ? 'text-bg-success' : 'text-bg-danger'}">${escapeHtml(student.result)}</span>`}</td>
+            <td class="text-center">
+                <button class="btn btn-outline-danger btn-sm" type="button" title="Xóa sinh viên khỏi lớp học phần" aria-label="Xóa sinh viên khỏi lớp" data-action="remove-student" data-registration="${escapeHtml(student.registrationId)}" data-name="${escapeHtml(student.studentName || '')}">
+                    <i class="bi bi-person-x-fill"></i>
+                </button>
+            </td>
         </tr>
     `).join('');
 }
@@ -911,6 +982,15 @@ async function handleGradeAction(event) {
         && window.confirm('Xóa điểm thành phần này?')) {
         try {
             await request(`${API_ENDPOINTS.GRADES}/entries/${encodeURIComponent(button.dataset.entry)}`, { method: 'DELETE' });
+            await loadGradeBook();
+        } catch (error) {
+            showAlert(error.message, 'danger');
+        }
+    } else if (button.dataset.action === 'remove-student' && button.dataset.registration
+        && window.confirm(`Xóa sinh viên "${button.dataset.name || 'này'}" khỏi lớp học phần?`)) {
+        try {
+            await request(`${API_ENDPOINTS.GRADES}/registrations/${encodeURIComponent(button.dataset.registration)}`, { method: 'DELETE' });
+            showAlert(`Đã xóa sinh viên "${button.dataset.name || ''}" khỏi lớp học phần.`, 'success');
             await loadGradeBook();
         } catch (error) {
             showAlert(error.message, 'danger');
