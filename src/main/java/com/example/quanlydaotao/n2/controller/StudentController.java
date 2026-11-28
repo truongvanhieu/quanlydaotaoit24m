@@ -31,6 +31,11 @@ public class StudentController {
         return studentService.search(keyword);
     }
 
+    @GetMapping("/next-code")
+    public java.util.Map<String, String> getNextStudentCode() {
+        return java.util.Map.of("nextStudentCode", studentService.getNextStudentCode());
+    }
+
     @GetMapping("/{id}")
     public Student getStudent(@PathVariable UUID id) {
 
