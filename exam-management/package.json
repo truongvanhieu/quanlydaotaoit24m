@@ -1,0 +1,14 @@
+{
+  "name": "exam-management",
+  "version": "1.0.0",
+  "description": "Hệ thống Quản lý Thi – Khảo thí (Spring Boot + React + SQL Server)",
+  "scripts": {
+    "start": "npm run dev",
+    "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"cyan,magenta\" \"npm run backend\" \"npm run frontend\"",
+    "backend": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File backend/start-backend.ps1",
+    "frontend": "cd frontend && npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

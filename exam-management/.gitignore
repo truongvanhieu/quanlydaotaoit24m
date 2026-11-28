@@ -1,0 +1,22 @@
+﻿# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Build outputs
+dist/
+frontend/dist/
+backend/target/
+
+# Bundled JRE / runtime
+backend/jre/
+
+# IDE & OS
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Env & logs
+.env
+.env.local
+*.log
