@@ -3,6 +3,7 @@ package vn.edu.quanlydaotao.entity;
 import java.util.ArrayList;
 import java.util.List;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -23,6 +24,7 @@ public class TrainingProgram {
 	private Long id;
 
 	@Column(name = "program_code", nullable = false, length = 30)
+	@Convert(converter = SqlServerVarcharCodeConverter.class)
 	private String programCode;
 
 	@Column(name = "program_name", nullable = false, length = 200)

@@ -25,6 +25,7 @@ Maven Wrapper tự tải Maven và các thư viện cần thiết vào thư mụ
 
 - Website: `http://localhost:8080/dashboard`
 - Kiểm tra API và database: `http://localhost:8080/api/v1/health`
+- Tài liệu và giao diện thử API Swagger: `http://localhost:8080/swagger-ui/index.html`
 
 Kết quả health thành công:
 
@@ -34,18 +35,6 @@ Kết quả health thành công:
   "database": "quan_ly_dao_tao"
 }
 ```
-
-### Đăng nhập quyền quản trị
-
-Các API `POST`, `PUT`, `DELETE` yêu cầu HTTP Basic Authentication với vai trò `ADMIN`. Tài khoản là `admin`. Nếu chưa đặt mật khẩu, Spring Security sinh mật khẩu ngẫu nhiên và in trong Terminal khi ứng dụng khởi động; nhập mật khẩu đó tại nút **Đăng nhập quản trị** trên website.
-Để tự đặt mật khẩu cho lần chạy hiện tại, trước khi khởi động ứng dụng trong cùng Terminal:
-
-```powershell
-$env:SPRING_SECURITY_USER_PASSWORD = 'dat-mat-khau-rieng-cua-ban'
-.\mvnw.cmd spring-boot:run
-```
-
-Không đưa mật khẩu thật vào Git hoặc Postman collection đã chia sẻ. Website lưu thông tin Basic Authentication trong `localStorage` của trình duyệt để giữ đăng nhập khi chuyển mục hoặc mở tab khác; nút **Đăng xuất** sẽ xóa thông tin này. Chỉ dùng trên máy/trình duyệt cá nhân đáng tin cậy.
 
 ## 3. Database — giữ nguyên schema hiện có
 
@@ -66,6 +55,10 @@ spring.sql.init.mode=never
 | `program_courses` | `id BIGINT IDENTITY`, `program_id BIGINT`, `course_id BIGINT`, `semester_index INT`, `is_compulsory BIT` |
 | `course_prerequisites` | `id BIGINT IDENTITY`, `course_id BIGINT`, `prerequisite_course_id BIGINT`, `type VARCHAR(30)` |
 
+Khi khởi động, ứng dụng tự thêm các ngành mẫu còn thiếu theo mã ngành (không tạo bản ghi trùng và không ghi đè ngành đã có): CNTT, QTKD, LOG, KT, MKT, NNA, TMĐT và TKDH.
+
+Ứng dụng cũng tự thêm một chương trình đào tạo cho mỗi ngành trên nếu mã chương trình chưa tồn tại. Chương trình dùng mã và tên ngành tương ứng, khóa 2026, năm học 2026-2030; tổng tín chỉ bắt đầu từ 0 và được cập nhật khi gán môn học.
+
 Các khóa ngoại, mã duy nhất và CHECK constraint hiện có đã được giữ nguyên. Database đang có dữ liệu mẫu. Nút xóa trên giao diện chỉ đổi `is_active` thành `false`; không xóa cứng dữ liệu.
 
 SQL Server hiện dùng chứng chỉ TLS chưa được máy tin cậy, vì vậy cấu hình kết nối cục bộ có `trustServerCertificate=true`. Đây là cấu hình phát triển trên máy cá nhân; môi trường triển khai thật cần cấu hình chứng chỉ SQL Server được tin cậy.
@@ -75,6 +68,8 @@ SQL Server hiện dùng chứng chỉ TLS chưa được máy tin cậy, vì v�
 ## 4. API REST
 
 Base URL: `http://localhost:8080/api/v1`. Các danh sách trả `content`, `page` (bắt đầu từ 0), `limit`, `totalElements`, `totalPages`, `first`, `last`. Tham số `limit` tối đa là 100.
+
+Website và các API không yêu cầu tài khoản đăng nhập. Swagger UI liệt kê các endpoint và cho phép gửi thử request trực tiếp.
 
 | Nhóm | Endpoint |
 |---|---|
@@ -131,7 +126,7 @@ Ví dụ body:
 }
 ```
 
-Trong Postman, chọn **Authorization → Basic Auth**, nhập `admin` và mật khẩu ở Terminal. Thử lỗi an toàn bằng cách gửi body thiếu mã/tên (400), một mã đã tồn tại (409), ID rất lớn không có trong bảng (404), môn tự làm tiên quyết (400), hoặc tạo `CS101 → CS102` khi dữ liệu hiện tại đã có `CS102 → CS101` (409). Không thử DELETE trên dữ liệu mẫu nếu không muốn ngừng sử dụng bản ghi đó.
+Trong Postman, không cần cấu hình Authorization. Thử lỗi an toàn bằng cách gửi body thiếu mã/tên (400), một mã đã tồn tại (409), ID rất lớn không có trong bảng (404), môn tự làm tiên quyết (400), hoặc tạo `CS101 → CS102` khi dữ liệu hiện tại đã có `CS102 → CS101` (409). Không thử DELETE trên dữ liệu mẫu nếu không muốn ngừng sử dụng bản ghi đó.
 
 Các mã lỗi validation và xung đột trả JSON có `timestamp`, `status`, `error`, `message`, `path`; lỗi máy chủ không trả chi tiết nội bộ.
 
@@ -139,7 +134,7 @@ Các mã lỗi validation và xung đột trả JSON có `timestamp`, `status`, 
 
 ```text
 src/main/java/vn/edu/quanlydaotao/
-├── config/       Cấu hình Spring Security
+├── config/       Cấu hình OpenAPI
 ├── controller/   REST API và trang Thymeleaf
 ├── dto/          Request/response API
 ├── entity/       Ánh xạ các bảng SQL Server

@@ -12,11 +12,13 @@ import vn.edu.quanlydaotao.dto.TrainingProgramDetail;
 import vn.edu.quanlydaotao.dto.TrainingProgramRequest;
 import vn.edu.quanlydaotao.dto.TrainingProgramSummary;
 import vn.edu.quanlydaotao.entity.Course;
+import vn.edu.quanlydaotao.entity.CoursePrerequisite;
 import vn.edu.quanlydaotao.entity.Major;
 import vn.edu.quanlydaotao.entity.ProgramCourse;
 import vn.edu.quanlydaotao.entity.TrainingProgram;
 import vn.edu.quanlydaotao.exception.ConflictException;
 import vn.edu.quanlydaotao.exception.NotFoundException;
+import vn.edu.quanlydaotao.repository.CoursePrerequisiteRepository;
 import vn.edu.quanlydaotao.repository.CourseRepository;
 import vn.edu.quanlydaotao.repository.MajorRepository;
 import vn.edu.quanlydaotao.repository.ProgramCourseRepository;
@@ -30,16 +32,19 @@ public class TrainingProgramService {
 	private final MajorRepository majorRepository;
 	private final CourseRepository courseRepository;
 	private final ProgramCourseRepository programCourseRepository;
+	private final CoursePrerequisiteRepository prerequisiteRepository;
 
 	public TrainingProgramService(
 			TrainingProgramRepository programRepository,
 			MajorRepository majorRepository,
 			CourseRepository courseRepository,
-			ProgramCourseRepository programCourseRepository) {
+			ProgramCourseRepository programCourseRepository,
+			CoursePrerequisiteRepository prerequisiteRepository) {
 		this.programRepository = programRepository;
 		this.majorRepository = majorRepository;
 		this.courseRepository = courseRepository;
 		this.programCourseRepository = programCourseRepository;
+		this.prerequisiteRepository = prerequisiteRepository;
 	}
 
 	public PagedResponse<TrainingProgramSummary> getPrograms(
@@ -109,6 +114,7 @@ public class TrainingProgramService {
 		if (programCourseRepository.existsByProgram_IdAndCourse_Id(programId, course.getId())) {
 			throw new ConflictException("Môn học này đã được gán vào chương trình.");
 		}
+		validateSemesterOrder(programId, course, request.semesterIndex());
 
 		ProgramCourse programCourse = new ProgramCourse();
 		programCourse.setProgram(program);
@@ -121,6 +127,19 @@ public class TrainingProgramService {
 	}
 
 	@Transactional
+	public ProgramCourseResponse updateCourseAssignment(Long programId, Long courseId, ProgramCourseRequest request) {
+		findProgram(programId);
+		ProgramCourse programCourse = programCourseRepository
+				.findByProgram_IdAndCourse_Id(programId, courseId)
+				.orElseThrow(() -> new NotFoundException(
+						"Môn học này chưa được gán vào chương trình hoặc không tồn tại."));
+		validateSemesterOrder(programId, programCourse.getCourse(), request.semesterIndex());
+		programCourse.setSemesterIndex(request.semesterIndex());
+		programCourse.setCompulsory(request.isCompulsory());
+		return ProgramCourseResponse.from(programCourseRepository.save(programCourse));
+	}
+
+	@Transactional
 	public void removeCourse(Long programId, Long courseId) {
 		TrainingProgram program = findProgram(programId);
 		ProgramCourse programCourse = programCourseRepository
@@ -129,6 +148,39 @@ public class TrainingProgramService {
 						"Môn học này chưa được gán vào chương trình hoặc không tồn tại."));
 		programCourseRepository.delete(programCourse);
 		refreshTotalCredits(program);
+	}
+
+	private void validateSemesterOrder(Long programId, Course course, int semesterIndex) {
+		for (CoursePrerequisite relation : prerequisiteRepository
+				.findByCourse_IdOrderByPrerequisiteCourse_CourseCode(course.getId())) {
+			Course prereqCourse = relation.getPrerequisiteCourse();
+			programCourseRepository.findByProgram_IdAndCourse_Id(programId, prereqCourse.getId())
+					.ifPresent(prereqPc -> {
+						if (prereqPc.getSemesterIndex() >= semesterIndex) {
+							throw new ConflictException(
+									"Không thể xếp môn " + course.getCourseCode()
+											+ " ở Học kỳ " + semesterIndex
+											+ " vì môn tiên quyết " + prereqCourse.getCourseCode()
+											+ " đang ở Học kỳ " + prereqPc.getSemesterIndex()
+											+ " (phải học trước).");
+						}
+					});
+		}
+
+		for (CoursePrerequisite relation : prerequisiteRepository.findByPrerequisiteCourse_Id(course.getId())) {
+			Course dependentCourse = relation.getCourse();
+			programCourseRepository.findByProgram_IdAndCourse_Id(programId, dependentCourse.getId())
+					.ifPresent(dependentPc -> {
+						if (dependentPc.getSemesterIndex() <= semesterIndex) {
+							throw new ConflictException(
+									"Không thể xếp môn " + course.getCourseCode()
+											+ " ở Học kỳ " + semesterIndex
+											+ " vì môn này là tiên quyết của môn " + dependentCourse.getCourseCode()
+											+ " đang ở Học kỳ " + dependentPc.getSemesterIndex()
+											+ " (phải học trước).");
+						}
+					});
+		}
 	}
 
 	private void refreshTotalCredits(TrainingProgram program) {

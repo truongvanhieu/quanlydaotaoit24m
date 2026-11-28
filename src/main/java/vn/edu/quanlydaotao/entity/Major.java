@@ -1,6 +1,7 @@
 package vn.edu.quanlydaotao.entity;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -17,6 +18,7 @@ public class Major {
 	private Long id;
 
 	@Column(name = "major_code", nullable = false, length = 20)
+	@Convert(converter = SqlServerVarcharCodeConverter.class)
 	private String majorCode;
 
 	@Column(name = "major_name", nullable = false, length = 150)

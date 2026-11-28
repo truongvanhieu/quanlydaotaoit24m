@@ -191,11 +191,25 @@ body {
 	margin: 0;
 }
 
-.welcome-icon {
-	color: rgba(255, 255, 255, 0.17);
-	font-size: 7rem;
-	line-height: 1;
-	padding-right: 1rem;
+.welcome-logo-frame {
+	background: #f5f5f5;
+	border: 1px solid rgba(255, 255, 255, 0.35);
+	border-radius: 12px;
+	flex: 0 0 280px;
+	height: 112px;
+	margin-right: 1rem;
+	overflow: hidden;
+	position: relative;
+}
+
+.welcome-logo {
+	height: auto;
+	left: 50%;
+	max-width: none;
+	position: absolute;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	width: 150%;
 }
 
 .stat-card,
@@ -532,7 +546,19 @@ code {
 		padding: 1.3rem;
 	}
 
-	.welcome-icon {
+	.welcome-logo-frame {
+		flex-basis: 210px;
+		height: 84px;
+		margin-right: 0;
+	}
+
+	.welcome-logo {
+		width: 150%;
+	}
+}
+
+@media (max-width: 560px) {
+	.welcome-logo-frame {
 		display: none;
 	}
 }

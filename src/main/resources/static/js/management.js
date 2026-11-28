@@ -489,7 +489,10 @@
 							<td>${escape(course.courseName)}</td>
 							<td>${course.credits}</td>
 							<td>${course.isCompulsory ? "Bắt buộc" : "Tự chọn"}</td>
-							<td><button class="btn btn-sm btn-outline-danger" data-remove-course="${course.courseId}">Gỡ</button></td>
+							<td class="text-end">
+								<button class="btn btn-sm btn-outline-primary me-1" data-edit-course="${course.courseId}" data-semester="${course.semesterIndex}" data-compulsory="${course.isCompulsory}" data-code="${escape(course.courseCode)}">Đổi kỳ</button>
+								<button class="btn btn-sm btn-outline-danger" data-remove-course="${course.courseId}">Gỡ</button>
+							</td>
 						</tr>`).join("")}
 					</tbody></table></div>
 				</section>`).join("")
@@ -517,6 +520,28 @@
 
 		programSelect.addEventListener("change", () => loadDetail().catch(showError));
 		document.getElementById("semester-list").addEventListener("click", async event => {
+			const editButton = event.target.closest("button[data-edit-course]");
+			if (editButton && currentProgram) {
+				const rawSemester = window.prompt(
+					`Nhập học kỳ mới cho môn ${editButton.dataset.code}:`,
+					editButton.dataset.semester);
+				if (rawSemester === null) return;
+				const nextSemester = Number(rawSemester);
+				if (!Number.isInteger(nextSemester) || nextSemester < 1) {
+					showError(new Error("Học kỳ phải là số nguyên lớn hơn 0."));
+					return;
+				}
+				try {
+					await api.put(`/api/v1/training-programs/${currentProgram.id}/courses/${editButton.dataset.editCourse}`, {
+						courseId: Number(editButton.dataset.editCourse),
+						semesterIndex: nextSemester,
+						isCompulsory: editButton.dataset.compulsory === "true"
+					});
+					ui.notify("Đã cập nhật học kỳ môn học.");
+					await loadDetail();
+				} catch (error) { showError(error); }
+				return;
+			}
 			const button = event.target.closest("button[data-remove-course]");
 			if (!button || !currentProgram) return;
 			if (!window.confirm("Gỡ môn học này khỏi chương trình?")) return;

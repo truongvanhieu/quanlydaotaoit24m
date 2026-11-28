@@ -1,6 +1,8 @@
 package vn.edu.quanlydaotao.repository;
 
+import java.util.List;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,6 +13,9 @@ public interface ProgramCourseRepository extends JpaRepository<ProgramCourse, Lo
 	boolean existsByProgram_IdAndCourse_Id(Long programId, Long courseId);
 
 	Optional<ProgramCourse> findByProgram_IdAndCourse_Id(Long programId, Long courseId);
+
+	@EntityGraph(attributePaths = "program")
+	List<ProgramCourse> findByCourse_Id(Long courseId);
 
 	void deleteByProgram_IdAndCourse_Id(Long programId, Long courseId);
 

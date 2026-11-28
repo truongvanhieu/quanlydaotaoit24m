@@ -16,6 +16,9 @@ public interface CoursePrerequisiteRepository extends JpaRepository<CoursePrereq
 	@EntityGraph(attributePaths = "prerequisiteCourse")
 	List<CoursePrerequisite> findByCourse_IdOrderByPrerequisiteCourse_CourseCode(Long courseId);
 
+	@EntityGraph(attributePaths = "course")
+	List<CoursePrerequisite> findByPrerequisiteCourse_Id(Long prerequisiteCourseId);
+
 	Optional<CoursePrerequisite> findByCourse_IdAndPrerequisiteCourse_Id(Long courseId, Long prerequisiteCourseId);
 
 	@Query("""

@@ -80,6 +80,14 @@ public class TrainingProgramController {
 				"/api/v1/training-programs/" + id + "/courses/" + assigned.courseId())).body(assigned);
 	}
 
+	@PutMapping("/{id}/courses/{courseId}")
+	public ProgramCourseResponse updateCourseAssignment(
+			@PathVariable @Min(value = 1, message = "ID chương trình phải lớn hơn 0") Long id,
+			@PathVariable @Min(value = 1, message = "ID môn học phải lớn hơn 0") Long courseId,
+			@Valid @RequestBody ProgramCourseRequest request) {
+		return programService.updateCourseAssignment(id, courseId, request);
+	}
+
 	@DeleteMapping("/{id}/courses/{courseId}")
 	public ResponseEntity<Void> removeCourse(
 			@PathVariable @Min(value = 1, message = "ID chương trình phải lớn hơn 0") Long id,

@@ -1,6 +1,4 @@
 (() => {
-	const credentialKey = "edu-manage-admin-auth";
-
 	function notify(message, type = "success") {
 		const area = document.getElementById("toast-area");
 		if (!area || !window.bootstrap) {
@@ -23,32 +21,10 @@
 		instance.show();
 	}
 
-	function setLoginState(isLoggedIn) {
-		const loginButton = document.querySelector('[data-bs-target="#login-modal"]');
-		const logoutButton = document.getElementById("logout-button");
-		const userBadge = document.getElementById("user-badge");
-		if (loginButton) {
-			loginButton.textContent = isLoggedIn ? "Đã đăng nhập" : "Đăng nhập quản trị";
-			loginButton.classList.toggle("btn-primary", isLoggedIn);
-			loginButton.classList.toggle("btn-outline-primary", !isLoggedIn);
-		}
-		if (userBadge) {
-			userBadge.innerHTML = `<span class="status-dot"></span> ${isLoggedIn ? "ADMIN · Đã đăng nhập" : "Chưa đăng nhập"}`;
-		}
-		if (logoutButton) {
-			logoutButton.hidden = !isLoggedIn;
-		}
-	}
-
 	async function request(url, options = {}) {
 		const headers = new Headers(options.headers || {});
 		if (options.body && !headers.has("Content-Type")) {
 			headers.set("Content-Type", "application/json");
-		}
-
-		const credentials = localStorage.getItem(credentialKey);
-		if (credentials) {
-			headers.set("Authorization", `Basic ${credentials}`);
 		}
 
 		let response;
@@ -68,14 +44,6 @@
 			: null;
 
 		if (!response.ok) {
-			if (response.status === 401) {
-				localStorage.removeItem(credentialKey);
-				setLoginState(false);
-				throw new Error("Cần đăng nhập quản trị hoặc mật khẩu không chính xác.");
-			}
-			if (response.status === 403) {
-				throw new Error("Tài khoản không có quyền quản lý dữ liệu.");
-			}
 			throw new Error(payload?.message || `Yêu cầu thất bại (HTTP ${response.status}).`);
 		}
 
@@ -84,35 +52,6 @@
 		}
 		return payload;
 	}
-
-	document.addEventListener("DOMContentLoaded", () => {
-		setLoginState(Boolean(localStorage.getItem(credentialKey)));
-
-		const loginForm = document.getElementById("login-form");
-		if (loginForm) {
-			loginForm.addEventListener("submit", event => {
-				event.preventDefault();
-				const username = document.getElementById("login-username").value.trim();
-				const password = document.getElementById("login-password").value;
-				const bytes = new TextEncoder().encode(`${username}:${password}`);
-				const binary = Array.from(bytes, byte => String.fromCharCode(byte)).join("");
-				localStorage.setItem(credentialKey, btoa(binary));
-				setLoginState(true);
-				document.getElementById("login-password").value = "";
-				bootstrap.Modal.getOrCreateInstance(document.getElementById("login-modal")).hide();
-				notify("Đã lưu đăng nhập trên trình duyệt này. Máy chủ sẽ xác nhận quyền khi bạn lưu dữ liệu.");
-			});
-		}
-
-		const logoutButton = document.getElementById("logout-button");
-		if (logoutButton) {
-			logoutButton.addEventListener("click", () => {
-				localStorage.removeItem(credentialKey);
-				setLoginState(false);
-				notify("Đã đăng xuất khỏi phiên quản trị.");
-			});
-		}
-	});
 
 	window.adminApi = {
 		get: url => request(url, { method: "GET" }),
