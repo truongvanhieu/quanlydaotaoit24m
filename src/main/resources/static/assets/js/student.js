@@ -1,8 +1,27 @@
 import { API_ENDPOINTS } from './config.js';
+import { requireAuth } from './auth.js?v=1.0';
 
-document.addEventListener('DOMContentLoaded', () => {
+function isAdminUser() {
+    return window.currentUser?.role === 'ADMIN';
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const user = await requireAuth();
+    if (!user) return;
+
     const params = new URLSearchParams(window.location.search);
     const page = params.get('page') || 'list';
+    const mode = params.get('mode') || 'create';
+
+    if (page === 'form' && mode !== 'view' && !isAdminUser()) {
+        window.location.href = 'index.html?page=list';
+        return;
+    }
+
+    const createBtn = document.getElementById('createStudentBtn');
+    if (createBtn && !isAdminUser()) {
+        createBtn.style.display = 'none';
+    }
 
     const pageList = document.getElementById('page-list');
     const pageForm = document.getElementById('page-form');
@@ -291,6 +310,7 @@ function renderStudents(students) {
                                 <i class="bi bi-eye"></i>
                             </a>
 
+                            ${isAdminUser() ? `
                             <!-- Sửa -->
                             <a
                                 class="action-btn edit"
@@ -309,6 +329,7 @@ function renderStudents(students) {
                             >
                                 <i class="bi bi-trash"></i>
                             </button>
+                            ` : ''}
                         </div>
                     </td>
                 </tr>

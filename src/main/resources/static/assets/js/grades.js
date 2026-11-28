@@ -1,4 +1,13 @@
 import { API_ENDPOINTS } from './config.js';
+import { requireAuth } from './auth.js?v=1.0';
+
+function isStudentRole() {
+    return window.currentUser?.role === 'STUDENT';
+}
+
+function isAdminRole() {
+    return window.currentUser?.role === 'ADMIN';
+}
 
 const classSelect = document.getElementById('courseClassSelect');
 const gradeAlert = document.getElementById('gradeAlert');
@@ -29,6 +38,20 @@ let addStudentModalInstance = null;
 let createClassModalInstance = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
+    const user = await requireAuth();
+    if (!user) return;
+
+    if (isStudentRole()) {
+        ['openCreateClassModalBtn', 'deleteCourseClassBtn', 'toggleComponentForm', 'addStudentToClassBtn'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+        if (componentSection) componentSection.style.display = 'none';
+    } else if (!isAdminRole()) {
+        // Giảng viên không được xóa lớp học phần
+        if (deleteCourseClassBtn) deleteCourseClassBtn.style.display = 'none';
+    }
+
     classSelect.addEventListener('change', loadGradeBook);
     document.getElementById('toggleComponentForm').addEventListener('click', () => {
         componentSection.hidden = !componentSection.hidden;
@@ -870,6 +893,8 @@ function renderComponents(components) {
 
 function renderGradeBook(gradeBook) {
     const components = gradeBook.components;
+    const readOnly = isStudentRole();
+    const currentStudentCode = window.currentUser?.studentCode || '';
     weightSummary.textContent = `Tổng trọng số: ${formatNumber(gradeBook.configuredWeightTotal)}%`;
     gradeTableHead.innerHTML = `
         <tr>
@@ -881,35 +906,48 @@ function renderGradeBook(gradeBook) {
             <th>Điểm tổng kết</th>
             <th>Xếp loại</th>
             <th>Kết quả</th>
-            <th style="width: 70px; text-align: center;">Xóa SV</th>
+            ${readOnly ? '' : '<th style="width: 70px; text-align: center;">Xóa SV</th>'}
         </tr>
     `;
 
     if (!gradeBook.students.length) {
-        gradeTableBody.innerHTML = emptyRow(components.length + 8, 'Chưa có sinh viên đăng ký lớp học phần này.');
+        gradeTableBody.innerHTML = emptyRow(components.length + (readOnly ? 7 : 8), 'Chưa có sinh viên đăng ký lớp học phần này.');
         return;
     }
 
-    gradeTableBody.innerHTML = gradeBook.students.map((student, index) => `
-        <tr>
+    gradeTableBody.innerHTML = gradeBook.students.map((student, index) => {
+        const isSelf = readOnly && currentStudentCode && student.studentCode === currentStudentCode;
+        return `
+        <tr class="${isSelf ? 'table-info' : ''}">
             <td class="text-center fw-semibold text-secondary">${index + 1}</td>
             <td class="fw-semibold text-primary font-monospace">${escapeHtml(student.studentCode || '')}</td>
-            <td class="fw-medium">${escapeHtml(student.studentName || '')}</td>
+            <td class="fw-medium">${escapeHtml(student.studentName || '')}${isSelf ? ' <span class="badge text-bg-info ms-1">Bạn</span>' : ''}</td>
             <td class="text-center text-muted small">${escapeHtml(student.dateOfBirth || '—')}</td>
             ${student.grades.map((grade) => renderGradeCell(student.registrationId, grade, components.find((item) => item.id === grade.componentId))).join('')}
             <td class="fw-semibold">${student.totalScore == null ? '<span class="text-muted">Chưa đủ điểm</span>' : formatNumber(student.totalScore)}</td>
             <td>${student.letterGrade == null ? '—' : `<span class="badge text-bg-primary">${escapeHtml(student.letterGrade)}</span><small class="d-block text-muted">GPA ${formatNumber(student.gpaValue)}</small>`}</td>
             <td>${student.result == null ? '—' : `<span class="badge ${student.result === 'Đạt' ? 'text-bg-success' : 'text-bg-danger'}">${escapeHtml(student.result)}</span>`}</td>
+            ${readOnly ? '' : `
             <td class="text-center">
                 <button class="btn btn-outline-danger btn-sm" type="button" title="Xóa sinh viên khỏi lớp học phần" aria-label="Xóa sinh viên khỏi lớp" data-action="remove-student" data-registration="${escapeHtml(student.registrationId)}" data-name="${escapeHtml(student.studentName || '')}">
                     <i class="bi bi-person-x-fill"></i>
                 </button>
-            </td>
+            </td>`}
         </tr>
-    `).join('');
+    `;
+    }).join('');
 }
 
 function renderGradeCell(registrationId, grade, component) {
+    if (isStudentRole()) {
+        return `
+            <td class="text-center">
+                ${grade.score == null
+                    ? '<span class="text-muted">—</span>'
+                    : `<span class="badge bg-light text-dark border px-2 py-1 fw-bold fs-6">${formatNumber(grade.score)}</span>`}
+            </td>
+        `;
+    }
     const score = grade.score == null ? '' : escapeHtml(grade.score);
     const min = component?.minScore ?? 0;
     const max = component?.maxScore ?? 10;

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập | Hệ thống Quản lý Đào tạo</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #0f766e 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+        }
+        .login-card {
+            width: 100%;
+            max-width: 460px;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+            overflow: hidden;
+        }
+        .login-header {
+            background: linear-gradient(135deg, #1d4ed8, #0f766e);
+            color: #ffffff;
+            padding: 28px 32px 24px;
+            text-align: center;
+        }
+        .login-logo {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.18);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+        .login-body {
+            padding: 28px 32px 30px;
+        }
+        .quick-role-btn {
+            font-size: 0.8125rem;
+            border-radius: 10px;
+            transition: all 0.15s ease;
+        }
+    </style>
+</head>
+<body>
+<div class="login-card">
+    <div class="login-header">
+        <div class="login-logo">
+            <i class="bi bi-mortarboard-fill"></i>
+        </div>
+        <h4 class="fw-bold mb-1">HỆ THỐNG QUẢN LÝ ĐÀO TẠO</h4>
+        <div class="small opacity-75">Trường Đại học Đông Á · Nhóm 8 - IT24M</div>
+    </div>
+    <div class="login-body">
+        <div id="loginError" class="alert alert-danger d-none py-2 small" role="alert"></div>
+
+        <form id="loginForm">
+            <div class="mb-3">
+                <label for="username" class="form-label fw-semibold">Tên đăng nhập / IDSV</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light"><i class="bi bi-person-fill text-primary"></i></span>
+                    <input type="text" id="username" class="form-control" placeholder="VD: admin, giangvien hoặc IDSV (110431)" required autofocus>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="password" class="form-label fw-semibold">Mật khẩu</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light"><i class="bi bi-lock-fill text-primary"></i></span>
+                    <input type="password" id="password" class="form-control" placeholder="Nhập mật khẩu..." required>
+                    <button class="btn btn-outline-secondary" type="button" id="togglePasswordBtn" title="Hiện/Ẩn mật khẩu">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" id="loginSubmitBtn" class="btn btn-primary w-100 py-2 fw-semibold shadow-sm mt-2">
+                <i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập hệ thống
+            </button>
+        </form>
+
+        <hr class="my-4">
+
+        <div class="small text-muted fw-semibold mb-2">
+            <i class="bi bi-lightning-charge-fill text-warning me-1"></i>Tài khoản dùng thử nhanh (Mật khẩu: <code>123456</code>):
+        </div>
+        <div class="d-grid gap-2">
+            <button type="button" class="btn btn-outline-danger btn-sm quick-role-btn text-start" data-user="admin" data-pass="123456">
+                <i class="bi bi-shield-lock-fill me-2"></i><strong>Admin:</strong> <code>admin</code> / <code>123456</code> <span class="float-end badge bg-danger-subtle text-danger">Toàn quyền</span>
+            </button>
+            <button type="button" class="btn btn-outline-primary btn-sm quick-role-btn text-start" data-user="giangvien" data-pass="123456">
+                <i class="bi bi-person-workspace me-2"></i><strong>Giảng viên:</strong> <code>giangvien</code> / <code>123456</code> <span class="float-end badge bg-primary-subtle text-primary">Chấm điểm</span>
+            </button>
+            <button type="button" class="btn btn-outline-success btn-sm quick-role-btn text-start" data-user="110431" data-pass="123456">
+                <i class="bi bi-person-badge me-2"></i><strong>Sinh viên:</strong> <code>110431</code> / <code>123456</code> <span class="float-end badge bg-success-subtle text-success">Chỉ xem</span>
+            </button>
+        </div>
+        <div class="form-text text-muted small mt-2">
+            * Mọi sinh viên trong danh sách đều có thể đăng nhập bằng <strong>IDSV</strong> của mình với mật khẩu <code>123456</code>.
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    // Nếu đã đăng nhập sẵn thì chuyển thẳng vào trang chủ
+    try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+            const user = await res.json();
+            window.location.href = user.role === 'STUDENT' ? '/grades.html' : '/index.html';
+            return;
+        }
+    } catch (_) {}
+
+    const form = document.getElementById('loginForm');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const errorBox = document.getElementById('loginError');
+    const submitBtn = document.getElementById('loginSubmitBtn');
+    const toggleBtn = document.getElementById('togglePasswordBtn');
+
+    toggleBtn?.addEventListener('click', () => {
+        const isPwd = passwordInput.type === 'password';
+        passwordInput.type = isPwd ? 'text' : 'password';
+        toggleBtn.innerHTML = isPwd ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>';
+    });
+
+    document.querySelectorAll('.quick-role-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            usernameInput.value = btn.dataset.user;
+            passwordInput.value = btn.dataset.pass;
+            form.requestSubmit();
+        });
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorBox.classList.add('d-none');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang đăng nhập...';
+
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: usernameInput.value.trim(),
+                    password: passwordInput.value.trim(),
+                }),
+            });
+
+            if (!response.ok) {
+                let msg = 'Sai tên đăng nhập hoặc mật khẩu!';
+                try {
+                    const err = await response.json();
+                    msg = err.message || err.detail || msg;
+                } catch (_) {}
+                throw new Error(msg);
+            }
+
+            const user = await response.json();
+            window.location.href = user.role === 'STUDENT' ? '/grades.html' : '/index.html';
+        } catch (err) {
+            errorBox.textContent = err.message;
+            errorBox.classList.remove('d-none');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập hệ thống';
+        }
+    });
+});
+</script>
+</body>
+</html>
