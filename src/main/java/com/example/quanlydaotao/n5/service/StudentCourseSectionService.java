@@ -194,6 +194,88 @@ public class StudentCourseSectionService {
         return saved;
     }
 
+    public Map<String, Object> saveBatch(UUID courseSectionId, List<UUID> studentIds, String registrationType, String status, String note, LocalDateTime registrationDate) {
+        if (courseSectionId == null) {
+            throw new IllegalArgumentException("Lớp học phần không được để trống!");
+        }
+        if (studentIds == null || studentIds.isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng chọn ít nhất 1 sinh viên để thêm vào lớp học phần!");
+        }
+
+        CourseSection cs = csRepo.findById(courseSectionId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy lớp học phần!"));
+
+        if (Boolean.FALSE.equals(cs.getIsActive())) {
+            throw new IllegalArgumentException("Lớp học phần đang ngừng hoạt động, không thể thêm sinh viên!");
+        }
+        if (cs.getStatus() != null) {
+            String st = cs.getStatus().toLowerCase();
+            if (st.contains("đóng") || st.equals("closed") || st.equals("canceled") || st.contains("hủy")) {
+                throw new IllegalArgumentException("Lớp học phần này hiện đã đóng đăng ký!");
+            }
+        }
+
+        int maxStudents = cs.getMaxStudents() != null ? cs.getMaxStudents() : 50;
+        long currentCount = repo.countByCourseSectionIdAndDeletedAtIsNull(courseSectionId);
+
+        String regType = (registrationType != null && !registrationType.isBlank()) ? registrationType.trim() : "Học lần đầu";
+        String regStatus = (status != null && !status.isBlank()) ? status.trim() : "Đang học";
+
+        Set<UUID> uniqueIds = new LinkedHashSet<>(studentIds);
+        int addedCount = 0;
+        int skippedDuplicates = 0;
+        int skippedFull = 0;
+
+        for (UUID studentId : uniqueIds) {
+            if (studentId == null) continue;
+            if (repo.existsByStudentIdAndCourseSectionIdAndDeletedAtIsNull(studentId, courseSectionId)) {
+                skippedDuplicates++;
+                continue;
+            }
+            if (currentCount >= maxStudents) {
+                skippedFull++;
+                continue;
+            }
+            StudentCourseSection item = new StudentCourseSection();
+            item.setStudentId(studentId);
+            item.setCourseSection(cs);
+            item.setRegistrationDate(registrationDate != null ? registrationDate : LocalDateTime.now());
+            item.setRegistrationType(regType);
+            item.setStatus(regStatus);
+            item.setNote(note);
+            item.setIsActive(true);
+            studentRepo.findById(studentId).ifPresent(st -> {
+                item.setStudentName(st.getFullName());
+                item.setStudentCode(st.getStudentCode());
+            });
+            repo.save(item);
+            currentCount++;
+            addedCount++;
+        }
+
+        if (addedCount == 0 && skippedFull > 0) {
+            throw new IllegalArgumentException("Lớp học phần đã đạt sĩ số tối đa (" + maxStudents + " sinh viên)!");
+        }
+
+        StringBuilder msg = new StringBuilder();
+        msg.append("Đã thêm thành công ").append(addedCount).append(" sinh viên vào lớp học phần");
+        if (skippedDuplicates > 0) {
+            msg.append(" (bỏ qua ").append(skippedDuplicates).append(" SV đã có trong lớp)");
+        }
+        if (skippedFull > 0) {
+            msg.append(" (").append(skippedFull).append(" SV không thể thêm do lớp đã đủ sĩ số ").append(maxStudents).append(")");
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("addedCount", addedCount);
+        result.put("skippedDuplicates", skippedDuplicates);
+        result.put("skippedFull", skippedFull);
+        result.put("currentStudents", currentCount);
+        result.put("maxStudents", maxStudents);
+        result.put("message", msg.toString());
+        return result;
+    }
+
     public StudentCourseSection update(UUID id, StudentCourseSection updateData, UUID csId) {
         StudentCourseSection existing = repo.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin đăng ký với ID: " + id));
         UUID targetCsId = csId != null ? csId : updateData.getCourseSectionId();

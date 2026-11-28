@@ -2,6 +2,7 @@ const BASE_URL = '/api';
 
 export const API_ENDPOINTS = {
     STUDENTS: `${BASE_URL}/students`,
+    LECTURERS: `${BASE_URL}/lecturers`,
     ACADEMIC_YEARS: `${BASE_URL}/academic-years`,
     SCHOOL_YEARS: `${BASE_URL}/school-years`,
     SEMESTERS: `${BASE_URL}/semesters`,

@@ -52,6 +52,32 @@ public class StudentCourseSectionController {
         return service.save(e, courseSectionId);
     }
 
+    @PostMapping("/batch")
+    public ResponseEntity<Map<String, Object>> createBatch(@RequestBody Map<String, Object> body) {
+        if (body == null || body.get("courseSectionId") == null) {
+            throw new IllegalArgumentException("Lớp học phần không được để trống!");
+        }
+        UUID courseSectionId = UUID.fromString(String.valueOf(body.get("courseSectionId")));
+        Object rawIds = body.get("studentIds");
+        if (!(rawIds instanceof List<?> idList) || idList.isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng chọn ít nhất 1 sinh viên!");
+        }
+        List<UUID> studentIds = idList.stream()
+                .filter(item -> item != null && !String.valueOf(item).isBlank())
+                .map(item -> UUID.fromString(String.valueOf(item)))
+                .toList();
+        String registrationType = body.get("registrationType") != null ? String.valueOf(body.get("registrationType")) : "Học lần đầu";
+        String status = body.get("status") != null ? String.valueOf(body.get("status")) : "Đang học";
+        String note = body.get("note") != null ? String.valueOf(body.get("note")) : null;
+        java.time.LocalDateTime regDate = null;
+        if (body.get("registrationDate") != null && !String.valueOf(body.get("registrationDate")).isBlank()) {
+            String rawDate = String.valueOf(body.get("registrationDate")).trim();
+            if (rawDate.length() == 16) rawDate = rawDate + ":00";
+            regDate = java.time.LocalDateTime.parse(rawDate);
+        }
+        return ResponseEntity.ok(service.saveBatch(courseSectionId, studentIds, registrationType, status, note, regDate));
+    }
+
     @PutMapping("/{id}")
     public StudentCourseSection update(@PathVariable UUID id, @RequestBody StudentCourseSection e, @RequestParam(required = false) UUID courseSectionId) {
         return service.update(id, e, courseSectionId);

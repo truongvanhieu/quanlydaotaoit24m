@@ -1,5 +1,56 @@
 import { API_ENDPOINTS } from './config.js';
 
+const UDA_COURSE_SECTION_PRESETS = [
+    'Lập trình Web 1 - IT24M',
+    'HTML, CSS, Bootstrap programming - IT24M',
+    'Lập trình hướng đối tượng - IT24M',
+    'Cơ sở dữ liệu (SQL Server) - IT24M',
+    'Cấu trúc dữ liệu và giải thuật - IT24M',
+    'Kỹ thuật lập trình - IT24M',
+    'Mạng máy tính - IT24M',
+    'Phân tích và thiết kế hệ thống - IT24M',
+    'Công nghệ phần mềm - IT24M',
+    'Kiểm thử và đảm bảo chất lượng phần mềm - IT24M',
+    'Lập trình Web nâng cao - IT24M',
+    'Lập trình ứng dụng di động - IT24M',
+    'Điện toán đám mây (Cloud Computing) & DevOps - IT24M',
+    'Ứng dụng Trí tuệ nhân tạo (AI) & Khoa học dữ liệu - IT24M',
+    'Luật an toàn thông tin và Luật an ninh mạng - IT24M',
+    'Quản trị dự án phần mềm - IT24M',
+    'Nhập môn ngành Công nghệ thông tin - IT24M',
+    'Đồ họa ứng dụng & Nguyên lý thiết kế - IT24M',
+    'Kỹ năng giao tiếp và thuyết trình - IT24M',
+    'Toán cao cấp - IT24M',
+    'Pháp luật đại cương - IT24M',
+];
+
+function computeNextSectionCode(courseId, semesterId) {
+    const course = state.allCourses.find((c) => String(c.id) === String(courseId));
+    const sem = state.allSemesters.find((s) => String(s.id) === String(semesterId));
+    const coursePrefix = (course?.code || 'UDA').replace(/[^A-Za-z0-9]/g, '').toUpperCase() || 'UDA';
+    const semPart = (sem?.code || (sem?.startDate ? String(sem.startDate).slice(0, 4) : '2026'))
+        .replace(/[^A-Za-z0-9]/g, '')
+        .toUpperCase() || '2026';
+    const basePrefix = `${coursePrefix}-${semPart}-`;
+    let maxSeq = 0;
+    state.allCourseSections.forEach((cs) => {
+        const c = String(cs.code || '').toUpperCase();
+        if (c.startsWith(basePrefix)) {
+            const num = parseInt(c.slice(basePrefix.length).replace(/[^0-9]/g, ''), 10);
+            if (!Number.isNaN(num)) maxSeq = Math.max(maxSeq, num);
+        }
+    });
+    return `${basePrefix}${String(maxSeq + 1).padStart(2, '0')}`;
+}
+
+function updateAutoCourseSectionCodePreview() {
+    const codeInput = document.getElementById('autoCourseSectionCode');
+    if (!codeInput || state.modal.id) return;
+    const courseId = document.querySelector('#recordForm select[name="courseId"]')?.value || '';
+    const semId = document.querySelector('#recordForm select[name="semesterId"]')?.value || '';
+    codeInput.value = computeNextSectionCode(courseId, semId);
+}
+
 const PAGE_SIZE = 10;
 
 const state = {
@@ -98,6 +149,17 @@ const formatCourseSectionLabel = (cs) => {
 };
 
 const dateInput = (value) => (value ? String(value).slice(0, 10) : '');
+
+const dateTimeLocalInput = (value) => {
+    if (!value) return '';
+    return String(value).replace(' ', 'T').slice(0, 16);
+};
+
+const nowDateTimeLocal = () => {
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
 
 const statusBadge = (active) =>
     active !== false
@@ -293,7 +355,15 @@ function renderCourseSections() {
             <td><span class="badge capacity">${Number(item.currentStudents || 0)} / ${Number(item.maxStudents || 50)}</span></td>
             <td>${openStatusBadge(item.status)}</td>
             <td>${statusBadge(item.isActive)}</td>
-            <td>${actionButtons('course-sections', item)}</td>
+            <td>
+                <div class="row-actions">
+                    <button type="button" class="icon-button info assign-lecturer-action" data-id="${item.id}" title="Chọn giảng viên giảng dạy học phần" aria-label="Chọn giảng viên">👨‍🏫</button>
+                    <button type="button" class="icon-button success bulk-student-action" data-id="${item.id}" title="Thêm danh sách sinh viên vào lớp học phần" aria-label="Thêm DS sinh viên">👥</button>
+                    <button type="button" class="icon-button edit-action" data-type="course-sections" data-id="${item.id}" title="Chỉnh sửa" aria-label="Sửa">✎</button>
+                    <button type="button" class="icon-button warn toggle-action" data-type="course-sections" data-id="${item.id}" title="${item.isActive !== false ? 'Chuyển sang Ngừng hoạt động' : 'Kích hoạt Đang hoạt động'}" aria-label="Đổi trạng thái">${item.isActive !== false ? '◉' : '○'}</button>
+                    <button type="button" class="icon-button danger delete-action" data-type="course-sections" data-id="${item.id}" title="Xóa mềm (Ngừng hoạt động)" aria-label="Xóa mềm">⌫</button>
+                </div>
+            </td>
         </tr>`
               )
               .join('')
@@ -662,25 +732,31 @@ function fieldsFor(type, item = {}) {
             )
             .join('');
         const openSt = item.status || 'Đang mở';
+        const isEdit = Boolean(item.id);
+        const autoCode = isEdit ? (item.code || '') : computeNextSectionCode(selectedCourseId, selectedSemId);
+        const udaOptions = UDA_COURSE_SECTION_PRESETS.map((p) => `<option value="${escapeHtml(p)}">`).join('');
 
         return `
-            <label>Mã lớp học phần *
-                <input name="code" required maxlength="100" placeholder="VD: IT301-2605" value="${escapeHtml(item.code || '')}">
-            </label>
-            <label>Tên lớp học phần *
-                <input name="name" required maxlength="255" placeholder="VD: Phân tích & thiết kế hệ thống - Lớp 05" value="${escapeHtml(item.name || '')}">
-            </label>
-            <label>Học phần *
+            <label>Học phần (Đại học Đông Á) *
                 <select name="courseId" required>
                     <option value="">-- Chọn học phần --</option>
                     ${courseOptions}
                 </select>
             </label>
-            <label>Học kỳ *
+            <label>Học kỳ / Năm học *
                 <select name="semesterId" required>
                     <option value="">-- Chọn học kỳ --</option>
                     ${semOptions}
                 </select>
+            </label>
+            <label class="full-width">Tên lớp học phần (Chuẩn Trường Đại học Đông Á) *
+                <input name="name" required maxlength="255" list="udaCourseSectionList" placeholder="Chọn hoặc nhập tên lớp học phần ĐH Đông Á..." value="${escapeHtml(item.name || '')}">
+                <datalist id="udaCourseSectionList">
+                    ${udaOptions}
+                </datalist>
+            </label>
+            <label>Mã lớp học phần (Tự nhảy số theo Học phần & Năm học)
+                <input id="autoCourseSectionCode" name="code" readonly style="background:#eff6ff;color:#1d4ed8;font-weight:700" value="${escapeHtml(autoCode)}">
             </label>
             <label>Giảng viên phụ trách
                 <select name="lecturerId">
@@ -709,6 +785,12 @@ function fieldsFor(type, item = {}) {
                     <option value="Đang mở" ${openSt === 'Đang mở' ? 'selected' : ''}>Đang mở</option>
                     <option value="Đã đóng" ${openSt === 'Đã đóng' ? 'selected' : ''}>Đã đóng</option>
                 </select>
+            </label>
+            <label>Thời gian bắt đầu lớp học phần
+                <input name="registrationStart" type="datetime-local" value="${dateTimeLocalInput(item.registrationStart)}">
+            </label>
+            <label>Thời gian kết thúc lớp học phần
+                <input name="registrationEnd" type="datetime-local" value="${dateTimeLocalInput(item.registrationEnd)}">
             </label>
             <label>Trạng thái hoạt động
                 <select name="isActive">
@@ -766,6 +848,9 @@ function fieldsFor(type, item = {}) {
                     <option value="true" ${isActiveVal === 'true' ? 'selected' : ''}>Đang hoạt động</option>
                     <option value="false" ${isActiveVal === 'false' ? 'selected' : ''}>Ngừng hoạt động</option>
                 </select>
+            </label>
+            <label>Thời gian / Ngày đăng ký
+                <input name="registrationDate" type="datetime-local" value="${dateTimeLocalInput(item.registrationDate) || nowDateTimeLocal()}">
             </label>
             <label>Ghi chú
                 <input name="note" maxlength="255" placeholder="Ghi chú đăng ký" value="${escapeHtml(item.note || '')}">
@@ -825,10 +910,356 @@ function openModal(type, item = null) {
     document.getElementById('modalFields').innerHTML = fieldsFor(type, item || {});
     document.getElementById('modalMessage').hidden = true;
     document.getElementById('recordModal').hidden = false;
+
+    if (type === 'course-sections' && !item) {
+        const courseSel = document.querySelector('#recordForm select[name="courseId"]');
+        const semSel = document.querySelector('#recordForm select[name="semesterId"]');
+        const nameInput = document.querySelector('#recordForm input[name="name"]');
+        const syncCodeAndName = () => {
+            updateAutoCourseSectionCodePreview();
+            if (nameInput && !nameInput.value.trim() && courseSel?.value) {
+                const c = state.allCourses.find((x) => String(x.id) === String(courseSel.value));
+                if (c) nameInput.value = `${c.name} - IT24M`;
+            }
+        };
+        courseSel?.addEventListener('change', syncCodeAndName);
+        semSel?.addEventListener('change', syncCodeAndName);
+        updateAutoCourseSectionCodePreview();
+    }
 }
 
 function closeModal() {
     document.getElementById('recordModal').hidden = true;
+}
+
+// ── BULK ADD STUDENTS TO COURSE SECTION ──
+const bulkState = {
+    enrolledIds: new Set(),
+    selectedIds: new Set(),
+    maxStudents: 50,
+    currentStudents: 0,
+};
+
+function updateBulkCapacityBanner() {
+    const bar = document.getElementById('bulkCapacityInfo');
+    if (!bar) return;
+    const remaining = Math.max(0, bulkState.maxStudents - bulkState.currentStudents);
+    const selected = bulkState.selectedIds.size;
+    const over = selected > remaining;
+    bar.innerHTML = `Đã chọn: <strong>${selected}</strong> sinh viên | Hiện có: <strong>${bulkState.currentStudents}/${bulkState.maxStudents}</strong> | Chỗ còn trống: <strong style="color:${over ? '#dc2626' : '#15803d'}">${remaining}</strong>${over ? ' <span style="color:#dc2626;font-weight:700">(Vượt quá chỗ trống!)</span>' : ''}`;
+}
+
+function renderBulkStudentChecklist() {
+    const listEl = document.getElementById('bulkStudentChecklist');
+    const csId = document.getElementById('bulkCourseSectionSelect')?.value;
+    if (!listEl) return;
+    if (!csId) {
+        listEl.innerHTML = '<div class="empty">Vui lòng chọn lớp học phần để tải danh sách sinh viên.</div>';
+        updateBulkCapacityBanner();
+        return;
+    }
+
+    const kw = (document.getElementById('bulkStudentSearch')?.value || '').trim().toLowerCase();
+    const classFilter = document.getElementById('bulkStudentClassFilter')?.value || '';
+    const filtered = state.allStudents.filter((st) => {
+        if (classFilter && String(st.className || 'Chưa phân lớp') !== classFilter) return false;
+        if (!kw) return true;
+        const hay = `${st.studentCode || ''} ${st.fullName || ''} ${st.email || ''} ${st.className || ''}`.toLowerCase();
+        return hay.includes(kw);
+    });
+
+    if (!filtered.length) {
+        listEl.innerHTML = '<div class="empty">Không tìm thấy sinh viên phù hợp.</div>';
+        updateBulkCapacityBanner();
+        return;
+    }
+
+    listEl.innerHTML = filtered
+        .map((st) => {
+            const idStr = String(st.id);
+            const enrolled = bulkState.enrolledIds.has(idStr);
+            const checked = !enrolled && bulkState.selectedIds.has(idStr);
+            return `<label class="bulk-student-item ${enrolled ? 'enrolled' : ''}">
+                <span class="bulk-student-left">
+                    <input type="checkbox" class="bulk-student-cb" value="${escapeHtml(idStr)}" ${checked ? 'checked' : ''} ${enrolled ? 'disabled' : ''}>
+                    <span class="bulk-student-meta">
+                        <strong>${escapeHtml(st.studentCode || '—')} — ${escapeHtml(st.fullName || 'Chưa rõ tên')}</strong>
+                        <small>${escapeHtml(st.email || st.className || 'IT24M')}</small>
+                    </span>
+                </span>
+                ${enrolled ? '<span class="badge status-studying">Đã trong lớp</span>' : '<span class="badge muted">Chưa ĐK</span>'}
+            </label>`;
+        })
+        .join('');
+    updateBulkCapacityBanner();
+}
+
+async function syncBulkCourseSectionInfo(csId) {
+    bulkState.enrolledIds = new Set();
+    bulkState.selectedIds = new Set();
+    const cs = state.allCourseSections.find((item) => String(item.id) === String(csId));
+    bulkState.maxStudents = Number(cs?.maxStudents || 50);
+    bulkState.currentStudents = Number(cs?.currentStudents || 0);
+
+    if (csId) {
+        try {
+            const data = await request(`${API_ENDPOINTS.COURSE_REGISTRATIONS}/by-section/${csId}`);
+            const students = Array.isArray(data.students) ? data.students : [];
+            students.forEach((st) => {
+                const sid = st.student_id || st.studentId;
+                if (sid) bulkState.enrolledIds.add(String(sid));
+            });
+            bulkState.currentStudents = students.length;
+            bulkState.maxStudents = Number(data.section_info?.max_students ?? data.section_info?.maxStudents ?? bulkState.maxStudents);
+        } catch {
+            // Fall back to catalog numbers
+        }
+    }
+    renderBulkStudentChecklist();
+}
+
+async function openBulkStudentModal(preselectCsId = '') {
+    if (!state.allStudents.length || !state.allCourseSections.length) {
+        await loadCatalogs();
+    }
+    const select = document.getElementById('bulkCourseSectionSelect');
+    const classFilter = document.getElementById('bulkStudentClassFilter');
+    const regDateInput = document.getElementById('bulkRegistrationDate');
+    const msg = document.getElementById('bulkStudentMessage');
+    const search = document.getElementById('bulkStudentSearch');
+    if (msg) msg.hidden = true;
+    if (search) search.value = '';
+    if (regDateInput) regDateInput.value = nowDateTimeLocal();
+
+    if (classFilter) {
+        const classes = [...new Set(state.allStudents.map((s) => String(s.className || 'Chưa phân lớp')))].sort();
+        classFilter.innerHTML =
+            '<option value="">Tất cả lớp sinh viên</option>' +
+            classes.map((cls) => `<option value="${escapeHtml(cls)}">Lớp ${escapeHtml(cls)}</option>`).join('');
+        classFilter.value = '';
+    }
+
+    const sortedCs = [...state.allCourseSections].sort((a, b) => (b.currentStudents || 0) - (a.currentStudents || 0));
+    if (select) {
+        select.innerHTML =
+            '<option value="">-- Chọn lớp học phần --</option>' +
+            sortedCs
+                .map(
+                    (cs) =>
+                        `<option value="${cs.id}">${escapeHtml(formatCourseSectionLabel(cs))} — Sĩ số: ${cs.currentStudents || 0}/${cs.maxStudents || 50}</option>`
+                )
+                .join('');
+        select.value = preselectCsId || document.getElementById('lookupCourseSectionSelect')?.value || (sortedCs[0]?.id || '');
+    }
+
+    document.getElementById('bulkStudentModal').hidden = false;
+    await syncBulkCourseSectionInfo(select?.value || '');
+}
+
+function closeBulkStudentModal() {
+    document.getElementById('bulkStudentModal').hidden = true;
+}
+
+async function submitBulkStudents(event) {
+    event.preventDefault();
+    const msg = document.getElementById('bulkStudentMessage');
+    if (msg) msg.hidden = true;
+
+    const courseSectionId = document.getElementById('bulkCourseSectionSelect')?.value;
+    const registrationType = document.getElementById('bulkRegistrationType')?.value || 'Học lần đầu';
+    const status = document.getElementById('bulkRegistrationStatus')?.value || 'Đang học';
+    const rawRegDate = document.getElementById('bulkRegistrationDate')?.value || '';
+    const registrationDate = rawRegDate ? (rawRegDate.length === 16 ? `${rawRegDate}:00` : rawRegDate) : null;
+    const studentIds = Array.from(bulkState.selectedIds);
+
+    if (!courseSectionId) {
+        msg.textContent = 'Vui lòng chọn lớp học phần!';
+        msg.hidden = false;
+        return;
+    }
+    if (!studentIds.length) {
+        msg.textContent = 'Vui lòng tích chọn ít nhất 1 sinh viên để thêm vào lớp học phần!';
+        msg.hidden = false;
+        return;
+    }
+
+    try {
+        const res = await request(`${API_ENDPOINTS.STUDENT_COURSE_SECTIONS}/batch`, {
+            method: 'POST',
+            body: JSON.stringify({ courseSectionId, studentIds, registrationType, status, registrationDate }),
+        });
+        closeBulkStudentModal();
+        showToast(res.message || `Đã thêm ${res.addedCount || 0} sinh viên vào lớp học phần!`);
+        await loadCatalogs();
+        const lookupSel = document.getElementById('lookupCourseSectionSelect');
+        if (lookupSel) lookupSel.value = courseSectionId;
+        await Promise.all([load('registrations'), load('course-sections'), renderCourseSectionLookup()]);
+    } catch (error) {
+        msg.textContent = `Không thể thêm danh sách sinh viên: ${error.message}`;
+        msg.hidden = false;
+    }
+}
+
+// ── QUICK ASSIGN LECTURER TO COURSE SECTION ──
+const assignState = {
+    selectedLecturerId: '',
+    selectedLecturerLabel: '',
+};
+
+function renderAssignLecturerOptions(selectedLecturerId = '') {
+    const listEl = document.getElementById('assignLecturerList');
+    const hiddenInput = document.getElementById('assignLecturerSelect');
+    const summaryEl = document.getElementById('assignLecturerSummary');
+    if (!listEl) return;
+
+    if (selectedLecturerId) {
+        assignState.selectedLecturerId = String(selectedLecturerId);
+    }
+    const csId = document.getElementById('assignCourseSectionSelect')?.value || '';
+    const kw = (document.getElementById('assignLecturerSearch')?.value || '').trim().toLowerCase();
+    const roleFilter = document.getElementById('assignLecturerRoleFilter')?.value || '';
+    const statusFilter = document.getElementById('assignLecturerStatusFilter')?.value || '';
+
+    // Map existing role per lecturer on the selected course section (or overall)
+    const sectionRoleMap = new Map();
+    const allRoleMap = new Map();
+    (state.instructors || []).forEach((ins) => {
+        const empId = String(ins.employeeId || ins.lecturerId || '');
+        const clsId = String(ins.courseClassId || ins.courseSection?.id || '');
+        if (!empId) return;
+        if (ins.role) allRoleMap.set(empId, ins.role);
+        if (csId && clsId === String(csId)) {
+            sectionRoleMap.set(empId, { role: ins.role || 'Giảng viên chính', isActive: ins.isActive !== false });
+        }
+    });
+
+    const filtered = state.allLecturers.filter((l) => {
+        const idStr = String(l.id);
+        const active = l.isActive !== false;
+        if (kw && !`${l.code || ''} ${l.fullName || ''} ${l.email || ''}`.toLowerCase().includes(kw)) {
+            return false;
+        }
+        if (statusFilter === 'true' && !active) return false;
+        if (statusFilter === 'false' && active) return false;
+        if (roleFilter) {
+            const assigned = sectionRoleMap.get(idStr)?.role || allRoleMap.get(idStr) || '';
+            if (assigned !== roleFilter) return false;
+        }
+        return true;
+    });
+
+    const chosenObj = state.allLecturers.find((l) => String(l.id) === assignState.selectedLecturerId);
+    if (hiddenInput) hiddenInput.value = assignState.selectedLecturerId;
+    if (summaryEl) {
+        const activeCount = filtered.filter((l) => l.isActive !== false).length;
+        const chosenText = chosenObj ? `${chosenObj.code || ''} — ${chosenObj.fullName || ''}` : 'Chưa chọn';
+        summaryEl.innerHTML = `Hiển thị: <strong>${filtered.length}</strong> giảng viên (Đang hoạt động: <strong>${activeCount}</strong>) | Đang chọn: <strong style="color:#1d4ed8">${escapeHtml(chosenText)}</strong>`;
+    }
+
+    if (!filtered.length) {
+        listEl.innerHTML = '<div class="empty">Không có giảng viên phù hợp bộ lọc.</div>';
+        return;
+    }
+
+    listEl.innerHTML = filtered
+        .map((l) => {
+            const idStr = String(l.id);
+            const active = l.isActive !== false;
+            const checked = idStr === assignState.selectedLecturerId;
+            const secRole = sectionRoleMap.get(idStr);
+            const roleBadge = secRole
+                ? `<span class="badge role">${escapeHtml(secRole.role)}</span>`
+                : allRoleMap.get(idStr)
+                ? `<span class="badge status">${escapeHtml(allRoleMap.get(idStr))}</span>`
+                : '';
+            return `<label class="bulk-student-item">
+                <span class="bulk-student-left">
+                    <input type="radio" name="assignLecturerRadio" class="assign-lecturer-radio" value="${escapeHtml(idStr)}" ${checked ? 'checked' : ''}>
+                    <span class="bulk-student-meta">
+                        <strong>${escapeHtml(l.code || '—')} — ${escapeHtml(l.fullName || 'Chưa rõ tên')}</strong>
+                        <small>${escapeHtml(l.email || 'Giảng viên Khoa CNTT')}</small>
+                    </span>
+                </span>
+                <span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+                    ${roleBadge}
+                    ${statusBadge(active)}
+                </span>
+            </label>`;
+        })
+        .join('');
+}
+
+async function openAssignLecturerModal(preselectCsId = '') {
+    if (!state.allLecturers.length || !state.allCourseSections.length) {
+        await loadCatalogs();
+    }
+    const csSelect = document.getElementById('assignCourseSectionSelect');
+    const search = document.getElementById('assignLecturerSearch');
+    const roleFilter = document.getElementById('assignLecturerRoleFilter');
+    const statusFilter = document.getElementById('assignLecturerStatusFilter');
+    const msg = document.getElementById('assignLecturerMessage');
+    if (msg) msg.hidden = true;
+    if (search) search.value = '';
+    if (roleFilter) roleFilter.value = '';
+    if (statusFilter) statusFilter.value = '';
+
+    const sortedCs = [...state.allCourseSections].sort((a, b) => String(a.code || '').localeCompare(String(b.code || '')));
+    if (csSelect) {
+        csSelect.innerHTML =
+            '<option value="">-- Chọn lớp học phần --</option>' +
+            sortedCs
+                .map(
+                    (cs) =>
+                        `<option value="${cs.id}">${escapeHtml(formatCourseSectionLabel(cs))} — GV hiện tại: ${escapeHtml(cs.lecturerName || 'Chưa phân công')}</option>`
+                )
+                .join('');
+        csSelect.value = preselectCsId || (sortedCs[0]?.id || '');
+    }
+
+    const chosenCs = state.allCourseSections.find((item) => String(item.id) === String(csSelect?.value || ''));
+    assignState.selectedLecturerId = chosenCs?.lecturerId ? String(chosenCs.lecturerId) : '';
+    renderAssignLecturerOptions(assignState.selectedLecturerId);
+    document.getElementById('assignLecturerRole').value = 'Giảng viên chính';
+    document.getElementById('assignLecturerHours').value = 45;
+    const activeSel = document.getElementById('assignLecturerActive');
+    if (activeSel) activeSel.value = 'true';
+    document.getElementById('assignLecturerModal').hidden = false;
+}
+
+function closeAssignLecturerModal() {
+    document.getElementById('assignLecturerModal').hidden = true;
+}
+
+async function submitAssignLecturer(event) {
+    event.preventDefault();
+    const msg = document.getElementById('assignLecturerMessage');
+    if (msg) msg.hidden = true;
+
+    const courseSectionId = document.getElementById('assignCourseSectionSelect')?.value;
+    const employeeId = document.getElementById('assignLecturerSelect')?.value || assignState.selectedLecturerId;
+    const role = document.getElementById('assignLecturerRole')?.value || 'Giảng viên chính';
+    const hours = Number(document.getElementById('assignLecturerHours')?.value || 45);
+    const isActive = (document.getElementById('assignLecturerActive')?.value || 'true') === 'true';
+
+    if (!courseSectionId || !employeeId) {
+        msg.textContent = 'Vui lòng chọn đầy đủ Lớp học phần và Giảng viên giảng dạy từ danh sách!';
+        msg.hidden = false;
+        return;
+    }
+
+    try {
+        const updated = await request(`${API_ENDPOINTS.COURSE_SECTIONS}/${courseSectionId}/assign-lecturer`, {
+            method: 'POST',
+            body: JSON.stringify({ employeeId, role, hours, isActive }),
+        });
+        closeAssignLecturerModal();
+        showToast(`Đã phân công giảng viên "${updated.lecturerName || 'Giảng viên'}" (${role}) giảng dạy lớp ${updated.code || ''}!`);
+        await loadCatalogs();
+        await Promise.all([load('course-sections'), load('instructors')]);
+    } catch (error) {
+        msg.textContent = `Không thể phân công giảng viên: ${error.message}`;
+        msg.hidden = false;
+    }
 }
 
 async function saveModal(event) {
@@ -837,13 +1268,27 @@ async function saveModal(event) {
     const formData = new FormData(event.currentTarget);
     const payload = Object.fromEntries(formData.entries());
 
-    // Client-side validation for startDate < endDate
+    // Client-side validation for startDate < endDate and registrationStart < registrationEnd
     if (payload.startDate && payload.endDate && payload.startDate >= payload.endDate) {
         const msg = document.getElementById('modalMessage');
         msg.textContent = 'Lỗi dữ liệu: Ngày bắt đầu phải nhỏ hơn ngày kết thúc!';
         msg.hidden = false;
         return;
     }
+    if (payload.registrationStart && payload.registrationEnd && payload.registrationStart >= payload.registrationEnd) {
+        const msg = document.getElementById('modalMessage');
+        msg.textContent = 'Lỗi dữ liệu: Thời gian bắt đầu lớp học phần phải nhỏ hơn thời gian kết thúc!';
+        msg.hidden = false;
+        return;
+    }
+
+    ['registrationStart', 'registrationEnd', 'registrationDate'].forEach((k) => {
+        if (payload[k] && payload[k].length === 16) {
+            payload[k] = `${payload[k]}:00`;
+        } else if (payload[k] === '') {
+            delete payload[k];
+        }
+    });
 
     if (payload.isActive !== undefined) {
         payload.isActive = payload.isActive === 'true';
@@ -934,7 +1379,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     document.querySelectorAll('.add-button').forEach((button) =>
-        button.addEventListener('click', () => openModal(button.dataset.create))
+        button.addEventListener('click', () => {
+            if (button.dataset.create === 'registrations') {
+                openBulkStudentModal(document.getElementById('lookupCourseSectionSelect')?.value || '');
+            } else {
+                openModal(button.dataset.create);
+            }
+        })
     );
     document.querySelectorAll('[data-close-modal]').forEach((button) =>
         button.addEventListener('click', closeModal)
@@ -971,9 +1422,74 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderCourseSectionLookup();
     });
 
+    // Bulk Add Students Modal listeners
+    document.getElementById('openBulkStudentFromCsBtn')?.addEventListener('click', () => openBulkStudentModal());
+    document.getElementById('openBulkStudentFromLookupBtn')?.addEventListener('click', () => {
+        openBulkStudentModal(document.getElementById('lookupCourseSectionSelect')?.value || '');
+    });
+    document.querySelectorAll('[data-close-bulk]').forEach((btn) => btn.addEventListener('click', closeBulkStudentModal));
+    document.getElementById('bulkStudentModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'bulkStudentModal') closeBulkStudentModal();
+    });
+    document.getElementById('bulkCourseSectionSelect')?.addEventListener('change', (e) => {
+        syncBulkCourseSectionInfo(e.target.value);
+    });
+    document.getElementById('bulkStudentSearch')?.addEventListener('input', () => renderBulkStudentChecklist());
+    document.getElementById('bulkStudentClassFilter')?.addEventListener('change', () => renderBulkStudentChecklist());
+    document.getElementById('bulkStudentChecklist')?.addEventListener('change', (e) => {
+        if (!e.target.classList.contains('bulk-student-cb')) return;
+        if (e.target.checked) bulkState.selectedIds.add(e.target.value);
+        else bulkState.selectedIds.delete(e.target.value);
+        updateBulkCapacityBanner();
+    });
+    document.getElementById('bulkSelectAllBtn')?.addEventListener('click', () => {
+        document.querySelectorAll('#bulkStudentChecklist .bulk-student-cb:not(:disabled)').forEach((cb) => {
+            cb.checked = true;
+            bulkState.selectedIds.add(cb.value);
+        });
+        updateBulkCapacityBanner();
+    });
+    document.getElementById('bulkClearAllBtn')?.addEventListener('click', () => {
+        document.querySelectorAll('#bulkStudentChecklist .bulk-student-cb').forEach((cb) => {
+            cb.checked = false;
+        });
+        bulkState.selectedIds.clear();
+        updateBulkCapacityBanner();
+    });
+    document.getElementById('bulkStudentForm')?.addEventListener('submit', submitBulkStudents);
+
+    // Quick Assign Lecturer Modal listeners
+    document.getElementById('openAssignLecturerBtn')?.addEventListener('click', () => openAssignLecturerModal());
+    document.querySelectorAll('[data-close-assign]').forEach((btn) => btn.addEventListener('click', closeAssignLecturerModal));
+    document.getElementById('assignLecturerModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'assignLecturerModal') closeAssignLecturerModal();
+    });
+    document.getElementById('assignCourseSectionSelect')?.addEventListener('change', (e) => {
+        const cs = state.allCourseSections.find((item) => String(item.id) === String(e.target.value));
+        assignState.selectedLecturerId = cs?.lecturerId ? String(cs.lecturerId) : '';
+        renderAssignLecturerOptions(assignState.selectedLecturerId);
+    });
+    document.getElementById('assignLecturerSearch')?.addEventListener('input', () => renderAssignLecturerOptions());
+    document.getElementById('assignLecturerRoleFilter')?.addEventListener('change', () => renderAssignLecturerOptions());
+    document.getElementById('assignLecturerStatusFilter')?.addEventListener('change', () => renderAssignLecturerOptions());
+    document.getElementById('assignLecturerList')?.addEventListener('change', (e) => {
+        if (!e.target.classList.contains('assign-lecturer-radio')) return;
+        assignState.selectedLecturerId = e.target.value;
+        const hiddenInput = document.getElementById('assignLecturerSelect');
+        if (hiddenInput) hiddenInput.value = e.target.value;
+        renderAssignLecturerOptions();
+    });
+    document.getElementById('assignLecturerForm')?.addEventListener('submit', submitAssignLecturer);
+
     document.addEventListener('click', (event) => {
         const button = event.target.closest('button');
         if (!button) return;
+        if (button.classList.contains('assign-lecturer-action')) {
+            openAssignLecturerModal(button.dataset.id);
+        }
+        if (button.classList.contains('bulk-student-action')) {
+            openBulkStudentModal(button.dataset.id);
+        }
         if (button.classList.contains('edit-action')) {
             const type = button.dataset.type;
             const record = state[configs[type].key].find((item) => String(item.id) === String(button.dataset.id));

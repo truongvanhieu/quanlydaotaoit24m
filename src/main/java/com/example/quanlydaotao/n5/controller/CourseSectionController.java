@@ -43,6 +43,20 @@ public class CourseSectionController {
         return service.update(id, e, semesterId);
     }
 
+    @PostMapping("/{id}/assign-lecturer")
+    public CourseSection assignLecturer(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
+        if (body == null || body.get("employeeId") == null || String.valueOf(body.get("employeeId")).isBlank()) {
+            throw new IllegalArgumentException("Vui lòng chọn giảng viên giảng dạy!");
+        }
+        UUID employeeId = UUID.fromString(String.valueOf(body.get("employeeId")));
+        String role = body.get("role") != null ? String.valueOf(body.get("role")) : "Giảng viên chính";
+        Integer hours = body.get("hours") != null && !String.valueOf(body.get("hours")).isBlank()
+                ? Integer.valueOf(String.valueOf(body.get("hours")))
+                : 45;
+        Boolean isActive = body.get("isActive") != null ? Boolean.valueOf(String.valueOf(body.get("isActive"))) : true;
+        return service.assignLecturer(id, employeeId, role, hours, isActive);
+    }
+
     @PatchMapping("/{id}/active")
     public CourseSection updateActive(@PathVariable UUID id, @RequestBody(required = false) Map<String, Boolean> body) {
         Boolean isActive = body != null ? body.get("isActive") : null;

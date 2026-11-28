@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Quản lý đào tạo (IT24M) | Module Nhóm 5</title>
     <link rel="stylesheet" href="/adminlte/css/adminlte.css">
-    <link rel="stylesheet" href="/assets/css/n5.css">
+    <link rel="stylesheet" href="/assets/css/n5.css?v=3">
 </head>
 <body>
 <div id="toastBanner" class="toast-banner" hidden></div>
@@ -19,6 +19,7 @@
         </div>
         <div class="header-actions">
             <button type="button" id="refreshAllBtn" class="secondary-button">↻ Làm mới dữ liệu</button>
+            <a class="back-link" href="/lecturers.html">👨‍🏫 Danh sách giảng viên</a>
             <a class="back-link" href="/index.html">← Danh sách sinh viên</a>
         </div>
     </header>
@@ -173,7 +174,11 @@
                     </select>
                     <button id="courseSectionSearch" class="secondary-button">Tìm kiếm</button>
                 </div>
-                <button class="primary-button add-button" data-create="course-sections">＋ Thêm lớp học phần</button>
+                <div class="toolbar-actions">
+                    <button type="button" id="openAssignLecturerBtn" class="secondary-button">👨‍🏫 Chọn giảng viên dạy HP</button>
+                    <button type="button" id="openBulkStudentFromCsBtn" class="secondary-button">👥 Thêm DS sinh viên vào LHP</button>
+                    <button class="primary-button add-button" data-create="course-sections">＋ Thêm lớp học phần</button>
+                </div>
             </div>
         </div>
         <div id="courseSectionMessage" class="message" hidden></div>
@@ -214,6 +219,7 @@
                     <select id="lookupCourseSectionSelect" aria-label="Chọn lớp học phần cần tra cứu">
                         <option value="">-- Chọn lớp học phần để tra cứu --</option>
                     </select>
+                    <button type="button" id="openBulkStudentFromLookupBtn" class="primary-button">👥 ＋ Thêm DS sinh viên vào lớp</button>
                 </div>
             </div>
             <div id="lookupSummaryBanner" class="lookup-banner">
@@ -363,6 +369,132 @@
     </div>
 </div>
 
-<script type="module" src="/assets/js/n5.js"></script>
+<!-- MODAL THÊM DANH SÁCH SINH VIÊN VÀO LỚP HỌC PHẦN -->
+<div id="bulkStudentModal" class="modal-backdrop" hidden>
+    <div class="modal-card modal-wide" role="dialog" aria-modal="true" aria-labelledby="bulkStudentModalTitle">
+        <div class="modal-header">
+            <div>
+                <p class="eyebrow">ĐĂNG KÝ HÀNG LOẠT — NHÓM 5</p>
+                <h2 id="bulkStudentModalTitle">Thêm danh sách sinh viên vào lớp học phần</h2>
+            </div>
+            <button type="button" class="modal-close" data-close-bulk aria-label="Đóng">×</button>
+        </div>
+        <form id="bulkStudentForm">
+            <div class="form-grid">
+                <label class="full-width">Chọn Lớp học phần *
+                    <select id="bulkCourseSectionSelect" name="courseSectionId" required>
+                        <option value="">-- Chọn lớp học phần --</option>
+                    </select>
+                </label>
+                <label>Loại đăng ký *
+                    <select id="bulkRegistrationType" name="registrationType">
+                        <option value="Học lần đầu">Học lần đầu</option>
+                        <option value="Học lại">Học lại</option>
+                        <option value="Học cải thiện">Học cải thiện</option>
+                        <option value="Học thay thế">Học thay thế</option>
+                    </select>
+                </label>
+                <label>Trạng thái học tập *
+                    <select id="bulkRegistrationStatus" name="status">
+                        <option value="Đang học">Đang học</option>
+                        <option value="Đã đăng ký">Đã đăng ký</option>
+                    </select>
+                </label>
+                <label class="full-width">Thời gian / Ngày đăng ký *
+                    <input id="bulkRegistrationDate" name="registrationDate" type="datetime-local" required>
+                </label>
+                <div class="full-width bulk-picker-box">
+                    <div class="bulk-toolbar">
+                        <input id="bulkStudentSearch" type="search" placeholder="Tìm theo mã SV hoặc họ tên sinh viên...">
+                        <select id="bulkStudentClassFilter" aria-label="Lọc sinh viên theo lớp">
+                            <option value="">Tất cả lớp sinh viên</option>
+                        </select>
+                        <div class="bulk-toolbar-buttons">
+                            <button type="button" id="bulkSelectAllBtn" class="secondary-button">Chọn tất cả lớp đang lọc</button>
+                            <button type="button" id="bulkClearAllBtn" class="secondary-button">Bỏ chọn</button>
+                        </div>
+                    </div>
+                    <div id="bulkCapacityInfo" class="bulk-capacity-bar">
+                        Đã chọn: <strong>0</strong> sinh viên | Chỗ còn trống: <strong>--</strong>
+                    </div>
+                    <div id="bulkStudentChecklist" class="bulk-student-list">
+                        <div class="empty">Vui lòng chọn lớp học phần để tải danh sách sinh viên.</div>
+                    </div>
+                </div>
+            </div>
+            <div id="bulkStudentMessage" class="form-message" hidden></div>
+            <div class="modal-actions">
+                <button type="button" class="secondary-button" data-close-bulk>Hủy</button>
+                <button type="submit" class="primary-button">Lưu danh sách sinh viên</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL CHỌN GIẢNG VIÊN GIẢNG DẠY 1 HỌC PHẦN -->
+<div id="assignLecturerModal" class="modal-backdrop" hidden>
+    <div class="modal-card modal-wide" role="dialog" aria-modal="true" aria-labelledby="assignLecturerModalTitle">
+        <div class="modal-header">
+            <div>
+                <p class="eyebrow">PHÂN CÔNG GIẢNG DẠY — NHÓM 5</p>
+                <h2 id="assignLecturerModalTitle">Chọn giảng viên giảng dạy học phần</h2>
+            </div>
+            <button type="button" class="modal-close" data-close-assign aria-label="Đóng">×</button>
+        </div>
+        <form id="assignLecturerForm">
+            <div class="form-grid">
+                <label class="full-width">Lớp học phần *
+                    <select id="assignCourseSectionSelect" name="courseSectionId" required>
+                        <option value="">-- Chọn lớp học phần --</option>
+                    </select>
+                </label>
+                <div class="full-width bulk-picker-box">
+                    <div class="bulk-toolbar">
+                        <input id="assignLecturerSearch" type="search" placeholder="Tìm theo mã hoặc họ tên giảng viên...">
+                        <select id="assignLecturerRoleFilter" aria-label="Lọc theo vai trò">
+                            <option value="">Tất cả vai trò</option>
+                            <option value="Giảng viên chính">Giảng viên chính</option>
+                            <option value="Trợ giảng">Trợ giảng</option>
+                        </select>
+                        <select id="assignLecturerStatusFilter" aria-label="Lọc trạng thái giảng viên">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="true">Đang hoạt động</option>
+                            <option value="false">Ngừng hoạt động</option>
+                        </select>
+                    </div>
+                    <div id="assignLecturerSummary" class="bulk-capacity-bar">
+                        Danh sách giảng viên: <strong>0</strong> | Đang chọn: <strong>Chưa chọn</strong>
+                    </div>
+                    <div id="assignLecturerList" class="bulk-student-list">
+                        <div class="empty">Đang tải danh sách giảng viên...</div>
+                    </div>
+                </div>
+                <input type="hidden" id="assignLecturerSelect" name="employeeId" value="">
+                <label>Vai trò giảng dạy *
+                    <select id="assignLecturerRole" name="role">
+                        <option value="Giảng viên chính">Giảng viên chính</option>
+                        <option value="Trợ giảng">Trợ giảng</option>
+                    </select>
+                </label>
+                <label>Số tiết phân công *
+                    <input id="assignLecturerHours" name="hours" type="number" min="1" max="300" required value="45">
+                </label>
+                <label class="full-width">Trạng thái phân công *
+                    <select id="assignLecturerActive" name="isActive">
+                        <option value="true">Đang hoạt động</option>
+                        <option value="false">Ngừng hoạt động</option>
+                    </select>
+                </label>
+            </div>
+            <div id="assignLecturerMessage" class="form-message" hidden></div>
+            <div class="modal-actions">
+                <button type="button" class="secondary-button" data-close-assign>Hủy</button>
+                <button type="submit" class="primary-button">Xác nhận phân công</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script type="module" src="/assets/js/n5.js?v=3"></script>
 </body>
 </html>

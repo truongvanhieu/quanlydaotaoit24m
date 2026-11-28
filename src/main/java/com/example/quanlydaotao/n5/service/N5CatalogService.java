@@ -66,30 +66,49 @@ public class N5CatalogService {
     public List<Map<String, Object>> getLecturers() {
         List<Map<String, Object>> result = new ArrayList<>();
         try {
-            String sql = "SELECT id, code, full_name FROM employees WHERE deleted_at IS NULL ORDER BY code ASC";
+            String sql = "SELECT id, code, full_name, email, is_active FROM employees WHERE deleted_at IS NULL ORDER BY code ASC";
             result.addAll(jdbcTemplate.query(sql, (rs, rowNum) -> {
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("id", rs.getString("id"));
                 m.put("code", rs.getString("code"));
                 m.put("fullName", rs.getString("full_name"));
+                m.put("email", rs.getString("email"));
+                Object activeObj = rs.getObject("is_active");
+                boolean active = activeObj == null || Boolean.TRUE.equals(activeObj) || "1".equals(String.valueOf(activeObj)) || "true".equalsIgnoreCase(String.valueOf(activeObj));
+                m.put("isActive", active);
                 return m;
             }));
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+            try {
+                String sqlFallback = "SELECT id, code, full_name FROM employees WHERE deleted_at IS NULL ORDER BY code ASC";
+                result.addAll(jdbcTemplate.query(sqlFallback, (rs, rowNum) -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("id", rs.getString("id"));
+                    m.put("code", rs.getString("code"));
+                    m.put("fullName", rs.getString("full_name"));
+                    m.put("isActive", true);
+                    return m;
+                }));
+            } catch (Exception ignored2) {}
+        }
         try {
-            String sql2 = "SELECT id, lecturer_code, full_name FROM lecturers WHERE deleted_at IS NULL ORDER BY lecturer_code ASC";
+            String sql2 = "SELECT id, lecturer_code, full_name, is_active FROM lecturers WHERE deleted_at IS NULL ORDER BY lecturer_code ASC";
             result.addAll(jdbcTemplate.query(sql2, (rs, rowNum) -> {
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("id", rs.getString("id"));
                 m.put("code", rs.getString("lecturer_code"));
                 m.put("fullName", rs.getString("full_name"));
+                Object activeObj = rs.getObject("is_active");
+                boolean active = activeObj == null || Boolean.TRUE.equals(activeObj) || "1".equals(String.valueOf(activeObj)) || "true".equalsIgnoreCase(String.valueOf(activeObj));
+                m.put("isActive", active);
                 return m;
             }));
         } catch (Exception ignored) {}
         if (!result.isEmpty()) return result;
         return List.of(
-                Map.of("id", "cedeed49-0178-4394-a16c-02bc11cdb15a", "code", "GV059", "fullName", "Bùi Văn Tùng"),
-                Map.of("id", "bbb70b16-2b23-460e-858f-043dcfa19506", "code", "GV033", "fullName", "Võ Minh Khôi"),
-                Map.of("id", "50ec9fec-7670-4f85-a983-08f8b3b5cf47", "code", "GV054", "fullName", "Lê Thị Giang")
+                Map.of("id", "cedeed49-0178-4394-a16c-02bc11cdb15a", "code", "GV059", "fullName", "Bùi Văn Tùng", "isActive", true),
+                Map.of("id", "bbb70b16-2b23-460e-858f-043dcfa19506", "code", "GV033", "fullName", "Võ Minh Khôi", "isActive", true),
+                Map.of("id", "50ec9fec-7670-4f85-a983-08f8b3b5cf47", "code", "GV054", "fullName", "Lê Thị Giang", "isActive", false)
         );
     }
 
