@@ -26,6 +26,11 @@ public class LecturerController {
         return service.getAll(keyword);
     }
 
+    @GetMapping("/deleted")
+    public List<Lecturer> getDeleted() {
+        return service.getDeleted();
+    }
+
     @GetMapping("/{id}")
     public Lecturer getById(@PathVariable UUID id) {
         return service.getById(id);
@@ -42,6 +47,11 @@ public class LecturerController {
             @PathVariable UUID id,
             @RequestBody Lecturer lecturer) {
         return service.update(id, lecturer);
+    }
+
+    @PutMapping("/{id}/restore")
+    public Lecturer restore(@PathVariable UUID id) {
+        return service.restore(id);
     }
 
     @DeleteMapping("/{id}")

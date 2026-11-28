@@ -8,7 +8,7 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./style.css?v=20261128c">
 </head>
 
 <body>
@@ -53,6 +53,18 @@
             <button type="button" class="nav-item" data-tab="employee-positions">
                 <i class="bi bi-briefcase"></i>
                 <span>Vị trí công tác</span>
+            </button>
+
+            <div class="menu-title mt-3">LỊCH SỬ &amp; LƯU TRỮ</div>
+
+            <button type="button" class="nav-item" data-tab="lecturer-positions-history">
+                <i class="bi bi-journal-text"></i>
+                <span>Lịch sử chức vụ GV</span>
+            </button>
+
+            <button type="button" class="nav-item" data-tab="history">
+                <i class="bi bi-clock-history"></i>
+                <span>Lịch sử &amp; Nhật ký</span>
             </button>
         </nav>
 
@@ -133,10 +145,20 @@
                 </div>
             </div>
 
+            <div class="stat-card">
+                <div class="stat-icon green">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <div>
+                    <p>Lịch sử chức vụ GV</p>
+                    <h3 id="totalLecturerHistory">0</h3>
+                </div>
+            </div>
+
         </section>
 
         <!-- DANH SÁCH DỮ LIỆU -->
-        <section class="content-card">
+        <section id="standardCard" class="content-card">
             <div class="section-header">
                 <div>
                     <h5 id="tableTitle">Danh sách giảng viên</h5>
@@ -165,6 +187,14 @@
                     <option value="">-- Tất cả nhân viên --</option>
                 </select>
 
+                <button id="openTimelineBtn"
+                        type="button"
+                        class="btn btn-outline-primary"
+                        style="display: none;">
+                    <i class="bi bi-clock-history"></i>
+                    Xem Timeline
+                </button>
+
                 <button id="refreshBtn"
                         type="button"
                         class="btn btn-outline-secondary">
@@ -190,6 +220,149 @@
                  class="text-danger mt-2"
                  role="status">
             </div>
+        </section>
+
+        <!-- TRUNG TÂM LỊCH SỬ & NHẬT KÝ HOẠT ĐỘNG -->
+        <section id="historyCard" class="content-card" style="display: none;">
+            <div class="section-header flex-wrap">
+                <div>
+                    <h5>Lịch sử Thêm / Sửa / Xóa &amp; Quá trình công tác</h5>
+                    <small>Theo dõi nhật ký cập nhật dữ liệu (bảng logs), lịch sử vị trí công tác và dữ liệu đã xóa mềm của Nhóm N3</small>
+                </div>
+
+                <div class="btn-group flex-wrap" role="group" aria-label="Chế độ xem lịch sử">
+                    <button id="histTabAudit" type="button" class="btn btn-primary btn-sm">
+                        <i class="bi bi-activity me-1"></i>
+                        Nhật ký Thêm / Sửa / Xóa
+                    </button>
+                    <button id="histTabWork" type="button" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-diagram-3 me-1"></i>
+                        Lịch sử công tác
+                    </button>
+                    <button id="histTabDeleted" type="button" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-archive me-1"></i>
+                        Dữ liệu đã xóa mềm
+                    </button>
+                </div>
+            </div>
+
+            <!-- PANEL 0: NHẬT KÝ THÊM / SỬA / XÓA / CẬP NHẬT -->
+            <div id="historyAuditPanel">
+                <div class="toolbar flex-wrap">
+                    <div class="search-box" style="min-width: 220px;">
+                        <i class="bi bi-search"></i>
+                        <input id="auditSearchInput"
+                               type="search"
+                               placeholder="Tìm theo nội dung thay đổi, mã, tên...">
+                    </div>
+
+                    <select id="auditActionFilter" class="form-select" style="max-width: 210px;">
+                        <option value="">-- Tất cả hành động --</option>
+                        <option value="THEM">Thêm mới</option>
+                        <option value="CAP_NHAT">Cập nhật / Sửa</option>
+                        <option value="XOA_MEM">Xóa mềm</option>
+                        <option value="KHOI_PHUC">Khôi phục</option>
+                        <option value="KET_THUC_NHIEM_KY">Kết thúc nhiệm kỳ</option>
+                    </select>
+
+                    <select id="auditTableFilter" class="form-select" style="max-width: 220px;">
+                        <option value="">-- Tất cả phân hệ N3 --</option>
+                        <option value="departments">Khoa / viện</option>
+                        <option value="positions">Chức danh</option>
+                        <option value="lecturers">Giảng viên</option>
+                        <option value="employees">Nhân viên</option>
+                        <option value="employee_positions">Vị trí công tác</option>
+                        <option value="lecturer_positions_history">Lịch sử chức vụ GV</option>
+                    </select>
+
+                    <button id="auditRefreshBtn" type="button" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        Làm mới
+                    </button>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <small id="auditCount" class="text-muted">0 nhật ký</small>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th style="width: 170px;">Thời gian</th>
+                                <th style="width: 155px;">Hành động</th>
+                                <th style="width: 165px;">Phân hệ</th>
+                                <th>Chi tiết thay đổi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditTableBody">
+                            <tr><td colspan="4" class="text-center text-muted py-4">Đang tải nhật ký...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- PANEL 1: LỊCH SỬ CÔNG TÁC NHÂN SỰ -->
+            <div id="historyWorkPanel" style="display: none;">
+                <div class="toolbar flex-wrap">
+                    <select id="historyEmployeeSelect" class="form-select" style="max-width: 340px;">
+                        <option value="">-- Chọn nhân viên để xem toàn bộ lịch sử công tác --</option>
+                    </select>
+
+                    <select id="historyTermFilter" class="form-select" style="max-width: 220px;">
+                        <option value="all">Tất cả nhiệm kỳ</option>
+                        <option value="current">Đang đương nhiệm</option>
+                        <option value="ended">Đã kết thúc nhiệm kỳ</option>
+                    </select>
+
+                    <div class="form-check d-flex align-items-center gap-2 ms-1">
+                        <input id="historyIncludeDeleted" class="form-check-input mt-0" type="checkbox">
+                        <label class="form-check-label small" for="historyIncludeDeleted">
+                            Gồm lượt đã xóa mềm
+                        </label>
+                    </div>
+
+                    <button id="historyAssignBtn" type="button" class="btn btn-primary btn-sm ms-auto">
+                        <i class="bi bi-plus-lg"></i>
+                        Phân công vị trí
+                    </button>
+                </div>
+
+                <div id="historyWorkSummary" class="history-summary mb-3"></div>
+                <div id="historyWorkTimeline"></div>
+            </div>
+
+            <!-- PANEL 2: LỊCH SỬ DỮ LIỆU ĐÃ XÓA MỀM -->
+            <div id="historyDeletedPanel" style="display: none;">
+                <div class="toolbar flex-wrap">
+                    <select id="deletedEntitySelect" class="form-select" style="max-width: 280px;">
+                        <option value="employees">Nhân viên đã xóa mềm</option>
+                        <option value="departments">Khoa / viện đã xóa mềm</option>
+                        <option value="positions">Chức danh đã xóa mềm</option>
+                        <option value="lecturers">Giảng viên đã xóa mềm</option>
+                        <option value="employee-positions">Vị trí công tác đã xóa mềm</option>
+                        <option value="lecturer-positions-history">Lịch sử chức vụ GV đã xóa mềm</option>
+                    </select>
+
+                    <button id="deletedRefreshBtn" type="button" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        Tải lại lịch sử xóa mềm
+                    </button>
+
+                    <small id="deletedCount" class="text-muted ms-auto">0 bản ghi đã xóa mềm</small>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead id="deletedTableHead"></thead>
+                        <tbody id="deletedTableBody">
+                            <tr><td class="text-center text-muted py-4">Đang tải dữ liệu...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="historyMessage" class="mt-2" role="status"></div>
         </section>
 
     </main>
@@ -239,9 +412,41 @@
     </div>
 </div>
 
+<!-- MODAL XEM LỊCH SỬ CÔNG TÁC (TIMELINE) -->
+<div class="modal fade"
+     id="historyModal"
+     tabindex="-1"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title mb-0" id="historyModalTitle">Lịch sử công tác</h5>
+                    <small class="text-muted" id="historyModalSubtitle"></small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+
+            <div class="modal-body">
+                <div id="historyModalSummary" class="history-summary mb-3"></div>
+                <div id="historyModalBody"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button id="historyModalAddBtn" type="button" class="btn btn-primary me-auto" style="display: none;">
+                    <i class="bi bi-plus-lg"></i>
+                    Phân công thêm vị trí
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- JAVASCRIPT -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="./app.js"></script>
+<script src="./app.js?v=20261128c"></script>
 
 </body>
 </html>

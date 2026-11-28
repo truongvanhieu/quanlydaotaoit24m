@@ -26,6 +26,11 @@ public class PositionController {
         return service.getAll(keyword);
     }
 
+    @GetMapping("/deleted")
+    public List<Position> getDeleted() {
+        return service.getDeleted();
+    }
+
     @GetMapping("/{id}")
     public Position getById(@PathVariable UUID id) {
         return service.getById(id);
@@ -42,6 +47,11 @@ public class PositionController {
             @PathVariable UUID id,
             @RequestBody Position position) {
         return service.update(id, position);
+    }
+
+    @PutMapping("/{id}/restore")
+    public Position restore(@PathVariable UUID id) {
+        return service.restore(id);
     }
 
     @DeleteMapping("/{id}")

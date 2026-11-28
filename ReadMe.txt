@@ -32,7 +32,7 @@ Thông tin kết nối cấu hình trong file: src/main/resources/application.pr
 - Username    : sa
 - Password    : 123123
 - JDBC URL    : jdbc:sqlserver://localhost:1433;databaseName=it24m;encrypt=true;trustServerCertificate=true
-- File script : database/it24m.sql
+- File script : database/it24mN3.sql (hoặc database/it24m.sql)
 
 * Lưu ý thiết lập SQL Server trước khi chạy:
   1) Bật chế độ xác thực "SQL Server and Windows Authentication mode" (Mixed Mode)
@@ -42,7 +42,7 @@ Thông tin kết nối cấu hình trong file: src/main/resources/application.pr
      Protocols for SQLEXPRESS/MSSQLSERVER -> Bật TCP/IP -> Cấu hình TCP Port = 1433
      -> Khởi động lại dịch vụ SQL Server.
   3) Mở SSMS, tạo mới database tên "it24m", sau đó mở và chạy file:
-     database/it24m.sql để khởi tạo đầy đủ các bảng và dữ liệu mẫu.
+     database/it24mN3.sql để khởi tạo đầy đủ các bảng và dữ liệu mẫu.
 
 4. HƯỚNG DẪN CÀI ĐẶT & CHẠY DỰ ÁN
 --------------------------------------------------------------------------------
@@ -103,32 +103,51 @@ Bước 4: Truy cập ứng dụng sau khi server khởi động thành công (c
 5.4. Phân công & Quản lý Vị trí công tác (Bảng: employee_positions)
     - API: GET / POST / PUT / DELETE /api/n3/employee-positions
            GET /api/n3/employee-positions/employee/{employeeId}
+           GET /api/n3/employee-positions/employee/{employeeId}/history
+           PUT /api/n3/employee-positions/{id}/end (Kết thúc nhiệm kỳ)
     - Hiển thị danh sách phân công (tự động map tên nhân viên & tên chức vụ),
       chọn nhân viên từ bảng employees, chọn chức vụ từ bảng positions, thiết lập
       vị trí đang đương nhiệm (end_date = NULL), phân công kiêm nhiệm nhiều vị
       trí cho cùng 1 nhân viên, cập nhật ngày kết thúc nhiệm kỳ (validate
-      end_date >= start_date), lọc/xem lịch sử công tác theo nhân viên và xóa mềm.
+      end_date >= start_date), lọc/xem lịch sử công tác theo nhân viên dạng
+      Timeline và xóa mềm.
+
+5.5. Lịch sử hoạt động, Lịch sử chức vụ GV & Dữ liệu đã xóa mềm
+    - Nhật ký Thêm/Sửa/Xóa/Cập nhật (Bảng: logs):
+      + API: GET /api/n3/audit-logs (lọc ?tableName=, ?action=, ?keyword=)
+             GET /api/n3/audit-logs/record/{recordId}
+      + Tự động ghi nhận mọi thao tác Thêm, Cập nhật (cũ -> mới), Xóa mềm,
+        Khôi phục và Kết thúc nhiệm kỳ trên toàn bộ 6 phân hệ N3.
+    - Lịch sử chức vụ Giảng viên (Bảng: lecturer_positions_history):
+      + API: GET / POST / PUT / DELETE /api/n3/lecturer-positions-history
+             GET /api/n3/lecturer-positions-history/lecturer/{lecturerId}
+             PUT /api/n3/lecturer-positions-history/{id}/end
+    - Dữ liệu đã xóa mềm & Khôi phục (cho cả 6 phân hệ N3):
+      + API: GET /api/n3/{resource}/deleted và PUT /api/n3/{resource}/{id}/restore
 
 6. CẤU TRÚC MÃ NGUỒN PHẦN NHÓM N3
 --------------------------------------------------------------------------------
 src/main/java/com/example/quanlydaotao/n3/
   ├── config/
-  │   ├── SwaggerConfig.java              (Cấu hình Swagger nhóm API N3)
-  │   └── N3ExceptionHandler.java         (Chuẩn hóa JSON thông báo lỗi N3)
+  │   ├── SwaggerConfig.java                      (Cấu hình Swagger nhóm API N3)
+  │   └── N3ExceptionHandler.java                 (Chuẩn hóa JSON thông báo lỗi N3)
   ├── controller/
-  │   ├── DepartmentController.java       (/api/n3/departments)
-  │   ├── PositionController.java         (/api/n3/positions)
-  │   ├── LecturerController.java         (/api/n3/lecturers)
-  │   ├── EmployeeController.java         (/api/n3/employees)
-  │   ├── EmployeePositionController.java (/api/n3/employee-positions)
-  │   └── UserLookupController.java       (/api/n3/users)
+  │   ├── DepartmentController.java               (/api/n3/departments)
+  │   ├── PositionController.java                 (/api/n3/positions)
+  │   ├── LecturerController.java                 (/api/n3/lecturers)
+  │   ├── EmployeeController.java                 (/api/n3/employees)
+  │   ├── EmployeePositionController.java         (/api/n3/employee-positions)
+  │   ├── LecturerPositionHistoryController.java  (/api/n3/lecturer-positions-history)
+  │   ├── N3AuditLogController.java               (/api/n3/audit-logs)
+  │   └── UserLookupController.java               (/api/n3/users)
   ├── entity/
-  │   ├── Department.java, Position.java, Lecturer.java,
-  │   ├── Employee.java, EmployeePosition.java, N3User.java
+  │   ├── Department.java, Position.java, Lecturer.java, Employee.java,
+  │   ├── EmployeePosition.java, LecturerPositionHistory.java,
+  │   └── N3User.java, N3AuditLog.java
   ├── repository/
-  │   └── Các JPA Repository tương ứng cho 6 entity trên
+  │   └── Các JPA Repository tương ứng cho 8 entity trên
   └── service/
-      └── Xử lý nghiệp vụ, kiểm tra dữ liệu và xóa mềm cho N3
+      └── Xử lý nghiệp vụ, kiểm tra dữ liệu, xóa mềm và ghi nhật ký N3
 
 src/main/resources/static/n3/
   ├── index.html                          (Giao diện quản trị Nhóm N3)

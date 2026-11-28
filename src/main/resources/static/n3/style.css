@@ -332,6 +332,145 @@ body {
     max-height: calc(100vh - 210px);
 }
 
+/* ===== LỊCH SỬ & TIMELINE ===== */
+
+.history-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.summary-pill {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+}
+
+.timeline-list {
+    position: relative;
+    padding-left: 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.timeline-list::before {
+    content: "";
+    position: absolute;
+    left: 9px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: #cbd5e1;
+}
+
+.timeline-item {
+    position: relative;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px 16px;
+}
+
+.timeline-item::before {
+    content: "";
+    position: absolute;
+    left: -22px;
+    top: 18px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #2563eb;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 2px #93c5fd;
+}
+
+.timeline-item.ended::before {
+    background: #64748b;
+    box-shadow: 0 0 0 2px #cbd5e1;
+}
+
+.timeline-item.deleted::before {
+    background: #dc2626;
+    box-shadow: 0 0 0 2px #fecaca;
+}
+
+.timeline-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.timeline-meta {
+    font-size: 12.5px;
+    color: #475569;
+}
+
+.badge-term {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge-term.current {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.badge-term.ended {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.badge-term.deleted {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.badge-action {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge-action.create {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.badge-action.update {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.badge-action.delete {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.badge-action.restore {
+    background: #f3e8ff;
+    color: #7e22ce;
+}
+
+.badge-action.end {
+    background: #ffedd5;
+    color: #c2410c;
+}
+
 .modal-header {
     background: #f8fafc;
     padding: 20px 24px;

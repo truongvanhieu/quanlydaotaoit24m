@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -15,9 +16,13 @@ import java.util.UUID;
 public class DepartmentService {
 
     private final DepartmentRepository repository;
+    private final N3AuditLogService auditLogService;
 
-    public DepartmentService(DepartmentRepository repository) {
+    public DepartmentService(
+            DepartmentRepository repository,
+            N3AuditLogService auditLogService) {
         this.repository = repository;
+        this.auditLogService = auditLogService;
     }
 
     public List<Department> getAll(String keyword) {
@@ -82,12 +87,20 @@ public class DepartmentService {
         if (d.getIsActive() == null) {
             d.setIsActive(true);
         }
-        return repository.save(d);
+        Department saved = repository.save(d);
+        auditLogService.record(
+                N3AuditLogService.ACTION_CREATE,
+                "departments",
+                saved.getId(),
+                "Thêm mới Khoa/Viện: " + saved.getCode() + " - " + saved.getName()
+        );
+        return saved;
     }
 
     public Department update(UUID id, Department data) {
         validate(data);
         Department old = getById(id);
+        String oldSummary = old.getCode() + " - " + old.getName() + " (Trạng thái: " + (Boolean.TRUE.equals(old.getIsActive()) ? "Hoạt động" : "Tạm khóa") + ")";
         String code = data.getCode().trim();
         ensureUniqueCode(code, id);
 
@@ -99,7 +112,15 @@ public class DepartmentService {
             old.setIsActive(data.getIsActive());
         }
 
-        return repository.save(old);
+        Department saved = repository.save(old);
+        String newSummary = saved.getCode() + " - " + saved.getName() + " (Trạng thái: " + (Boolean.TRUE.equals(saved.getIsActive()) ? "Hoạt động" : "Tạm khóa") + ")";
+        auditLogService.record(
+                N3AuditLogService.ACTION_UPDATE,
+                "departments",
+                saved.getId(),
+                "Cập nhật Khoa/Viện: [" + oldSummary + "] -> [" + newSummary + "]"
+        );
+        return saved;
     }
 
     public void delete(UUID id) {
@@ -107,5 +128,37 @@ public class DepartmentService {
         d.setDeletedAt(LocalDateTime.now());
         d.setIsActive(false);
         repository.save(d);
+        auditLogService.record(
+                N3AuditLogService.ACTION_DELETE,
+                "departments",
+                d.getId(),
+                "Xóa mềm Khoa/Viện: " + d.getCode() + " - " + d.getName()
+        );
+    }
+
+    public List<Department> getDeleted() {
+        return repository.findAll().stream()
+                .filter(d -> d.getDeletedAt() != null)
+                .sorted(Comparator.comparing(Department::getDeletedAt).reversed())
+                .toList();
+    }
+
+    public Department restore(UUID id) {
+        Department d = repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Không tìm thấy khoa"));
+        if (d.getCode() != null && !d.getCode().isBlank()) {
+            ensureUniqueCode(d.getCode().trim(), id);
+        }
+        d.setDeletedAt(null);
+        d.setIsActive(true);
+        Department saved = repository.save(d);
+        auditLogService.record(
+                N3AuditLogService.ACTION_RESTORE,
+                "departments",
+                saved.getId(),
+                "Khôi phục Khoa/Viện đã xóa mềm: " + saved.getCode() + " - " + saved.getName()
+        );
+        return saved;
     }
 }

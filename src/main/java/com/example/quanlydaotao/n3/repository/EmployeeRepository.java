@@ -14,6 +14,8 @@ public interface EmployeeRepository
 
     List<Employee> findByDeletedAtIsNullOrderByFullNameAsc();
 
+    List<Employee> findByDeletedAtIsNotNullOrderByDeletedAtDesc();
+
     List<Employee> findByDepartmentIdAndDeletedAtIsNull(
             UUID departmentId
     );

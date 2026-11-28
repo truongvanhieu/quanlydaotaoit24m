@@ -26,6 +26,11 @@ public class DepartmentController {
         return service.getAll(keyword);
     }
 
+    @GetMapping("/deleted")
+    public List<Department> getDeleted() {
+        return service.getDeleted();
+    }
+
     @GetMapping("/{id}")
     public Department getById(@PathVariable UUID id) {
         return service.getById(id);
@@ -42,6 +47,11 @@ public class DepartmentController {
             @PathVariable UUID id,
             @RequestBody Department department) {
         return service.update(id, department);
+    }
+
+    @PutMapping("/{id}/restore")
+    public Department restore(@PathVariable UUID id) {
+        return service.restore(id);
     }
 
     @DeleteMapping("/{id}")

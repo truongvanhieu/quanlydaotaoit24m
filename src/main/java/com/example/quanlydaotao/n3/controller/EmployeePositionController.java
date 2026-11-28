@@ -8,7 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -29,6 +31,12 @@ public class EmployeePositionController {
         return service.getAll();
     }
 
+    // GET /api/n3/employee-positions/deleted
+    @GetMapping("/deleted")
+    public List<EmployeePosition> getDeleted() {
+        return service.getDeleted();
+    }
+
     // GET /api/n3/employee-positions/{id}
     @GetMapping("/{id}")
     public EmployeePosition getById(
@@ -43,6 +51,15 @@ public class EmployeePositionController {
             @PathVariable UUID employeeId) {
 
         return service.getByEmployee(employeeId);
+    }
+
+    // GET /api/n3/employee-positions/employee/{employeeId}/history
+    @GetMapping("/employee/{employeeId}/history")
+    public List<EmployeePosition> getHistoryByEmployee(
+            @PathVariable UUID employeeId,
+            @RequestParam(defaultValue = "false") boolean includeDeleted) {
+
+        return service.getHistoryByEmployee(employeeId, includeDeleted);
     }
 
     // POST /api/n3/employee-positions
@@ -64,6 +81,28 @@ public class EmployeePositionController {
             @RequestBody EmployeePosition item) {
 
         return service.update(id, item);
+    }
+
+    // PUT /api/n3/employee-positions/{id}/end
+    @PutMapping("/{id}/end")
+    public EmployeePosition endTerm(
+            @PathVariable UUID id,
+            @RequestBody(required = false) Map<String, String> body) {
+        LocalDateTime endDate = null;
+        if (body != null && body.get("endDate") != null && !body.get("endDate").isBlank()) {
+            String raw = body.get("endDate").trim();
+            if (raw.length() == 16) {
+                raw += ":00";
+            }
+            endDate = LocalDateTime.parse(raw);
+        }
+        return service.endTerm(id, endDate);
+    }
+
+    // PUT /api/n3/employee-positions/{id}/restore
+    @PutMapping("/{id}/restore")
+    public EmployeePosition restore(@PathVariable UUID id) {
+        return service.restore(id);
     }
 
     // DELETE /api/n3/employee-positions/{id}

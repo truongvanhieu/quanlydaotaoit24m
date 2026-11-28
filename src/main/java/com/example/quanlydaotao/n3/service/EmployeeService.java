@@ -26,15 +26,18 @@ public class EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final DepartmentRepository departmentRepository;
     private final N3UserRepository userRepository;
+    private final N3AuditLogService auditLogService;
 
     public EmployeeService(
             EmployeeRepository employeeRepository,
             DepartmentRepository departmentRepository,
-            N3UserRepository userRepository) {
+            N3UserRepository userRepository,
+            N3AuditLogService auditLogService) {
 
         this.employeeRepository = employeeRepository;
         this.departmentRepository = departmentRepository;
         this.userRepository = userRepository;
+        this.auditLogService = auditLogService;
     }
 
     // GET danh sach va tim kiem
@@ -123,7 +126,14 @@ public class EmployeeService {
             employee.setIsActive(true);
         }
 
-        return employeeRepository.save(employee);
+        Employee saved = employeeRepository.save(employee);
+        auditLogService.record(
+                N3AuditLogService.ACTION_CREATE,
+                "employees",
+                saved.getId(),
+                "Thêm mới Nhân viên: " + saved.getCode() + " - " + saved.getFullName()
+        );
+        return saved;
     }
 
     // PUT
@@ -131,6 +141,9 @@ public class EmployeeService {
     public Employee update(UUID id, Employee input) {
 
         Employee employee = getById(id);
+        String oldSummary = employee.getCode() + " - " + employee.getFullName()
+                + (employee.getAcademicDegree() != null ? " (" + employee.getAcademicDegree() + ")" : "")
+                + (employee.getSalaryCoefficient() != null ? " · HSL: " + employee.getSalaryCoefficient() : "");
 
         validate(input);
 
@@ -156,7 +169,17 @@ public class EmployeeService {
             employee.setIsActive(oldStatus);
         }
 
-        return employeeRepository.save(employee);
+        Employee saved = employeeRepository.save(employee);
+        String newSummary = saved.getCode() + " - " + saved.getFullName()
+                + (saved.getAcademicDegree() != null ? " (" + saved.getAcademicDegree() + ")" : "")
+                + (saved.getSalaryCoefficient() != null ? " · HSL: " + saved.getSalaryCoefficient() : "");
+        auditLogService.record(
+                N3AuditLogService.ACTION_UPDATE,
+                "employees",
+                saved.getId(),
+                "Cập nhật Nhân viên: [" + oldSummary + "] -> [" + newSummary + "]"
+        );
+        return saved;
     }
 
     // DELETE mem
@@ -169,6 +192,51 @@ public class EmployeeService {
         employee.setIsActive(false);
 
         employeeRepository.save(employee);
+        auditLogService.record(
+                N3AuditLogService.ACTION_DELETE,
+                "employees",
+                employee.getId(),
+                "Xóa mềm Nhân viên: " + employee.getCode() + " - " + employee.getFullName()
+        );
+    }
+
+    // GET danh sach da xoa mem (Lich su xoa mem)
+    @Transactional(readOnly = true)
+    public List<Employee> getDeleted() {
+        return employeeRepository.findByDeletedAtIsNotNullOrderByDeletedAtDesc();
+    }
+
+    // PUT khoi phuc ban ghi da xoa mem
+    @Transactional
+    public Employee restore(UUID id) {
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Khong tim thay nhan vien"
+                        )
+                );
+
+        if (employee.getCode() != null
+                && employee.getDeletedAt() != null
+                && employeeRepository.existsByCodeIgnoreCaseAndDeletedAtIsNull(
+                        employee.getCode().trim())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Ma nhan vien dang ton tai o ban ghi hoat dong khac"
+            );
+        }
+
+        employee.setDeletedAt(null);
+        employee.setIsActive(true);
+        Employee saved = employeeRepository.save(employee);
+        auditLogService.record(
+                N3AuditLogService.ACTION_RESTORE,
+                "employees",
+                saved.getId(),
+                "Khôi phục Nhân viên đã xóa mềm: " + saved.getCode() + " - " + saved.getFullName()
+        );
+        return saved;
     }
 
     // Kiem tra du lieu

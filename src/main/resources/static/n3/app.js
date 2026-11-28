@@ -19,8 +19,11 @@
         "departments",
         "positions",
         "employees",
-        "employee-positions"
+        "employee-positions",
+        "lecturer-positions-history"
     ];
+
+    const allTabs = [...types, "history"];
 
     const F = (
         name,
@@ -253,13 +256,14 @@
             title: "Vị trí công tác",
 
             description:
-                "Phân công và lịch sử vị trí của nhân viên",
+                "Phân công và lịch sử vị trí công tác của nhân viên",
 
             columns: [
                 "employeeId",
                 "positionId",
                 "startDate",
                 "endDate",
+                "termStatus",
                 "note",
                 "isActive"
             ],
@@ -291,6 +295,41 @@
 
                 F("isActive", "Trạng thái", "status")
             ]
+        },
+
+        // LICH SU CHUC VU GIANG VIEN
+        "lecturer-positions-history": {
+            title: "Lịch sử chức vụ giảng viên",
+
+            description:
+                "Quá trình đảm nhiệm chức danh của giảng viên (lecturer_positions_history)",
+
+            columns: [
+                "lecturerId",
+                "positionId",
+                "startDate",
+                "endDate",
+                "termStatus",
+                "isActive"
+            ],
+
+            fields: [
+                F("lecturerId", "Giảng viên", "lecturer", {
+                    required: true
+                }),
+
+                F("positionId", "Chức danh", "position", {
+                    required: true
+                }),
+
+                F("startDate", "Ngày bắt đầu", "date", {
+                    required: true
+                }),
+
+                F("endDate", "Ngày kết thúc", "date"),
+
+                F("isActive", "Trạng thái", "status")
+            ]
         }
     };
 
@@ -300,7 +339,7 @@
 
     const params = new URLSearchParams(location.search);
 
-    let tab = types.includes(params.get("tab"))
+    let tab = allTabs.includes(params.get("tab"))
         ? params.get("tab")
         : "lecturers";
 
@@ -308,18 +347,30 @@
         types.map(kind => [kind, []])
     );
     data.users = [];
+    data.auditLogs = [];
+    data.deleted = Object.fromEntries(
+        types.map(kind => [kind, []])
+    );
 
     const errors = {};
 
     let editId = null;
     let mode = "add";
+    let formTab = tab === "history" ? "employee-positions" : tab;
     let busy = false;
     let selectedEmployeeId = "";
     let employeeHistoryRows = null;
+    let selectedLecturerId = "";
+    let lecturerHistoryRows = null;
+    let historySubTab = "audit";
+    let historyModalContext = null;
 
-    const modal = bootstrap.Modal.getOrCreateInstance(
-        $("formModal")
-    );
+    const modal = (window.bootstrap && $("formModal"))
+        ? bootstrap.Modal.getOrCreateInstance($("formModal"))
+        : null;
+    const historyModal = (window.bootstrap && $("historyModal"))
+        ? bootstrap.Modal.getOrCreateInstance($("historyModal"))
+        : null;
 
     // ===================================
     // 3. HAM HO TRO
@@ -420,30 +471,55 @@
 
     function related(kind, id) {
 
-        const row = data[kind].find(
+        const activeList = data[kind] || [];
+        const deletedList = (data.deleted && data.deleted[kind]) || [];
+
+        let row = activeList.find(
             item => String(item.id) === String(id)
         );
+        let fromDeleted = false;
+
+        if (!row) {
+            row = deletedList.find(
+                item => String(item.id) === String(id)
+            );
+            fromDeleted = Boolean(row);
+        }
 
         if (!row) {
             return String(id);
         }
 
+        let labelText = "";
         if (kind === "employees") {
-            return (
-                `${row.code || ""} - ${row.fullName || ""}`
-            ).trim();
+            labelText = (`${row.code || ""} - ${row.fullName || ""}`).trim();
+        } else if (kind === "lecturers") {
+            labelText = (`${row.lecturerCode || ""} - ${row.fullName || ""}`).trim();
+        } else if (kind === "users") {
+            labelText = (`${row.username || ""}${row.fullName ? " - " + row.fullName : ""}`).trim();
+        } else {
+            labelText = row.name || row.code || String(id);
         }
 
-        if (kind === "users") {
-            return (
-                `${row.username || ""}${row.fullName ? " - " + row.fullName : ""}`
-            ).trim() || String(id);
-        }
-
-        return row.name || row.code || id;
+        return fromDeleted ? `${labelText} (đã xóa)` : (labelText || String(id));
     }
 
-    function display(key, value) {
+    function termBadgeHtml(row) {
+        if (row.deletedAt) {
+            return '<span class="badge-term deleted">Đã xóa mềm</span>';
+        }
+        if (!row.endDate) {
+            return '<span class="badge-term current">Đang đương nhiệm</span>';
+        }
+        return '<span class="badge-term ended">Đã kết thúc</span>';
+    }
+
+    function display(key, value, row = null, contextTab = tab) {
+
+        if (key === "termStatus" && row) {
+            if (row.deletedAt) return "Đã xóa mềm";
+            return row.endDate ? "Đã kết thúc" : "Đang đương nhiệm";
+        }
 
         if (
             value === null ||
@@ -465,19 +541,23 @@
             return related("employees", value);
         }
 
+        if (key === "lecturerId") {
+            return related("lecturers", value);
+        }
+
         if (key === "userId") {
             return related("users", value);
         }
 
         if (
             key === "positionId" &&
-            tab !== "employees"
+            contextTab !== "employees"
         ) {
             return related("positions", value);
         }
 
         if (
-            /Date$|^establishedYear$/.test(key) &&
+            /Date$|^establishedYear$|^deletedAt$|^createdAt$|^updatedAt$/.test(key) &&
             typeof value === "string"
         ) {
             return value
@@ -488,8 +568,10 @@
         return String(value).trim() || "—";
     }
 
-    function label(key) {
-        return C[tab].fields.find(
+    function label(key, kind = tab) {
+        if (key === "termStatus") return "Tình trạng nhiệm kỳ";
+        if (key === "deletedAt") return "Thời điểm xóa mềm";
+        return C[kind]?.fields.find(
             field => field.name === key
         )?.label || key;
     }
@@ -505,7 +587,8 @@
             departments: "totalDepartments",
             positions: "totalPositions",
             employees: "totalEmployees",
-            "employee-positions": "totalEmployeePositions"
+            "employee-positions": "totalEmployeePositions",
+            "lecturer-positions-history": "totalLecturerHistory"
         };
 
         for (const kind of types) {
@@ -523,6 +606,19 @@
     // ===================================
 
     function render() {
+
+        const isHistoryTab = tab === "history";
+        if ($("standardCard")) $("standardCard").style.display = isHistoryTab ? "none" : "";
+        if ($("historyCard")) $("historyCard").style.display = isHistoryTab ? "" : "none";
+
+        if (isHistoryTab) {
+            document.title = "Lịch sử & Nhật ký | IT24M";
+            text("pageTitle", "Lịch sử Thêm / Sửa / Xóa & Công tác");
+            text("n3Heading", "Lịch sử Thêm / Sửa / Xóa & Công tác");
+            text("pageDescription", "Nhật ký thao tác cập nhật dữ liệu, lịch sử vị trí công tác và dữ liệu đã xóa mềm của Nhóm N3");
+            renderHistoryCenter();
+            return;
+        }
 
         const cfg = C[tab];
 
@@ -543,13 +639,20 @@
             cfg.title.replace("Quản lý", "Danh sách")
         );
 
-        const sourceRows = (
+        let sourceRows = data[tab];
+        if (
             tab === "employee-positions" &&
             selectedEmployeeId &&
             Array.isArray(employeeHistoryRows)
-        )
-            ? employeeHistoryRows
-            : data[tab];
+        ) {
+            sourceRows = employeeHistoryRows;
+        } else if (
+            tab === "lecturer-positions-history" &&
+            selectedLecturerId &&
+            Array.isArray(lecturerHistoryRows)
+        ) {
+            sourceRows = lecturerHistoryRows;
+        }
 
         const searchKeys = Array.from(
             new Set([
@@ -563,7 +666,7 @@
             if (!query) return true;
 
             return searchKeys.some(key =>
-                display(key, row[key])
+                display(key, row[key], row, tab)
                     .toLocaleLowerCase("vi")
                     .includes(query)
             );
@@ -578,7 +681,7 @@
         $("tableHead").innerHTML = `
             <tr>
                 ${cfg.columns.map(key => `
-                    <th>${escapeHTML(label(key))}</th>
+                    <th>${escapeHTML(label(key, tab))}</th>
                 `).join("")}
 
                 <th class="text-end">Thao tác</th>
@@ -612,11 +715,33 @@
 
                 ${cfg.columns.map(key => `
                     <td>
-                        ${escapeHTML(display(key, row[key]))}
+                        ${key === "termStatus"
+                            ? termBadgeHtml(row)
+                            : escapeHTML(display(key, row[key], row, tab))}
                     </td>
                 `).join("")}
 
                 <td class="text-end text-nowrap">
+
+                    ${(tab === "employees" || tab === "lecturers") ? `
+                        <button type="button"
+                                class="btn btn-sm btn-outline-secondary"
+                                data-action="history"
+                                data-id="${escapeHTML(row.id)}"
+                                title="${tab === "employees" ? "Xem lịch sử công tác" : "Xem lịch sử chức vụ"}">
+                            <i class="bi bi-clock-history"></i>
+                        </button>
+                    ` : ""}
+
+                    ${((tab === "employee-positions" || tab === "lecturer-positions-history") && !row.endDate) ? `
+                        <button type="button"
+                                class="btn btn-sm btn-outline-success"
+                                data-action="end-term"
+                                data-id="${escapeHTML(row.id)}"
+                                title="Kết thúc nhiệm kỳ">
+                            <i class="bi bi-calendar-check"></i>
+                        </button>
+                    ` : ""}
 
                     <button type="button"
                             class="btn btn-sm btn-outline-info"
@@ -640,7 +765,7 @@
                             class="btn btn-sm btn-outline-danger"
                             data-action="delete"
                             data-id="${escapeHTML(row.id)}"
-                            title="Xóa">
+                            title="Xóa mềm">
 
                         <i class="bi bi-trash"></i>
                     </button>
@@ -681,7 +806,8 @@
         const map = {
             department: "departments",
             position: "positions",
-            employee: "employees"
+            employee: "employees",
+            lecturer: "lecturers"
         };
 
         const kind = map[field.type];
@@ -689,7 +815,7 @@
 
         // Loc chuc danh theo khoa khi them/sua giang vien
         if (
-            tab === "lecturers" &&
+            formTab === "lecturers" &&
             field.type === "position" &&
             selectedDeptId
         ) {
@@ -703,10 +829,12 @@
 
             const name = kind === "employees"
                 ? `${row.code || ""} - ${row.fullName || ""}`
-                : (
-                    (row.code ? row.code + " - " : "") +
-                    (row.name || row.id)
-                );
+                : kind === "lecturers"
+                    ? `${row.lecturerCode || ""} - ${row.fullName || ""}`
+                    : (
+                        (row.code ? row.code + " - " : "") +
+                        (row.name || row.id)
+                    );
 
             return [row.id, name];
         });
@@ -776,6 +904,7 @@
             "department",
             "position",
             "employee",
+            "lecturer",
             "user"
         ].includes(field.type)) {
 
@@ -871,9 +1000,10 @@
     // 10. MO MODAL
     // ===================================
 
-    function openForm(nextMode, row = null) {
+    function openForm(nextMode, row = null, targetTab = tab) {
 
         mode = nextMode;
+        formTab = C[targetTab] ? targetTab : "employee-positions";
         editId = row?.id || null;
 
         const action =
@@ -885,11 +1015,11 @@
 
         text(
             "modalTitle",
-            `${action} - ${C[tab].title}`
+            `${action} - ${C[formTab].title}`
         );
 
         $("formFields").innerHTML =
-            C[tab].fields.map(field =>
+            C[formTab].fields.map(field =>
                 control(
                     field,
                     row?.[field.name],
@@ -899,7 +1029,7 @@
             ).join("");
 
         // Dong bo loc chuc danh theo khoa tren form giang vien
-        if (tab === "lecturers" && nextMode !== "view") {
+        if (formTab === "lecturers" && nextMode !== "view") {
             const deptSelect = $("formFields").querySelector('select[name="departmentId"]');
             const posSelect = $("formFields").querySelector('select[name="positionId"]');
             const posField = C.lecturers.fields.find(f => f.name === "positionId");
@@ -931,7 +1061,7 @@
 
         const payload = {};
 
-        for (const field of C[tab].fields) {
+        for (const field of C[formTab].fields) {
 
             let value = String(
                 fd.get(field.name) ?? ""
@@ -969,7 +1099,7 @@
 
         // Kiem tra lich su cong tac
         if (
-            tab === "employee-positions" &&
+            (formTab === "employee-positions" || formTab === "lecturer-positions-history") &&
             payload.endDate &&
             payload.startDate &&
             payload.endDate < payload.startDate
@@ -983,56 +1113,515 @@
     }
 
     // ===================================
-    // 12. TAI DU LIEU
+    // 12. TAI DU LIEU & LICH SU
     // ===================================
+
+    function historyNotice(message = "", success = false) {
+        const box = $("historyMessage");
+        if (!box) return;
+        box.className = success ? "mt-2 text-success" : "mt-2 text-danger";
+        box.textContent = message;
+    }
 
     function syncEmployeeFilter() {
         const filter = $("employeeFilter");
+        const timelineBtn = $("openTimelineBtn");
         if (!filter) return;
 
-        filter.style.display =
-            tab === "employee-positions" ? "" : "none";
+        if (tab === "employee-positions") {
+            filter.style.display = "";
+            const options = (data.employees || []).map(emp => `
+                <option value="${escapeHTML(emp.id)}"
+                    ${String(emp.id) === String(selectedEmployeeId) ? "selected" : ""}>
+                    ${escapeHTML((`${emp.code || ""} - ${emp.fullName || ""}`).trim())}
+                </option>
+            `).join("");
+            filter.innerHTML =
+                '<option value="">-- Lọc lịch sử theo nhân viên (Tất cả) --</option>' +
+                options;
+            if (timelineBtn) {
+                timelineBtn.style.display = selectedEmployeeId ? "" : "none";
+            }
+            return;
+        }
 
-        const options = (data.employees || []).map(emp => `
-            <option value="${escapeHTML(emp.id)}"
-                ${String(emp.id) === String(selectedEmployeeId) ? "selected" : ""}>
+        if (tab === "lecturer-positions-history") {
+            filter.style.display = "";
+            const options = (data.lecturers || []).map(lec => `
+                <option value="${escapeHTML(lec.id)}"
+                    ${String(lec.id) === String(selectedLecturerId) ? "selected" : ""}>
+                    ${escapeHTML((`${lec.lecturerCode || ""} - ${lec.fullName || ""}`).trim())}
+                </option>
+            `).join("");
+            filter.innerHTML =
+                '<option value="">-- Lọc lịch sử theo giảng viên (Tất cả) --</option>' +
+                options;
+            if (timelineBtn) {
+                timelineBtn.style.display = selectedLecturerId ? "" : "none";
+            }
+            return;
+        }
+
+        filter.style.display = "none";
+        if (timelineBtn) {
+            timelineBtn.style.display = "none";
+        }
+    }
+
+    async function loadPersonFilter(personId) {
+        if (tab === "employee-positions") {
+            selectedEmployeeId = personId || "";
+            if (!selectedEmployeeId) {
+                employeeHistoryRows = null;
+                syncEmployeeFilter();
+                render();
+                notice("");
+                return;
+            }
+            try {
+                const rows = await api("employee-positions/employee/" + selectedEmployeeId);
+                employeeHistoryRows = Array.isArray(rows) ? rows : [];
+                syncEmployeeFilter();
+                render();
+                notice("");
+            } catch (error) {
+                employeeHistoryRows = [];
+                syncEmployeeFilter();
+                render();
+                notice(error.message);
+            }
+            return;
+        }
+
+        if (tab === "lecturer-positions-history") {
+            selectedLecturerId = personId || "";
+            if (!selectedLecturerId) {
+                lecturerHistoryRows = null;
+                syncEmployeeFilter();
+                render();
+                notice("");
+                return;
+            }
+            try {
+                const rows = await api("lecturer-positions-history/lecturer/" + selectedLecturerId);
+                lecturerHistoryRows = Array.isArray(rows) ? rows : [];
+                syncEmployeeFilter();
+                render();
+                notice("");
+            } catch (error) {
+                lecturerHistoryRows = [];
+                syncEmployeeFilter();
+                render();
+                notice(error.message);
+            }
+        }
+    }
+
+    function renderSummaryPills(rows) {
+        const total = rows.length;
+        const current = rows.filter(r => !r.deletedAt && !r.endDate).length;
+        const ended = rows.filter(r => !r.deletedAt && r.endDate).length;
+        const deleted = rows.filter(r => r.deletedAt).length;
+
+        return `
+            <div class="summary-pill">Tổng lượt: <strong>${total}</strong></div>
+            <div class="summary-pill text-success">Đang đương nhiệm: <strong>${current}</strong></div>
+            <div class="summary-pill text-secondary">Đã kết thúc nhiệm kỳ: <strong>${ended}</strong></div>
+            ${deleted > 0 ? `<div class="summary-pill text-danger">Đã xóa mềm (lưu lịch sử): <strong>${deleted}</strong></div>` : ""}
+        `;
+    }
+
+    function renderTimelineItems(rows, targetKind, showPerson = false) {
+        if (!rows || rows.length === 0) {
+            return `<div class="text-center text-muted py-4 border rounded-3 bg-light">Chưa có bản ghi lịch sử công tác phù hợp.</div>`;
+        }
+
+        return `
+            <div class="timeline-list">
+                ${rows.map(row => {
+                    const cls = row.deletedAt ? "deleted" : (row.endDate ? "ended" : "");
+                    const personTitle = targetKind === "employee-positions"
+                        ? related("employees", row.employeeId)
+                        : related("lecturers", row.lecturerId);
+                    const posTitle = related("positions", row.positionId);
+                    const startText = display("startDate", row.startDate);
+                    const endText = row.endDate ? display("endDate", row.endDate) : "Hiện tại";
+
+                    return `
+                        <div class="timeline-item ${cls}">
+                            <div class="timeline-header">
+                                <div>
+                                    <strong>${escapeHTML(posTitle)}</strong>
+                                    ${showPerson ? `<span class="text-muted ms-2">(${escapeHTML(personTitle)})</span>` : ""}
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    ${termBadgeHtml(row)}
+                                    ${(!row.deletedAt && !row.endDate) ? `
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-success py-0 px-2"
+                                                data-hist-action="end-term"
+                                                data-kind="${escapeHTML(targetKind)}"
+                                                data-id="${escapeHTML(row.id)}"
+                                                title="Kết thúc nhiệm kỳ">
+                                            <i class="bi bi-calendar-check me-1"></i>Kết thúc
+                                        </button>
+                                    ` : ""}
+                                    ${!row.deletedAt ? `
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-primary py-0 px-2"
+                                                data-hist-action="edit"
+                                                data-kind="${escapeHTML(targetKind)}"
+                                                data-id="${escapeHTML(row.id)}"
+                                                title="Sửa">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+                                    ` : `
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-success py-0 px-2"
+                                                data-hist-action="restore"
+                                                data-kind="${escapeHTML(targetKind)}"
+                                                data-id="${escapeHTML(row.id)}"
+                                                title="Khôi phục">
+                                            <i class="bi bi-arrow-counterclockwise me-1"></i>Khôi phục
+                                        </button>
+                                    `}
+                                </div>
+                            </div>
+                            <div class="timeline-meta">
+                                <i class="bi bi-calendar-range me-1"></i>
+                                <span>${escapeHTML(startText)}</span>
+                                <span class="mx-1">→</span>
+                                <strong>${escapeHTML(endText)}</strong>
+                                ${row.deletedAt ? `<span class="text-danger ms-3"><i class="bi bi-trash me-1"></i>Xóa mềm lúc: ${escapeHTML(display("deletedAt", row.deletedAt))}</span>` : ""}
+                            </div>
+                            ${row.description ? `<div class="small mt-2"><strong>Mô tả:</strong> ${escapeHTML(row.description)}</div>` : ""}
+                            ${row.note ? `<div class="small text-muted mt-1"><strong>Ghi chú:</strong> ${escapeHTML(row.note)}</div>` : ""}
+                        </div>
+                    `;
+                }).join("")}
+            </div>
+        `;
+    }
+
+    async function openHistoryModal(personKind, personId) {
+        if (!historyModal) return;
+
+        const isEmployee = personKind === "employees";
+        const targetKind = isEmployee ? "employee-positions" : "lecturer-positions-history";
+        const endpoint = isEmployee
+            ? `employee-positions/employee/${personId}/history?includeDeleted=true`
+            : `lecturer-positions-history/lecturer/${personId}?includeDeleted=true`;
+
+        const personLabel = related(personKind, personId);
+        historyModalContext = { personKind, personId, targetKind };
+
+        text(
+            "historyModalTitle",
+            isEmployee ? `Lịch sử công tác: ${personLabel}` : `Lịch sử chức vụ: ${personLabel}`
+        );
+        text(
+            "historyModalSubtitle",
+            isEmployee
+                ? "Toàn bộ các vị trí đang đương nhiệm, đã kết thúc nhiệm kỳ và đã xóa mềm (bảng employee_positions)"
+                : "Toàn bộ quá trình đảm nhiệm chức danh (bảng lecturer_positions_history)"
+        );
+
+        const isActivePerson = (data[personKind] || []).some(p => String(p.id) === String(personId));
+        if ($("historyModalAddBtn")) {
+            $("historyModalAddBtn").style.display = isActivePerson ? "" : "none";
+            $("historyModalAddBtn").innerHTML = isEmployee
+                ? '<i class="bi bi-plus-lg"></i> Phân công thêm vị trí'
+                : '<i class="bi bi-plus-lg"></i> Thêm lịch sử chức vụ';
+        }
+
+        $("historyModalSummary").innerHTML = "";
+        $("historyModalBody").innerHTML = '<div class="text-center text-muted py-4">Đang tải lịch sử...</div>';
+        historyModal.show();
+
+        try {
+            const rows = await api(endpoint);
+            const list = Array.isArray(rows) ? rows : [];
+            $("historyModalSummary").innerHTML = renderSummaryPills(list);
+            $("historyModalBody").innerHTML = renderTimelineItems(list, targetKind, false);
+        } catch (error) {
+            $("historyModalBody").innerHTML = `<div class="alert alert-danger mb-0">${escapeHTML(error.message)}</div>`;
+        }
+    }
+
+    function syncHistoryEmployeeSelect() {
+        const select = $("historyEmployeeSelect");
+        if (!select) return;
+        const currentVal = select.value;
+
+        const activeOpts = (data.employees || []).map(emp => `
+            <option value="${escapeHTML(emp.id)}">
                 ${escapeHTML((`${emp.code || ""} - ${emp.fullName || ""}`).trim())}
             </option>
         `).join("");
 
-        filter.innerHTML =
-            '<option value="">-- Lọc lịch sử theo nhân viên (Tất cả) --</option>' +
-            options;
+        const deletedOpts = (data.deleted.employees || []).map(emp => `
+            <option value="${escapeHTML(emp.id)}">
+                ${escapeHTML((`${emp.code || ""} - ${emp.fullName || ""}`).trim())} [Đã xóa mềm]
+            </option>
+        `).join("");
+
+        select.innerHTML =
+            '<option value="">-- Tất cả nhân viên (xem toàn bộ lịch sử công tác) --</option>' +
+            (activeOpts ? `<optgroup label="Nhân viên đang hoạt động">${activeOpts}</optgroup>` : "") +
+            (deletedOpts ? `<optgroup label="Nhân viên đã xóa mềm (còn lưu lịch sử)">${deletedOpts}</optgroup>` : "");
+
+        if (currentVal && [...(data.employees || []), ...(data.deleted.employees || [])].some(e => String(e.id) === String(currentVal))) {
+            select.value = currentVal;
+        }
     }
 
-    async function loadEmployeeHistory(empId) {
-        selectedEmployeeId = empId || "";
+    async function renderWorkHistoryPanel() {
+        syncHistoryEmployeeSelect();
+        const empId = $("historyEmployeeSelect")?.value || "";
+        const termFilter = $("historyTermFilter")?.value || "all";
+        const includeDeleted = Boolean($("historyIncludeDeleted")?.checked);
 
-        if (!selectedEmployeeId) {
-            employeeHistoryRows = null;
-            render();
-            notice("");
+        let rows = [];
+        try {
+            if (empId) {
+                const res = await api(`employee-positions/employee/${empId}/history?includeDeleted=${includeDeleted}`);
+                rows = Array.isArray(res) ? res : [];
+            } else {
+                rows = includeDeleted
+                    ? [...(data["employee-positions"] || []), ...(data.deleted["employee-positions"] || [])]
+                    : [...(data["employee-positions"] || [])];
+                rows.sort((a, b) => String(b.startDate || "").localeCompare(String(a.startDate || "")));
+            }
+
+            if (termFilter === "current") {
+                rows = rows.filter(r => !r.endDate);
+            } else if (termFilter === "ended") {
+                rows = rows.filter(r => Boolean(r.endDate));
+            }
+
+            $("historyWorkSummary").innerHTML = renderSummaryPills(rows);
+            $("historyWorkTimeline").innerHTML = renderTimelineItems(rows, "employee-positions", !empId);
+            historyNotice("");
+        } catch (error) {
+            $("historyWorkSummary").innerHTML = "";
+            $("historyWorkTimeline").innerHTML = "";
+            historyNotice(error.message);
+        }
+    }
+
+    function renderDeletedHistoryPanel() {
+        const entityKind = $("deletedEntitySelect")?.value || "employees";
+        const cfg = C[entityKind];
+        const rows = data.deleted[entityKind] || [];
+
+        const cols = [
+            ...cfg.columns.filter(k => k !== "termStatus" && k !== "isActive").slice(0, 4),
+            "deletedAt",
+            "isActive"
+        ];
+
+        text("deletedCount", `${rows.length} bản ghi đã xóa mềm`);
+
+        $("deletedTableHead").innerHTML = `
+            <tr>
+                ${cols.map(key => `<th>${escapeHTML(label(key, entityKind))}</th>`).join("")}
+                <th class="text-end">Thao tác</th>
+            </tr>
+        `;
+
+        if (rows.length === 0) {
+            $("deletedTableBody").innerHTML = `
+                <tr>
+                    <td colspan="${cols.length + 1}" class="text-center text-muted py-4">
+                        Chưa có bản ghi nào bị xóa mềm ở phân hệ này.
+                    </td>
+                </tr>
+            `;
             return;
         }
 
+        $("deletedTableBody").innerHTML = rows.map(row => `
+            <tr>
+                ${cols.map(key => `
+                    <td>${escapeHTML(display(key, row[key], row, entityKind))}</td>
+                `).join("")}
+                <td class="text-end text-nowrap">
+                    ${(entityKind === "employees" || entityKind === "lecturers") ? `
+                        <button type="button"
+                                class="btn btn-sm btn-outline-secondary"
+                                data-del-action="history"
+                                data-kind="${escapeHTML(entityKind)}"
+                                data-id="${escapeHTML(row.id)}"
+                                title="Xem lịch sử công tác vẫn được lưu giữ">
+                            <i class="bi bi-clock-history"></i>
+                        </button>
+                    ` : ""}
+                    <button type="button"
+                            class="btn btn-sm btn-outline-info"
+                            data-del-action="view"
+                            data-kind="${escapeHTML(entityKind)}"
+                            data-id="${escapeHTML(row.id)}"
+                            title="Xem chi tiết">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    <button type="button"
+                            class="btn btn-sm btn-outline-success"
+                            data-del-action="restore"
+                            data-kind="${escapeHTML(entityKind)}"
+                            data-id="${escapeHTML(row.id)}"
+                            title="Khôi phục bản ghi">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>Khôi phục
+                    </button>
+                </td>
+            </tr>
+        `).join("");
+    }
+
+    function auditActionBadge(action) {
+        const map = {
+            THEM: ["create", "Thêm mới"],
+            CAP_NHAT: ["update", "Cập nhật / Sửa"],
+            XOA_MEM: ["delete", "Xóa mềm"],
+            KHOI_PHUC: ["restore", "Khôi phục"],
+            KET_THUC_NHIEM_KY: ["end", "Kết thúc nhiệm kỳ"]
+        };
+        const [cls, labelText] = map[action] || ["update", action || "Khác"];
+        return `<span class="badge-action ${cls}">${escapeHTML(labelText)}</span>`;
+    }
+
+    function auditTableLabel(tableName) {
+        const map = {
+            departments: "Khoa / viện",
+            positions: "Chức danh",
+            lecturers: "Giảng viên",
+            employees: "Nhân viên",
+            employee_positions: "Vị trí công tác",
+            lecturer_positions_history: "Lịch sử chức vụ GV"
+        };
+        return map[tableName] || tableName || "—";
+    }
+
+    function renderAuditHistoryPanel() {
+        const query = ($("auditSearchInput")?.value || "").trim().toLocaleLowerCase("vi");
+        const actFilter = $("auditActionFilter")?.value || "";
+        const tblFilter = $("auditTableFilter")?.value || "";
+
+        const rows = (data.auditLogs || []).filter(log => {
+            if (actFilter && log.action !== actFilter) return false;
+            if (tblFilter && log.tableName !== tblFilter) return false;
+            if (!query) return true;
+
+            const haystack = [
+                log.description,
+                log.action,
+                log.tableName,
+                auditTableLabel(log.tableName),
+                log.recordId,
+                log.createdAt
+            ].join(" ").toLocaleLowerCase("vi");
+            return haystack.includes(query);
+        });
+
+        text("auditCount", `${rows.length} / ${(data.auditLogs || []).length} nhật ký`);
+
+        if (rows.length === 0) {
+            $("auditTableBody").innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-4">
+                        Chưa có nhật ký thao tác nào (hãy thử Thêm, Sửa, Xóa mềm hoặc Khôi phục một bản ghi ở các tab Nhóm N3).
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        $("auditTableBody").innerHTML = rows.map(log => `
+            <tr>
+                <td class="text-nowrap">${escapeHTML(display("createdAt", log.createdAt))}</td>
+                <td>${auditActionBadge(log.action)}</td>
+                <td class="text-nowrap">${escapeHTML(auditTableLabel(log.tableName))}</td>
+                <td>
+                    <div>${escapeHTML(log.description || "—")}</div>
+                    ${log.recordId ? `<small class="text-muted">ID: ${escapeHTML(log.recordId)}</small>` : ""}
+                </td>
+            </tr>
+        `).join("");
+    }
+
+    function renderHistoryCenter() {
+        const isAudit = historySubTab === "audit";
+        const isWork = historySubTab === "work";
+        const isDeleted = historySubTab === "deleted";
+
+        if ($("historyAuditPanel")) $("historyAuditPanel").style.display = isAudit ? "" : "none";
+        if ($("historyWorkPanel")) $("historyWorkPanel").style.display = isWork ? "" : "none";
+        if ($("historyDeletedPanel")) $("historyDeletedPanel").style.display = isDeleted ? "" : "none";
+
+        if ($("histTabAudit")) {
+            $("histTabAudit").className = isAudit ? "btn btn-primary btn-sm" : "btn btn-outline-primary btn-sm";
+        }
+        if ($("histTabWork")) {
+            $("histTabWork").className = isWork ? "btn btn-primary btn-sm" : "btn btn-outline-primary btn-sm";
+        }
+        if ($("histTabDeleted")) {
+            $("histTabDeleted").className = isDeleted ? "btn btn-primary btn-sm" : "btn btn-outline-primary btn-sm";
+        }
+
+        if (isAudit) {
+            renderAuditHistoryPanel();
+        } else if (isWork) {
+            renderWorkHistoryPanel();
+        } else {
+            renderDeletedHistoryPanel();
+        }
+    }
+
+    async function handleEndTerm(targetKind, id) {
+        if (!confirm("Xác nhận kết thúc nhiệm kỳ của vị trí công tác này (ghi nhận ngày kết thúc hôm nay và giữ lại lịch sử)?")) {
+            return;
+        }
         try {
-            const rows = await api("employee-positions/employee/" + selectedEmployeeId);
-            employeeHistoryRows = Array.isArray(rows) ? rows : [];
-            render();
-            notice("");
+            await api(`${targetKind}/${id}/end`, "PUT", {});
+            await loadAll();
+            if (historyModalContext && $("historyModal")?.classList.contains("show")) {
+                await openHistoryModal(historyModalContext.personKind, historyModalContext.personId);
+            }
+            notice("Đã kết thúc nhiệm kỳ và lưu lịch sử thành công", true);
+            historyNotice("Đã kết thúc nhiệm kỳ và lưu lịch sử thành công", true);
         } catch (error) {
-            employeeHistoryRows = [];
-            render();
             notice(error.message);
+            historyNotice(error.message);
+            alert("Không thể kết thúc nhiệm kỳ: " + error.message);
+        }
+    }
+
+    async function handleRestore(targetKind, id) {
+        if (!confirm("Bạn có muốn khôi phục bản ghi đã xóa mềm này trở lại hoạt động?")) {
+            return;
+        }
+        try {
+            await api(`${targetKind}/${id}/restore`, "PUT");
+            await loadAll();
+            if (historyModalContext && $("historyModal")?.classList.contains("show")) {
+                await openHistoryModal(historyModalContext.personKind, historyModalContext.personId);
+            }
+            notice("Đã khôi phục bản ghi thành công", true);
+            historyNotice("Đã khôi phục bản ghi thành công", true);
+        } catch (error) {
+            notice(error.message);
+            historyNotice(error.message);
+            alert("Không thể khôi phục: " + error.message);
         }
     }
 
     async function loadAll() {
 
         // Mot API loi khong lam cac API khac mat du lieu
-        const [results, usersResult] = await Promise.all([
+        const [results, deletedResults, usersResult, auditResult] = await Promise.all([
             Promise.allSettled(types.map(kind => api(kind))),
-            api("users").catch(() => [])
+            Promise.allSettled(types.map(kind => api(kind + "/deleted"))),
+            api("users").catch(() => []),
+            api("audit-logs").catch(() => [])
         ]);
 
         results.forEach((result, index) => {
@@ -1058,7 +1647,16 @@
             }
         });
 
+        deletedResults.forEach((result, index) => {
+            const kind = types[index];
+            data.deleted[kind] =
+                result.status === "fulfilled" && Array.isArray(result.value)
+                    ? result.value
+                    : [];
+        });
+
         data.users = Array.isArray(usersResult) ? usersResult : [];
+        data.auditLogs = Array.isArray(auditResult) ? auditResult : [];
 
         if (selectedEmployeeId) {
             try {
@@ -1067,6 +1665,16 @@
             } catch {
                 selectedEmployeeId = "";
                 employeeHistoryRows = null;
+            }
+        }
+
+        if (selectedLecturerId) {
+            try {
+                const rows = await api("lecturer-positions-history/lecturer/" + selectedLecturerId);
+                lecturerHistoryRows = Array.isArray(rows) ? rows : [];
+            } catch {
+                selectedLecturerId = "";
+                lecturerHistoryRows = null;
             }
         }
 
@@ -1090,13 +1698,15 @@
         updateUrl = false
     ) {
 
-        if (!types.includes(next)) {
+        if (!allTabs.includes(next)) {
             return;
         }
 
         tab = next;
 
-        $("searchInput").value = "";
+        if ($("searchInput")) {
+            $("searchInput").value = "";
+        }
         syncEmployeeFilter();
 
         // Menu N3 rieng
@@ -1152,7 +1762,7 @@
 
     $("addBtn").addEventListener(
         "click",
-        () => openForm("add")
+        () => openForm("add", null, tab)
     );
 
     // ===================================
@@ -1165,7 +1775,7 @@
     );
 
     // ===================================
-    // 16. TIM KIEM
+    // 16. TIM KIEM & LOC LICH SU
     // ===================================
 
     $("searchInput").addEventListener(
@@ -1176,8 +1786,155 @@
     if ($("employeeFilter")) {
         $("employeeFilter").addEventListener(
             "change",
-            event => loadEmployeeHistory(event.target.value)
+            event => loadPersonFilter(event.target.value)
         );
+    }
+
+    if ($("openTimelineBtn")) {
+        $("openTimelineBtn").addEventListener("click", () => {
+            if (tab === "employee-positions" && selectedEmployeeId) {
+                openHistoryModal("employees", selectedEmployeeId);
+            } else if (tab === "lecturer-positions-history" && selectedLecturerId) {
+                openHistoryModal("lecturers", selectedLecturerId);
+            }
+        });
+    }
+
+    if ($("histTabAudit")) {
+        $("histTabAudit").addEventListener("click", () => {
+            historySubTab = "audit";
+            renderHistoryCenter();
+        });
+    }
+
+    if ($("auditSearchInput")) {
+        $("auditSearchInput").addEventListener("input", renderAuditHistoryPanel);
+    }
+
+    if ($("auditActionFilter")) {
+        $("auditActionFilter").addEventListener("change", renderAuditHistoryPanel);
+    }
+
+    if ($("auditTableFilter")) {
+        $("auditTableFilter").addEventListener("change", renderAuditHistoryPanel);
+    }
+
+    if ($("auditRefreshBtn")) {
+        $("auditRefreshBtn").addEventListener("click", loadAll);
+    }
+
+    if ($("histTabWork")) {
+        $("histTabWork").addEventListener("click", () => {
+            historySubTab = "work";
+            renderHistoryCenter();
+        });
+    }
+
+    if ($("histTabDeleted")) {
+        $("histTabDeleted").addEventListener("click", () => {
+            historySubTab = "deleted";
+            renderHistoryCenter();
+        });
+    }
+
+    if ($("historyEmployeeSelect")) {
+        $("historyEmployeeSelect").addEventListener("change", renderWorkHistoryPanel);
+    }
+
+    if ($("historyTermFilter")) {
+        $("historyTermFilter").addEventListener("change", renderWorkHistoryPanel);
+    }
+
+    if ($("historyIncludeDeleted")) {
+        $("historyIncludeDeleted").addEventListener("change", renderWorkHistoryPanel);
+    }
+
+    if ($("historyAssignBtn")) {
+        $("historyAssignBtn").addEventListener("click", () => {
+            const empId = $("historyEmployeeSelect")?.value || "";
+            const isActiveEmp = empId && (data.employees || []).some(e => String(e.id) === String(empId));
+            openForm("add", isActiveEmp ? { employeeId: empId } : null, "employee-positions");
+        });
+    }
+
+    if ($("deletedEntitySelect")) {
+        $("deletedEntitySelect").addEventListener("change", renderDeletedHistoryPanel);
+    }
+
+    if ($("deletedRefreshBtn")) {
+        $("deletedRefreshBtn").addEventListener("click", loadAll);
+    }
+
+    if ($("historyModalAddBtn")) {
+        $("historyModalAddBtn").addEventListener("click", () => {
+            if (!historyModalContext) return;
+            const { personKind, personId, targetKind } = historyModalContext;
+            historyModal.hide();
+            const preset = personKind === "employees"
+                ? { employeeId: personId }
+                : { lecturerId: personId };
+            openForm("add", preset, targetKind);
+        });
+    }
+
+    // Xu ly click trong Timeline (ca tren tab Lich su va trong Modal)
+    async function handleTimelineClick(event) {
+        const btn = event.target.closest("[data-hist-action]");
+        if (!btn) return;
+        const action = btn.dataset.histAction;
+        const kind = btn.dataset.kind;
+        const id = btn.dataset.id;
+
+        if (action === "end-term") {
+            await handleEndTerm(kind, id);
+            return;
+        }
+        if (action === "restore") {
+            await handleRestore(kind, id);
+            return;
+        }
+        if (action === "edit") {
+            const row = (data[kind] || []).find(item => String(item.id) === String(id));
+            if (row) {
+                if ($("historyModal")?.classList.contains("show")) {
+                    historyModal.hide();
+                }
+                openForm("edit", row, kind);
+            }
+        }
+    }
+
+    if ($("historyWorkTimeline")) {
+        $("historyWorkTimeline").addEventListener("click", handleTimelineClick);
+    }
+    if ($("historyModalBody")) {
+        $("historyModalBody").addEventListener("click", handleTimelineClick);
+    }
+
+    // Xu ly click trong bang Du lieu da xoa mem
+    if ($("deletedTableBody")) {
+        $("deletedTableBody").addEventListener("click", async event => {
+            const btn = event.target.closest("[data-del-action]");
+            if (!btn) return;
+            const action = btn.dataset.delAction;
+            const kind = btn.dataset.kind;
+            const id = btn.dataset.id;
+
+            if (action === "restore") {
+                await handleRestore(kind, id);
+                return;
+            }
+            if (action === "history") {
+                await openHistoryModal(kind, id);
+                return;
+            }
+            if (action === "view") {
+                const row = (data.deleted[kind] || []).find(item => String(item.id) === String(id));
+                if (row) {
+                    openForm("view", row, kind);
+                }
+            }
+        });
     }
 
     // ===================================
@@ -1210,7 +1967,7 @@
 
             try {
 
-                const path = tab + (
+                const path = formTab + (
                     editId
                         ? "/" + editId
                         : ""
@@ -1234,10 +1991,15 @@
                     "Đã lưu thành công",
                     true
                 );
+                historyNotice(
+                    "Đã lưu thành công",
+                    true
+                );
 
             } catch (error) {
 
                 notice(error.message);
+                historyNotice(error.message);
 
                 alert(
                     "Không thể lưu: " + error.message
@@ -1253,7 +2015,7 @@
     );
 
     // ===================================
-    // 18. XEM / SUA / XOA
+    // 18. XEM / SUA / XOA / LICH SU / KET THUC
     // ===================================
 
     $("tableBody").addEventListener(
@@ -1268,7 +2030,7 @@
                 return;
             }
 
-            const row = data[tab].find(
+            const row = (data[tab] || []).find(
                 item =>
                     String(item.id) === button.dataset.id
             );
@@ -1279,12 +2041,22 @@
 
             const action = button.dataset.action;
 
+            if (action === "history") {
+                await openHistoryModal(tab, row.id);
+                return;
+            }
+
+            if (action === "end-term") {
+                await handleEndTerm(tab, row.id);
+                return;
+            }
+
             if (
                 action === "view" ||
                 action === "edit"
             ) {
 
-                openForm(action, row);
+                openForm(action, row, tab);
                 return;
             }
 
@@ -1292,16 +2064,18 @@
 
                 const name = tab === "employee-positions"
                     ? `${related("employees", row.employeeId)} - ${related("positions", row.positionId)}`
-                    : (
-                        row.code ||
-                        row.lecturerCode ||
-                        row.fullName ||
-                        row.name ||
-                        row.id
-                    );
+                    : tab === "lecturer-positions-history"
+                        ? `${related("lecturers", row.lecturerId)} - ${related("positions", row.positionId)}`
+                        : (
+                            row.code ||
+                            row.lecturerCode ||
+                            row.fullName ||
+                            row.name ||
+                            row.id
+                        );
 
                 if (!confirm(
-                    `Bạn có chắc muốn xóa bản ghi ${name}?`
+                    `Bạn có chắc muốn xóa mềm bản ghi ${name}?`
                 )) {
                     return;
                 }
@@ -1316,7 +2090,7 @@
                     await loadAll();
 
                     notice(
-                        "Đã xóa thành công",
+                        "Đã xóa mềm thành công (bản ghi vẫn được lưu trong mục Lịch sử & Xóa mềm)",
                         true
                     );
 
@@ -1336,18 +2110,14 @@
     // 19. MENU N3 RIENG
     // ===================================
 
-    document.querySelectorAll(
-        ".sidebar-nav [data-tab]"
-    ).forEach(element => {
-
-        element.addEventListener(
-            "click",
-            () => changeTab(
-                element.dataset.tab,
-                true
-            )
-        );
-    });
+    const sidebarNav = document.querySelector(".sidebar-nav");
+    if (sidebarNav) {
+        sidebarNav.addEventListener("click", event => {
+            const item = event.target.closest("[data-tab]");
+            if (!item) return;
+            changeTab(item.dataset.tab, true);
+        });
+    }
 
     // ===================================
     // 20. KHOI DONG

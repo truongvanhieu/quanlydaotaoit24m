@@ -30,6 +30,12 @@ public class EmployeeController {
         return employeeService.getAll(keyword);
     }
 
+    // GET /api/n3/employees/deleted
+    @GetMapping("/deleted")
+    public List<Employee> getDeleted() {
+        return employeeService.getDeleted();
+    }
+
     // GET /api/n3/employees/{id}
     @GetMapping("/{id}")
     public Employee getById(@PathVariable UUID id) {
@@ -64,6 +70,12 @@ public class EmployeeController {
             @RequestBody Employee employee) {
 
         return employeeService.update(id, employee);
+    }
+
+    // PUT /api/n3/employees/{id}/restore
+    @PutMapping("/{id}/restore")
+    public Employee restore(@PathVariable UUID id) {
+        return employeeService.restore(id);
     }
 
     // DELETE /api/n3/employees/{id}

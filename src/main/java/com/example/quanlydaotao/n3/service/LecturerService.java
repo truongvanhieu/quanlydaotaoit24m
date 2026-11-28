@@ -10,6 +10,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,14 +20,17 @@ public class LecturerService {
     private final LecturerRepository repository;
     private final DepartmentService departmentService;
     private final PositionService positionService;
+    private final N3AuditLogService auditLogService;
 
     public LecturerService(
             LecturerRepository repository,
             DepartmentService departmentService,
-            PositionService positionService) {
+            PositionService positionService,
+            N3AuditLogService auditLogService) {
         this.repository = repository;
         this.departmentService = departmentService;
         this.positionService = positionService;
+        this.auditLogService = auditLogService;
     }
 
     public List<Lecturer> getAll(String keyword) {
@@ -153,13 +157,21 @@ public class LecturerService {
             lecturer.setIsActive(true);
         }
 
-        return repository.save(lecturer);
+        Lecturer saved = repository.save(lecturer);
+        auditLogService.record(
+                N3AuditLogService.ACTION_CREATE,
+                "lecturers",
+                saved.getId(),
+                "Thêm mới Giảng viên: " + saved.getLecturerCode() + " - " + saved.getFullName()
+        );
+        return saved;
     }
 
     public Lecturer update(UUID id, Lecturer data) {
         validate(data);
 
         Lecturer old = getById(id);
+        String oldSummary = old.getLecturerCode() + " - " + old.getFullName() + " (Trạng thái: " + (Boolean.TRUE.equals(old.getIsActive()) ? "Hoạt động" : "Tạm khóa") + ")";
         String code = data.getLecturerCode().trim();
         ensureUniqueCode(code, id);
 
@@ -176,7 +188,15 @@ public class LecturerService {
             old.setIsActive(data.getIsActive());
         }
 
-        return repository.save(old);
+        Lecturer saved = repository.save(old);
+        String newSummary = saved.getLecturerCode() + " - " + saved.getFullName() + " (Trạng thái: " + (Boolean.TRUE.equals(saved.getIsActive()) ? "Hoạt động" : "Tạm khóa") + ")";
+        auditLogService.record(
+                N3AuditLogService.ACTION_UPDATE,
+                "lecturers",
+                saved.getId(),
+                "Cập nhật Giảng viên: [" + oldSummary + "] -> [" + newSummary + "]"
+        );
+        return saved;
     }
 
     public void delete(UUID id) {
@@ -185,5 +205,37 @@ public class LecturerService {
         lecturer.setIsActive(false);
 
         repository.save(lecturer);
+        auditLogService.record(
+                N3AuditLogService.ACTION_DELETE,
+                "lecturers",
+                lecturer.getId(),
+                "Xóa mềm Giảng viên: " + lecturer.getLecturerCode() + " - " + lecturer.getFullName()
+        );
+    }
+
+    public List<Lecturer> getDeleted() {
+        return repository.findAll().stream()
+                .filter(l -> l.getDeletedAt() != null)
+                .sorted(Comparator.comparing(Lecturer::getDeletedAt).reversed())
+                .toList();
+    }
+
+    public Lecturer restore(UUID id) {
+        Lecturer lecturer = repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Không tìm thấy giảng viên"));
+        if (lecturer.getLecturerCode() != null && !lecturer.getLecturerCode().isBlank()) {
+            ensureUniqueCode(lecturer.getLecturerCode().trim(), id);
+        }
+        lecturer.setDeletedAt(null);
+        lecturer.setIsActive(true);
+        Lecturer saved = repository.save(lecturer);
+        auditLogService.record(
+                N3AuditLogService.ACTION_RESTORE,
+                "lecturers",
+                saved.getId(),
+                "Khôi phục Giảng viên đã xóa mềm: " + saved.getLecturerCode() + " - " + saved.getFullName()
+        );
+        return saved;
     }
 }

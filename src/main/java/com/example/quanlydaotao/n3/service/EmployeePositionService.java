@@ -24,15 +24,28 @@ public class EmployeePositionService {
     private final EmployeePositionRepository repository;
     private final EmployeeRepository employeeRepository;
     private final PositionRepository positionRepository;
+    private final N3AuditLogService auditLogService;
 
     public EmployeePositionService(
             EmployeePositionRepository repository,
             EmployeeRepository employeeRepository,
-            PositionRepository positionRepository) {
+            PositionRepository positionRepository,
+            N3AuditLogService auditLogService) {
 
         this.repository = repository;
         this.employeeRepository = employeeRepository;
         this.positionRepository = positionRepository;
+        this.auditLogService = auditLogService;
+    }
+
+    private String describeAssignment(EmployeePosition item) {
+        String empName = employeeRepository.findById(item.getEmployeeId())
+                .map(e -> (e.getCode() != null ? e.getCode() + " - " : "") + e.getFullName())
+                .orElse(String.valueOf(item.getEmployeeId()));
+        String posName = positionRepository.findById(item.getPositionId())
+                .map(p -> (p.getCode() != null ? p.getCode() + " - " : "") + p.getName())
+                .orElse(String.valueOf(item.getPositionId()));
+        return empName + " | Chức vụ: " + posName;
     }
 
     // GET tat ca phan cong
@@ -104,7 +117,14 @@ public class EmployeePositionService {
             item.setIsActive(true);
         }
 
-        return repository.save(item);
+        EmployeePosition saved = repository.save(item);
+        auditLogService.record(
+                N3AuditLogService.ACTION_CREATE,
+                "employee_positions",
+                saved.getId(),
+                "Phân công vị trí công tác: " + describeAssignment(saved)
+        );
+        return saved;
     }
 
     // PUT
@@ -125,7 +145,87 @@ public class EmployeePositionService {
             item.setIsActive(oldStatus);
         }
 
-        return repository.save(item);
+        EmployeePosition saved = repository.save(item);
+        auditLogService.record(
+                N3AuditLogService.ACTION_UPDATE,
+                "employee_positions",
+                saved.getId(),
+                "Cập nhật vị trí công tác: " + describeAssignment(saved)
+                        + (saved.getEndDate() != null ? " (Kết thúc: " + saved.getEndDate() + ")" : " (Đang đương nhiệm)")
+        );
+        return saved;
+    }
+
+    // GET danh sach da xoa mem
+    @Transactional(readOnly = true)
+    public List<EmployeePosition> getDeleted() {
+        return repository.findByDeletedAtIsNotNullOrderByDeletedAtDesc();
+    }
+
+    // GET toan bo lich su vi tri cua nhan vien (ke ca khi nhan vien da xoa mem)
+    @Transactional(readOnly = true)
+    public List<EmployeePosition> getHistoryByEmployee(
+            UUID employeeId,
+            boolean includeDeleted) {
+
+        if (!employeeRepository.existsById(employeeId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Khong tim thay nhan vien"
+            );
+        }
+
+        return includeDeleted
+                ? repository.findByEmployeeIdOrderByStartDateDesc(employeeId)
+                : repository.findByEmployeeIdAndDeletedAtIsNullOrderByStartDateDesc(employeeId);
+    }
+
+    // PUT ket thuc nhiem ky (cap nhat end_date, giu lai lich su)
+    @Transactional
+    public EmployeePosition endTerm(UUID id, LocalDateTime endDate) {
+        EmployeePosition item = getById(id);
+        LocalDateTime targetEnd = endDate != null ? endDate : LocalDateTime.now();
+
+        if (item.getStartDate() != null
+                && targetEnd.isBefore(item.getStartDate())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Ngay ket thuc phai sau ngay bat dau"
+            );
+        }
+
+        item.setEndDate(targetEnd);
+        EmployeePosition saved = repository.save(item);
+        auditLogService.record(
+                N3AuditLogService.ACTION_END_TERM,
+                "employee_positions",
+                saved.getId(),
+                "Kết thúc nhiệm kỳ vị trí công tác: " + describeAssignment(saved) + " (Ngày kết thúc: " + saved.getEndDate() + ")"
+        );
+        return saved;
+    }
+
+    // PUT khoi phuc ban ghi da xoa mem
+    @Transactional
+    public EmployeePosition restore(UUID id) {
+        EmployeePosition item = repository.findById(id)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Khong tim thay vi tri cong tac"
+                        )
+                );
+
+        item.setDeletedAt(null);
+        item.setIsActive(true);
+        EmployeePosition saved = repository.save(item);
+        auditLogService.record(
+                N3AuditLogService.ACTION_RESTORE,
+                "employee_positions",
+                saved.getId(),
+                "Khôi phục vị trí công tác đã xóa mềm: " + describeAssignment(saved)
+        );
+        return saved;
     }
 
     // DELETE mem
@@ -138,6 +238,12 @@ public class EmployeePositionService {
         item.setIsActive(false);
 
         repository.save(item);
+        auditLogService.record(
+                N3AuditLogService.ACTION_DELETE,
+                "employee_positions",
+                item.getId(),
+                "Xóa mềm vị trí công tác: " + describeAssignment(item)
+        );
     }
 
     // Validation

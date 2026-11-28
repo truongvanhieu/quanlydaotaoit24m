@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,12 +17,15 @@ public class PositionService {
 
     private final PositionRepository repository;
     private final DepartmentService departmentService;
+    private final N3AuditLogService auditLogService;
 
     public PositionService(
             PositionRepository repository,
-            DepartmentService departmentService) {
+            DepartmentService departmentService,
+            N3AuditLogService auditLogService) {
         this.repository = repository;
         this.departmentService = departmentService;
+        this.auditLogService = auditLogService;
     }
 
     public List<Position> getAll(String keyword) {
@@ -103,12 +107,20 @@ public class PositionService {
             p.setIsActive(true);
         }
 
-        return repository.save(p);
+        Position saved = repository.save(p);
+        auditLogService.record(
+                N3AuditLogService.ACTION_CREATE,
+                "positions",
+                saved.getId(),
+                "Thêm mới Chức danh: " + saved.getCode() + " - " + saved.getName()
+        );
+        return saved;
     }
 
     public Position update(UUID id, Position data) {
         validate(data);
         Position old = getById(id);
+        String oldSummary = old.getCode() + " - " + old.getName() + " (Cấp bậc: " + (old.getLevel() != null ? old.getLevel() : "—") + ")";
         String code = data.getCode().trim();
         ensureUniqueCode(code, id);
 
@@ -122,7 +134,15 @@ public class PositionService {
             old.setIsActive(data.getIsActive());
         }
 
-        return repository.save(old);
+        Position saved = repository.save(old);
+        String newSummary = saved.getCode() + " - " + saved.getName() + " (Cấp bậc: " + (saved.getLevel() != null ? saved.getLevel() : "—") + ")";
+        auditLogService.record(
+                N3AuditLogService.ACTION_UPDATE,
+                "positions",
+                saved.getId(),
+                "Cập nhật Chức danh: [" + oldSummary + "] -> [" + newSummary + "]"
+        );
+        return saved;
     }
 
     public void delete(UUID id) {
@@ -131,5 +151,38 @@ public class PositionService {
         p.setIsActive(false);
 
         repository.save(p);
+        auditLogService.record(
+                N3AuditLogService.ACTION_DELETE,
+                "positions",
+                p.getId(),
+                "Xóa mềm Chức danh: " + p.getCode() + " - " + p.getName()
+        );
+    }
+
+    public List<Position> getDeleted() {
+        return repository.findAll().stream()
+                .filter(p -> p.getDeletedAt() != null)
+                .peek(this::normalizeLevel)
+                .sorted(Comparator.comparing(Position::getDeletedAt).reversed())
+                .toList();
+    }
+
+    public Position restore(UUID id) {
+        Position p = repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Không tìm thấy chức danh"));
+        if (p.getCode() != null && !p.getCode().isBlank()) {
+            ensureUniqueCode(p.getCode().trim(), id);
+        }
+        p.setDeletedAt(null);
+        p.setIsActive(true);
+        Position saved = repository.save(p);
+        auditLogService.record(
+                N3AuditLogService.ACTION_RESTORE,
+                "positions",
+                saved.getId(),
+                "Khôi phục Chức danh đã xóa mềm: " + saved.getCode() + " - " + saved.getName()
+        );
+        return saved;
     }
 }

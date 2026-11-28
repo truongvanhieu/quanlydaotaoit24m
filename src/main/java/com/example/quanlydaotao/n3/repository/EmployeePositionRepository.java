@@ -16,7 +16,15 @@ public interface EmployeePositionRepository
     findByDeletedAtIsNullOrderByCreatedAtDesc();
 
     List<EmployeePosition>
+    findByDeletedAtIsNotNullOrderByDeletedAtDesc();
+
+    List<EmployeePosition>
     findByEmployeeIdAndDeletedAtIsNullOrderByStartDateDesc(
+            UUID employeeId
+    );
+
+    List<EmployeePosition>
+    findByEmployeeIdOrderByStartDateDesc(
             UUID employeeId
     );
 }
