@@ -1,8 +1,6 @@
 package com.example.quanlydaotao.n2.controller;
 
 import java.util.List;
-import java.util.UUID;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,7 +30,7 @@ public class StudentController {
     }
 
     @GetMapping("/{id}")
-    public Student getStudent(@PathVariable UUID id) {
+    public Student getStudent(@PathVariable Integer id) {
 
         return studentService.getById(id);
     }
@@ -45,7 +43,7 @@ public class StudentController {
 
     @PutMapping("/{id}")
     public Student updateStudent(
-            @PathVariable UUID id,
+            @PathVariable Integer id,
             @RequestBody Student student) {
 
         student.setId(id);
@@ -54,7 +52,7 @@ public class StudentController {
     }
 
     @DeleteMapping("/{id}")
-    public void deleteStudent(@PathVariable UUID id) {
+    public void deleteStudent(@PathVariable Integer id) {
 
         studentService.delete(id);
     }

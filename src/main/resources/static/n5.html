@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quản lý đào tạo | Module N5</title>
+    <link rel="stylesheet" href="/adminlte/css/adminlte.css">
+    <link rel="stylesheet" href="/assets/css/n5.css?v=20261127-2">
+</head>
+<body>
+<main class="n5-shell">
+    <header class="n5-header">
+        <div class="brand-block">
+            <p class="eyebrow">QUẢN LÝ ĐÀO TẠO</p>
+            <h1>Quản lý học kỳ &amp; lớp học phần</h1>
+            <p class="subtitle">Theo dõi toàn bộ vòng đời học kỳ, lớp học phần, đăng ký và phân công giảng viên.</p>
+        </div>
+        <div class="header-actions">
+            <span class="system-status"><i></i> Hệ thống đang hoạt động</span>
+            <a class="back-link" href="/index.html">← Danh sách sinh viên</a>
+        </div>
+    </header>
+
+    <section class="summary-grid" aria-label="Tổng quan">
+        <article class="summary-card blue"><span class="summary-label">Năm học</span><strong id="schoolYearCount">--</strong><span class="summary-note">Đang hoạt động: <b id="activeSchoolYearCount">--</b></span></article>
+        <article class="summary-card purple"><span class="summary-label">Học kỳ</span><strong id="semesterCount">--</strong><span class="summary-note">Đang hoạt động: <b id="activeSemesterCount">--</b></span></article>
+        <article class="summary-card teal"><span class="summary-label">Lớp học phần</span><strong id="courseSectionCount">--</strong><span class="summary-note">Đang hoạt động: <b id="activeCourseSectionCount">--</b></span></article>
+        <article class="summary-card green"><span class="summary-label">Đăng ký học phần</span><strong id="registrationCount">--</strong><span class="summary-note">Đang hoạt động: <b id="activeRegistrationCount">--</b></span></article>
+        <article class="summary-card orange"><span class="summary-label">Phân công giảng viên</span><strong id="instructorCount">--</strong><span class="summary-note">Đang hoạt động: <b id="activeInstructorCount">--</b></span></article>
+    </section>
+
+    <nav class="n5-tabs" aria-label="Các chức năng N5" role="tablist">
+        <button class="tab-button active" data-tab="school-years">Năm học</button>
+        <button class="tab-button" data-tab="semesters">Học kỳ</button>
+        <button class="tab-button" data-tab="course-sections">Lớp học phần</button>
+        <button class="tab-button" data-tab="registrations">Đăng ký học phần</button>
+        <button class="tab-button" data-tab="instructors">Phân công giảng viên</button>
+    </nav>
+
+    <section id="tab-school-years" class="data-panel">
+        <div class="panel-heading"><div><h2>Danh sách năm học</h2><p>Tra cứu và quản lý các năm học.</p></div><div class="panel-tools"><div class="filters"><input id="schoolYearKeyword" type="search" placeholder="Tìm tên năm học"><select id="schoolYearStatus" aria-label="Lọc theo trạng thái"><option value="">Tất cả trạng thái</option><option value="true">Đang hoạt động</option><option value="false">Ngừng hoạt động</option></select><button id="schoolYearSearch" class="secondary-button">Tìm kiếm</button></div><button class="primary-button add-button" data-create="school-years">＋ Thêm năm học</button></div></div>
+        <div id="schoolYearMessage" class="message" hidden></div>
+        <div class="table-wrap"><table><thead><tr><th>Mã</th><th>Tên năm học</th><th>Mô tả</th><th>Ghi chú</th><th>Bắt đầu</th><th>Kết thúc</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody id="schoolYearBody"><tr><td colspan="8" class="empty">Đang tải dữ liệu...</td></tr></tbody></table></div><div id="schoolYearPagination" class="pagination"></div>
+    </section>
+
+    <section id="tab-course-sections" class="data-panel" hidden>
+        <div class="panel-heading"><div><h2>Danh sách lớp học phần</h2><p>Quản lý lớp học phần mở theo từng học kỳ.</p></div><div class="panel-tools"><div class="filters"><input id="courseSectionKeyword" type="search" placeholder="Tìm mã hoặc tên lớp"><select id="courseSectionSemester" aria-label="Lọc theo học kỳ"><option value="">Tất cả học kỳ</option></select><button id="courseSectionSearch" class="secondary-button">Tìm kiếm</button></div><button class="primary-button add-button" data-create="course-sections">＋ Thêm lớp học phần</button></div></div>
+        <div id="courseSectionMessage" class="message" hidden></div>
+        <div class="table-wrap"><table><thead><tr><th>Mã lớp</th><th>Tên lớp</th><th>Mã môn học</th><th>Học kỳ</th><th>Phòng</th><th>Tòa nhà</th><th>Sĩ số min/max</th><th>Loại lớp</th><th>Trạng thái</th><th>Đăng ký từ</th><th>Đến</th><th>Ghi chú</th><th>Hoạt động</th><th>Thao tác</th></tr></thead><tbody id="courseSectionBody"><tr><td colspan="14" class="empty">Đang tải dữ liệu...</td></tr></tbody></table></div><div id="courseSectionPagination" class="pagination"></div>
+    </section>
+
+    <section id="tab-semesters" class="data-panel" hidden>
+        <div class="panel-heading"><div><h2>Danh sách học kỳ</h2><p>Tra cứu và quản lý học kỳ theo năm học.</p></div><div class="panel-tools"><div class="filters"><input id="semesterKeyword" type="search" placeholder="Tìm tên học kỳ"><button id="semesterSearch" class="secondary-button">Tìm kiếm</button></div><button class="primary-button add-button" data-create="semesters">＋ Thêm học kỳ</button></div></div>
+        <div id="semesterMessage" class="message" hidden></div>
+        <div class="table-wrap"><table><thead><tr><th>Mã</th><th>Tên học kỳ</th><th>Năm học</th><th>Bắt đầu</th><th>Kết thúc</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody id="semesterBody"><tr><td colspan="7" class="empty">Đang tải dữ liệu...</td></tr></tbody></table></div><div id="semesterPagination" class="pagination"></div>
+    </section>
+
+    <section id="tab-registrations" class="data-panel" hidden>
+        <div class="panel-heading"><div><h2>Đăng ký học phần</h2><p>Quản lý đăng ký và điểm của sinh viên.</p></div><div class="panel-tools"><button class="primary-button add-button" data-create="registrations">＋ Thêm đăng ký</button></div></div>
+        <div id="registrationMessage" class="message" hidden></div>
+        <section class="student-lookup" aria-labelledby="studentLookupTitle">
+            <div class="lookup-heading">
+                <div><h3 id="studentLookupTitle">Tra cứu sinh viên theo lớp học phần</h3><p>Chọn lớp để xem danh sách sinh viên đã đăng ký.</p></div>
+                <label class="section-select-label">Lớp học phần
+                    <select id="studentLookupCourseSection" aria-label="Chọn lớp học phần để xem sinh viên">
+                        <option value="">Chọn lớp học phần</option>
+                    </select>
+                </label>
+            </div>
+            <div id="studentLookupMessage" class="message" hidden></div>
+            <div class="enrollment-count"><span class="count-icon">👥</span><span>Số đăng ký đang hoạt động</span><strong id="sectionStudentCount">—</strong><span>đăng ký</span></div>
+            <div class="table-wrap">
+                <table class="student-list-table">
+                    <thead><tr><th>STT</th><th>UUID sinh viên</th><th>Ngày đăng ký</th><th>Trạng thái</th><th>Lần học</th></tr></thead>
+                    <tbody id="sectionStudentBody"><tr><td colspan="5" class="empty">Vui lòng chọn lớp học phần để xem danh sách sinh viên.</td></tr></tbody>
+                </table>
+            </div>
+        </section>
+        <div id="registrationSchemaNote" class="schema-note">Cột student_id trong SQL Server là UUID, không khớp với students.student_id kiểu số nguyên; màn hình hiển thị và nhập UUID theo đúng bảng đăng ký.</div>
+        <div class="table-wrap"><table><thead><tr><th>UUID sinh viên</th><th>Lớp học phần</th><th>Ngày đăng ký</th><th>Hình thức</th><th>Trạng thái</th><th>Lần học</th><th>Ghi chú</th><th>Hoạt động</th><th>Thao tác</th></tr></thead><tbody id="registrationBody"><tr><td colspan="9" class="empty">Đang tải dữ liệu...</td></tr></tbody></table></div><div id="registrationPagination" class="pagination"></div>
+    </section>
+
+    <section id="tab-instructors" class="data-panel" hidden>
+        <div class="panel-heading"><div><h2>Phân công giảng viên</h2><p>Quản lý giảng viên phụ trách lớp học phần.</p></div><div class="panel-tools"><div class="filters"><input id="instructorCode" type="search" placeholder="Mã giảng viên"><input id="instructorName" type="search" placeholder="Tên giảng viên"><input id="instructorCourseClassName" type="search" placeholder="Tên lớp học phần"><input id="instructorRole" type="search" placeholder="Vai trò"><button id="instructorSearch" class="secondary-button">Tìm kiếm</button></div><button class="primary-button add-button" data-create="instructors">＋ Thêm phân công</button></div></div>
+        <div id="instructorMessage" class="message" hidden></div>
+        <div class="table-wrap"><table><thead><tr><th>Mã giảng viên</th><th>Tên giảng viên</th><th>Mã lớp học phần</th><th>Lớp học phần</th><th>Vai trò</th><th>Số tiết</th><th>Ngày tạo</th><th>Hoạt động</th><th>Thao tác</th></tr></thead><tbody id="instructorBody"><tr><td colspan="9" class="empty">Đang tải dữ liệu...</td></tr></tbody></table></div><div id="instructorPagination" class="pagination"></div>
+    </section>
+</main>
+
+<div id="recordModal" class="modal-backdrop" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-header"><div><p class="eyebrow">CẬP NHẬT DỮ LIỆU</p><h2 id="modalTitle">Thêm mới</h2></div><button type="button" class="modal-close" data-close-modal aria-label="Đóng">×</button></div>
+        <form id="recordForm"><div id="modalFields" class="form-grid"></div><div id="modalMessage" class="form-message" hidden></div><div class="modal-actions"><button type="button" class="secondary-button" data-close-modal>Hủy</button><button type="submit" class="primary-button">Lưu dữ liệu</button></div></form>
+    </div>
+</div>
+<script type="module" src="/assets/js/n5.js?v=20261127-4"></script>
+</body>
+</html>
