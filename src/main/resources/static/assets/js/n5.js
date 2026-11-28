@@ -639,17 +639,17 @@ function fieldsFor(type, item = {}) {
 
     if (type === 'school-years') {
         return `
-            <label>Mã năm học *
-                <input name="code" required maxlength="100" placeholder="VD: 2026-2027" value="${escapeHtml(item.code || '')}">
-            </label>
-            <label>Tên năm học *
-                <input name="name" required maxlength="255" placeholder="VD: Năm học 2026-2027" value="${escapeHtml(item.name || '')}">
-            </label>
             <label>Ngày bắt đầu *
                 <input name="startDate" type="date" required value="${dateInput(item.startDate)}">
             </label>
             <label>Ngày kết thúc *
                 <input name="endDate" type="date" required value="${dateInput(item.endDate)}">
+            </label>
+            <label>Mã năm học * <small style="color:#3b5bfd;font-weight:600">(Tự điền theo ngày)</small>
+                <input name="code" required maxlength="100" placeholder="VD: 2026-2027" value="${escapeHtml(item.code || '')}">
+            </label>
+            <label>Tên năm học * <small style="color:#3b5bfd;font-weight:600">(Tự điền theo ngày)</small>
+                <input name="name" required maxlength="255" placeholder="VD: Năm học 2026-2027" value="${escapeHtml(item.name || '')}">
             </label>
             <label>Mô tả / Ghi chú
                 <input name="description" maxlength="255" placeholder="Mô tả năm học" value="${escapeHtml(item.description || item.note || '')}">
@@ -910,6 +910,27 @@ function openModal(type, item = null) {
     document.getElementById('modalFields').innerHTML = fieldsFor(type, item || {});
     document.getElementById('modalMessage').hidden = true;
     document.getElementById('recordModal').hidden = false;
+
+    if (type === 'school-years') {
+        const startInput = document.querySelector('#recordForm input[name="startDate"]');
+        const endInput = document.querySelector('#recordForm input[name="endDate"]');
+        const codeInput = document.querySelector('#recordForm input[name="code"]');
+        const nameInput = document.querySelector('#recordForm input[name="name"]');
+        const syncSchoolYearFromDates = () => {
+            const s = startInput?.value || '';
+            const e = endInput?.value || '';
+            if (!s || !e || s >= e) return;
+            const sy = s.slice(0, 4);
+            const ey = e.slice(0, 4);
+            const rangeStr = sy === ey ? sy : `${sy}-${ey}`;
+            if (codeInput) codeInput.value = rangeStr;
+            if (nameInput) nameInput.value = `Năm học ${rangeStr}`;
+        };
+        startInput?.addEventListener('change', syncSchoolYearFromDates);
+        startInput?.addEventListener('input', syncSchoolYearFromDates);
+        endInput?.addEventListener('change', syncSchoolYearFromDates);
+        endInput?.addEventListener('input', syncSchoolYearFromDates);
+    }
 
     if (type === 'course-sections' && !item) {
         const courseSel = document.querySelector('#recordForm select[name="courseId"]');
