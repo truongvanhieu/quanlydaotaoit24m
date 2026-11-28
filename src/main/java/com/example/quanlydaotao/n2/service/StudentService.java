@@ -1,8 +1,6 @@
 package com.example.quanlydaotao.n2.service;
 
 import java.util.List;
-import java.util.UUID;
-
 import org.springframework.stereotype.Service;
 
 import com.example.quanlydaotao.n2.entity.Student;
@@ -30,7 +28,7 @@ public class StudentService {
                 value, value, value, value);
     }
 
-    public Student getById(UUID id) {
+    public Student getById(Integer id) {
         return studentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sinh viên với id: " + id));
     }
@@ -39,7 +37,7 @@ public class StudentService {
         return studentRepository.save(student);
     }
 
-    public void delete(UUID id) {
+    public void delete(Integer id) {
         studentRepository.deleteById(id);
     }
 }

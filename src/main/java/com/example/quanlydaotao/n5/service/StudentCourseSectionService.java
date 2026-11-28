@@ -1,15 +1,19 @@
 package com.example.quanlydaotao.n5.service;
 
-import com.example.quanlydaotao.n5.entity.StudentCourseSection;
+import com.example.quanlydaotao.n5.dto.CourseSectionStudent;
+import com.example.quanlydaotao.n5.dto.CourseSectionStudentsResponse;
 import com.example.quanlydaotao.n5.dto.StudentCourseSectionDetails;
+import com.example.quanlydaotao.n5.entity.CourseSection;
+import com.example.quanlydaotao.n5.entity.StudentCourseSection;
+import com.example.quanlydaotao.n5.repository.CourseSectionRepository;
 import com.example.quanlydaotao.n5.repository.StudentCourseSectionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -17,86 +21,112 @@ import java.util.UUID;
 public class StudentCourseSectionService {
 
     private final StudentCourseSectionRepository repository;
-    private static final List<String> ALLOWED_STATUSES =
-            List.of("REGISTERED", "STUDYING", "COMPLETED", "CANCELLED");
+    private final CourseSectionRepository courseSectionRepository;
 
-    public List<StudentCourseSectionDetails> getDetails(
-            UUID studentId, UUID courseSectionId, String status, Boolean isActive) {
-        String normalizedStatus = status == null || status.isBlank()
-                ? null
-                : normalizeStatus(status);
-        return repository.findDetails(studentId, courseSectionId, normalizedStatus, isActive);
+    public List<StudentCourseSectionDetails> getDetails(UUID studentId, UUID courseSectionId) {
+        return repository.findDetails(studentId, courseSectionId, null);
     }
 
-    public List<StudentCourseSection> getAll(UUID studentId, UUID courseSectionId, String status, String registrationType, Boolean isActive) {
-        if (studentId != null || courseSectionId != null || status != null || registrationType != null || isActive != null) {
-            return repository.search(studentId, courseSectionId, status, registrationType, isActive);
+    public StudentCourseSectionDetails getDetailsById(UUID id) {
+        return repository.findDetails(null, null, id).stream()
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Không tìm thấy thông tin đăng ký học phần"));
+    }
+
+    public CourseSectionStudentsResponse getStudentsByCourseSection(UUID courseSectionId) {
+        CourseSection courseSection = courseSectionRepository.findById(courseSectionId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy lớp học phần"));
+        List<CourseSectionStudent> students = repository.findStudentsByCourseSectionId(courseSectionId);
+        return new CourseSectionStudentsResponse(
+                courseSection.getId(),
+                courseSection.getCode(),
+                courseSection.getName(),
+                students.size(),
+                students);
+    }
+
+    public StudentCourseSectionDetails create(StudentCourseSection registration) {
+        CourseSection courseSection = validateTarget(registration);
+        if (Boolean.TRUE.equals(registration.getIsActive())
+                && repository.existsByStudentIdAndCourseSectionIdAndIsActiveTrue(
+                registration.getStudentId(), registration.getCourseSectionId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Sinh viên đã đăng ký lớp học phần này");
         }
-        return repository.findAllByDeletedAtIsNull();
-    }
-
-    public StudentCourseSection getById(UUID id) {
-        return repository.findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy thông tin đăng ký học phần"));
-    }
-
-    public StudentCourseSection create(StudentCourseSection registration) {
-        registration.setStatus(normalizeStatus(registration.getStatus()));
-        if (registration.getStudentId() != null && registration.getCourseSectionId() != null) {
-            boolean exists = repository.existsByStudentIdAndCourseSectionIdAndDeletedAtIsNull(
-                    registration.getStudentId(), registration.getCourseSectionId()
-            );
-            if (exists) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Sinh viên đã đăng ký lớp học phần này trước đó");
-            }
+        if (Boolean.TRUE.equals(registration.getIsActive())) {
+            validateCapacity(courseSection, null);
         }
-        return repository.save(registration);
+        StudentCourseSection saved = repository.save(registration);
+        return getDetailsById(saved.getId());
     }
 
-    public StudentCourseSection update(UUID id, StudentCourseSection request) {
-        StudentCourseSection existing = getById(id);
+    public StudentCourseSectionDetails update(UUID id, StudentCourseSection request) {
+        StudentCourseSection existing = repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Không tìm thấy thông tin đăng ký học phần"));
+        CourseSection courseSection = validateTarget(request);
+        if (Boolean.TRUE.equals(request.getIsActive())
+                && repository.existsByStudentIdAndCourseSectionIdAndIsActiveTrueAndIdNot(
+                request.getStudentId(), request.getCourseSectionId(), id)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Sinh viên đã đăng ký lớp học phần này");
+        }
+        if (Boolean.TRUE.equals(request.getIsActive())
+                && (!Objects.equals(existing.getCourseSectionId(), request.getCourseSectionId())
+                || !Boolean.TRUE.equals(existing.getIsActive()))) {
+            validateCapacity(courseSection, id);
+        }
 
         existing.setStudentId(request.getStudentId());
         existing.setCourseSectionId(request.getCourseSectionId());
         existing.setRegistrationDate(request.getRegistrationDate());
         existing.setRegistrationType(request.getRegistrationType());
-        if (request.getStatus() != null) {
-            existing.setStatus(normalizeStatus(request.getStatus()));
-        }
+        existing.setStatus(request.getStatus());
         existing.setAttemptNumber(request.getAttemptNumber());
         existing.setNote(request.getNote());
-        existing.setUpdatedBy(request.getUpdatedBy());
-        if (request.getIsActive() != null) {
-            existing.setIsActive(request.getIsActive());
-        }
-
-        return repository.save(existing);
+        existing.setIsActive(request.getIsActive());
+        StudentCourseSection saved = repository.save(existing);
+        return getDetailsById(saved.getId());
     }
 
-    public void updateStatus(UUID id, String status, UUID updatedBy) {
-        StudentCourseSection existing = getById(id);
-        existing.setStatus(normalizeStatus(status));
-        existing.setUpdatedBy(updatedBy);
-        repository.save(existing);
-    }
-
-    private String normalizeStatus(String status) {
-        if (status == null || status.isBlank()) {
-            return "REGISTERED";
-        }
-        String normalized = status.trim().toUpperCase();
-        if (!ALLOWED_STATUSES.contains(normalized)) {
+    private CourseSection validateTarget(StudentCourseSection registration) {
+        if (registration.getStudentId() == null || registration.getCourseSectionId() == null) {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Trạng thái phải là REGISTERED, STUDYING, COMPLETED hoặc CANCELLED");
+                    HttpStatus.BAD_REQUEST, "Mã UUID sinh viên và lớp học phần là bắt buộc");
         }
-        return normalized;
+        CourseSection courseSection = courseSectionRepository.findById(registration.getCourseSectionId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Lớp học phần không tồn tại"));
+        if (registration.getRegistrationDate() == null) {
+            registration.setRegistrationDate(java.time.LocalDateTime.now());
+        }
+        if (registration.getCreatedAt() == null) {
+            registration.setCreatedAt(java.time.LocalDateTime.now());
+        }
+        if (registration.getIsActive() == null) {
+            registration.setIsActive(true);
+        }
+        return courseSection;
     }
 
-    public void softDelete(UUID id, UUID deletedBy) {
-        StudentCourseSection existing = getById(id);
-        existing.setDeletedAt(LocalDateTime.now());
-        existing.setDeletedBy(deletedBy);
-        repository.save(existing);
+    private void validateCapacity(CourseSection courseSection, UUID excludedRegistrationId) {
+        if (courseSection.getMaxStudents() == null) {
+            return;
+        }
+        long registrations = excludedRegistrationId == null
+                ? repository.countByCourseSectionIdAndIsActiveTrue(courseSection.getId())
+                : repository.countByCourseSectionIdAndIsActiveTrueAndIdNot(
+                        courseSection.getId(), excludedRegistrationId);
+        if (registrations >= courseSection.getMaxStudents()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Lớp học phần đã đủ sĩ số");
+        }
+    }
+
+    public void delete(UUID id) {
+        StudentCourseSection existing = repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Không tìm thấy thông tin đăng ký học phần"));
+        repository.delete(existing);
     }
 }

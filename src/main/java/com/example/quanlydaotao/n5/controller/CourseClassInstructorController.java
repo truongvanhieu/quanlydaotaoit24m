@@ -1,6 +1,7 @@
 package com.example.quanlydaotao.n5.controller;
 
-import com.example.quanlydaotao.n5.entity.CourseClassInstructor;
+import com.example.quanlydaotao.n5.dto.CourseClassInstructorRequest;
+import com.example.quanlydaotao.n5.dto.CourseClassInstructorDetails;
 import com.example.quanlydaotao.n5.service.CourseClassInstructorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,48 +19,36 @@ public class CourseClassInstructorController {
     private final CourseClassInstructorService service;
 
     @GetMapping
-    public ResponseEntity<List<CourseClassInstructor>> getAll(
+    public ResponseEntity<List<CourseClassInstructorDetails>> getAll(
             @RequestParam(required = false) UUID employeeId,
-            @RequestParam(required = false) UUID courseClassId,
-            @RequestParam(required = false) String employeeName,
+            @RequestParam(required = false) String instructorCode,
+            @RequestParam(required = false) String instructorName,
             @RequestParam(required = false) String courseClassName,
-            @RequestParam(required = false) String role,
-            @RequestParam(required = false) Boolean isActive) {
+            @RequestParam(required = false) String role) {
         return ResponseEntity.ok(service.getAll(
-                employeeId, courseClassId, employeeName, courseClassName, role, isActive));
+                employeeId, instructorCode, instructorName, courseClassName, role));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CourseClassInstructor> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(service.getById(id));
+    public ResponseEntity<CourseClassInstructorDetails> getById(@PathVariable UUID id) {
+        return ResponseEntity.ok(service.getDetailsById(id));
     }
 
     @PostMapping
-    public ResponseEntity<CourseClassInstructor> create(@RequestBody CourseClassInstructor instructor) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(instructor));
+    public ResponseEntity<CourseClassInstructorDetails> create(@RequestBody CourseClassInstructorRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CourseClassInstructor> update(
+    public ResponseEntity<CourseClassInstructorDetails> update(
             @PathVariable UUID id,
-            @RequestBody CourseClassInstructor instructor) {
-        return ResponseEntity.ok(service.update(id, instructor));
-    }
-
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<Void> updateStatus(
-            @PathVariable UUID id,
-            @RequestParam Boolean isActive,
-            @RequestParam(required = false) UUID updatedBy) {
-        service.updateStatus(id, isActive, updatedBy);
-        return ResponseEntity.ok().build();
+            @RequestBody CourseClassInstructorRequest request) {
+        return ResponseEntity.ok(service.update(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(
-            @PathVariable UUID id,
-            @RequestParam(required = false) UUID deletedBy) {
-        service.softDelete(id, deletedBy);
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        service.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

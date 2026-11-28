@@ -1,13 +1,23 @@
 package com.example.quanlydaotao.n5.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "school_year")
+@Table(name = "school_years")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -20,17 +30,17 @@ public class SchoolYear {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(name = "code", length = 100)
+    @Column(name = "code", nullable = false, length = 100)
     private String code;
 
-    @Column(name = "name", length = 255)
+    @Column(name = "name", nullable = false, length = 255)
     private String name;
 
-    @Column(name = "school_year_id")
-    private UUID schoolYearId;
+    @Column(name = "description", length = 255)
+    private String description;
 
-    @Column(name = "school_year_name", length = 20)
-    private String schoolYearName;
+    @Column(name = "note", length = 255)
+    private String note;
 
     @Column(name = "start_date")
     private LocalDate startDate;
@@ -38,41 +48,10 @@ public class SchoolYear {
     @Column(name = "end_date")
     private LocalDate endDate;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @Column(name = "created_by", updatable = false)
-    private UUID createdBy;
-
-    @Column(name = "updated_by")
-    private UUID updatedBy;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
-    @Column(name = "deleted_by")
-    private UUID deletedBy;
-
+    @Builder.Default
     @Column(name = "is_active")
-    private Boolean isActive;
-
-   @PrePersist
-protected void onCreate() {
-    this.createdAt = LocalDateTime.now();
-    if (this.isActive == null) {
-        this.isActive = true;
-    }
-    // Tự động sinh UUID cho schoolYearId nếu người dùng bỏ trống trên Swagger
-    if (this.schoolYearId == null) {
-        this.schoolYearId = UUID.randomUUID();
-    }
-}
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
+    private Boolean isActive = true;
 }

@@ -154,7 +154,7 @@ function renderStudents(students) {
                     </td>
 
                     <td>
-                        ${escapeHtml(student.className)}
+                        ${escapeHtml(student.academicYearId)}
                     </td>
 
                     <td class="text-end">
@@ -304,7 +304,9 @@ function setupFormMode(mode) {
         document.getElementById('fullName'),
         document.getElementById('email'),
         document.getElementById('phone'),
-        document.getElementById('className')
+        document.getElementById('dateOfBirth'),
+        document.getElementById('gender'),
+        document.getElementById('academicYearId')
     ];
 
     // =========================
@@ -448,7 +450,9 @@ function fillStudentForm(student) {
     const fullName = document.getElementById('fullName');
     const email = document.getElementById('email');
     const phone = document.getElementById('phone');
-    const className = document.getElementById('className');
+    const dateOfBirth = document.getElementById('dateOfBirth');
+    const gender = document.getElementById('gender');
+    const academicYearId = document.getElementById('academicYearId');
 
     if (studentCode) {
         studentCode.value = student.studentCode || '';
@@ -466,8 +470,16 @@ function fillStudentForm(student) {
         phone.value = student.phone || '';
     }
 
-    if (className) {
-        className.value = student.className || '';
+    if (dateOfBirth) {
+        dateOfBirth.value = student.dateOfBirth || '';
+    }
+
+    if (gender) {
+        gender.value = student.gender || '';
+    }
+
+    if (academicYearId) {
+        academicYearId.value = student.academicYearId || '';
     }
 }
 
@@ -544,7 +556,11 @@ function getStudentFormData() {
         fullName: getValue('fullName'),
         email: getValue('email'),
         phone: getValue('phone'),
-        className: getValue('className')
+        dateOfBirth: getValue('dateOfBirth') || null,
+        gender: getValue('gender') || null,
+        academicYearId: getValue('academicYearId') === ''
+            ? null
+            : Number(getValue('academicYearId'))
     };
 }
 
@@ -581,11 +597,6 @@ function validateStudent(student) {
         return false;
     }
 
-    if (!student.className) {
-        alert('Vui lòng nhập lớp');
-        return false;
-    }
-
     return true;
 }
 
@@ -599,7 +610,9 @@ function setFormReadOnly(readOnly) {
         'fullName',
         'email',
         'phone',
-        'className'
+        'dateOfBirth',
+        'gender',
+        'academicYearId'
     ];
 
     fields.forEach((id) => {

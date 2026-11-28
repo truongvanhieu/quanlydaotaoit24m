@@ -49,10 +49,8 @@ public class AcademicYearController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(
-            @PathVariable UUID id,
-            @RequestParam(required = false) UUID deletedBy) {
-        academicYearService.delete(id, deletedBy);
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        academicYearService.delete(id);
         return ResponseEntity.noContent().build();
     }
 

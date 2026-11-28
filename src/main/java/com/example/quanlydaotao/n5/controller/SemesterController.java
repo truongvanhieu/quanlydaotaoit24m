@@ -20,9 +20,8 @@ public class SemesterController {
     @GetMapping
     public ResponseEntity<List<Semester>> getAll(
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) UUID schoolYearId,
-            @RequestParam(required = false) Boolean isActive) {
-        return ResponseEntity.ok(semesterService.getAll(keyword, schoolYearId, isActive));
+            @RequestParam(required = false) UUID schoolYearId) {
+        return ResponseEntity.ok(semesterService.getAll(keyword, schoolYearId));
     }
 
     @GetMapping("/{id}")
@@ -42,20 +41,9 @@ public class SemesterController {
         return ResponseEntity.ok(semesterService.update(id, semester));
     }
 
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<Void> updateStatus(
-            @PathVariable UUID id,
-            @RequestParam Boolean isActive,
-            @RequestParam(required = false) UUID updatedBy) {
-        semesterService.updateStatus(id, isActive, updatedBy);
-        return ResponseEntity.ok().build();
-    }
-
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(
-            @PathVariable UUID id,
-            @RequestParam(required = false) UUID deletedBy) {
-        semesterService.softDelete(id, deletedBy);
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        semesterService.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

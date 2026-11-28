@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "semester")
+@Table(name = "semesters")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -20,13 +20,13 @@ public class Semester {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(name = "code", length = 100)
+    @Column(name = "code", nullable = false, length = 100)
     private String code;
 
-    @Column(name = "name", length = 255)
+    @Column(name = "name", nullable = false, length = 255)
     private String name;
 
-    @Column(name = "school_year_id")
+    @Column(name = "school_year_id", nullable = false)
     private UUID schoolYearId;
 
     @Column(name = "school_year_name", length = 20)
@@ -38,37 +38,10 @@ public class Semester {
     @Column(name = "end_date")
     private LocalDate endDate;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @Column(name = "created_by", updatable = false)
-    private UUID createdBy;
-
-    @Column(name = "updated_by")
-    private UUID updatedBy;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
-    @Column(name = "deleted_by")
-    private UUID deletedBy;
-
+    @Builder.Default
     @Column(name = "is_active")
-    private Boolean isActive;
-
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        if (this.isActive == null) {
-            this.isActive = true;
-        }
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
+    private Boolean isActive = true;
 }

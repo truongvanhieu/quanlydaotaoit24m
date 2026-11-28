@@ -1,6 +1,6 @@
 package com.example.quanlydaotao.n2.entity;
 
-import java.util.UUID;
+import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,41 +14,39 @@ import jakarta.persistence.Table;
 public class Student {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id")
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "student_id")
+    private Integer id;
 
-    @Column(name = "student_code")
+    @Column(name = "student_code", length = 20)
     private String studentCode;
 
-    @Column(name = "full_name")
+    @Column(name = "full_name", length = 200)
     private String fullName;
 
-    @Column(name = "email")
+    @Column(name = "date_of_birth")
+    private LocalDate dateOfBirth;
+
+    @Column(name = "gender", length = 20)
+    private String gender;
+
+    @Column(name = "email", length = 100)
     private String email;
 
-    @Column(name = "phone")
+    @Column(name = "phone", length = 15)
     private String phone;
 
-    @Column(name = "class_name")
-    private String className;
+    @Column(name = "academic_year_id")
+    private Integer academicYearId;
 
     public Student() {
     }
 
-    public Student(String studentCode, String fullName, String email, String phone, String className) {
-        this.studentCode = studentCode;
-        this.fullName = fullName;
-        this.email = email;
-        this.phone = phone;
-        this.className = className;
-    }
-
-    public UUID getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -66,6 +64,22 @@ public class Student {
 
     public void setFullName(String fullName) {
         this.fullName = fullName;
+    }
+
+    public LocalDate getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public void setDateOfBirth(LocalDate dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
     }
 
     public String getName() {
@@ -92,11 +106,11 @@ public class Student {
         this.phone = phone;
     }
 
-    public String getClassName() {
-        return className;
+    public Integer getAcademicYearId() {
+        return academicYearId;
     }
 
-    public void setClassName(String className) {
-        this.className = className;
+    public void setAcademicYearId(Integer academicYearId) {
+        this.academicYearId = academicYearId;
     }
 }

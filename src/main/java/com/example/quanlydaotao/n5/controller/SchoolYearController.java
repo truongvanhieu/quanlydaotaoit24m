@@ -44,17 +44,14 @@ public class SchoolYearController {
     @PatchMapping("/{id}/status")
     public ResponseEntity<Void> updateStatus(
             @PathVariable UUID id,
-            @RequestParam Boolean isActive,
-            @RequestParam(required = false) UUID updatedBy) {
-        schoolYearService.updateStatus(id, isActive, updatedBy);
+            @RequestParam Boolean isActive) {
+        schoolYearService.updateStatus(id, isActive);
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(
-            @PathVariable UUID id,
-            @RequestParam(required = false) UUID deletedBy) {
-        schoolYearService.softDelete(id, deletedBy);
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        schoolYearService.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

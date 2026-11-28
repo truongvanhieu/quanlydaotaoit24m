@@ -19,10 +19,10 @@ public class StudentCourseSection {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(name = "student_id")
+    @Column(name = "student_id", nullable = false)
     private UUID studentId;
 
-    @Column(name = "course_section_id")
+    @Column(name = "course_section_id", nullable = false)
     private UUID courseSectionId;
 
     @Column(name = "registration_date")
@@ -40,46 +40,20 @@ public class StudentCourseSection {
     @Column(name = "note", length = 255)
     private String note;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @Column(name = "created_by", updatable = false)
-    private UUID createdBy;
-
-    @Column(name = "updated_by")
-    private UUID updatedBy;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
-    @Column(name = "deleted_by")
-    private UUID deletedBy;
-
+    @Builder.Default
     @Column(name = "is_active")
-    private Boolean isActive;
+    private Boolean isActive = true;
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
         if (this.registrationDate == null) {
             this.registrationDate = LocalDateTime.now();
         }
-        if (this.isActive == null) {
-            this.isActive = true;
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
         }
-        if (this.status == null) {
-            this.status = "REGISTERED";
-        }
-        if (this.attemptNumber == null) {
-            this.attemptNumber = "1";
-        }
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
     }
 }

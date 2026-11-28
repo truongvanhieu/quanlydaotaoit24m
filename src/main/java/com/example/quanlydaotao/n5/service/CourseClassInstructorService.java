@@ -1,13 +1,18 @@
 package com.example.quanlydaotao.n5.service;
 
+import com.example.quanlydaotao.n5.dto.CourseClassInstructorDetails;
+import com.example.quanlydaotao.n5.dto.CourseClassInstructorRequest;
 import com.example.quanlydaotao.n5.entity.CourseClassInstructor;
+import com.example.quanlydaotao.n5.entity.Instructor;
 import com.example.quanlydaotao.n5.repository.CourseClassInstructorRepository;
+import com.example.quanlydaotao.n5.repository.CourseSectionRepository;
+import com.example.quanlydaotao.n5.repository.InstructorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -15,69 +20,159 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CourseClassInstructorService {
 
+    private static final String DEFAULT_ROLE = "Giảng viên chính";
+
     private final CourseClassInstructorRepository repository;
+    private final CourseSectionRepository courseSectionRepository;
+    private final InstructorRepository instructorRepository;
 
-    public List<CourseClassInstructor> getAll(
-            UUID employeeId, UUID courseClassId, String employeeName, String courseClassName,
-            String role, Boolean isActive) {
-        if (employeeId != null || courseClassId != null || employeeName != null
-                || courseClassName != null || role != null || isActive != null) {
-            return repository.search(employeeId, courseClassId, employeeName, courseClassName, role, isActive);
-        }
-        return repository.findAllByDeletedAtIsNull();
+    public List<CourseClassInstructorDetails> getAll(
+            UUID employeeId, String instructorCode, String instructorName,
+            String courseClassName, String role) {
+        return repository.findDetails(
+                null,
+                employeeId,
+                normalize(instructorCode),
+                normalize(instructorName),
+                normalize(courseClassName),
+                normalize(role));
     }
 
-    public CourseClassInstructor getById(UUID id) {
-        return repository.findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy thông tin phân công giảng viên"));
+    public CourseClassInstructorDetails getDetailsById(UUID id) {
+        return repository.findDetails(id, null, null, null, null, null).stream()
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Không tìm thấy thông tin phân công giảng viên"));
     }
 
-    public CourseClassInstructor create(CourseClassInstructor instructor) {
-        if (instructor.getEmployeeId() != null && instructor.getCourseClassId() != null) {
-            boolean exists = repository.existsByEmployeeIdAndCourseClassIdAndDeletedAtIsNull(
-                    instructor.getEmployeeId(), instructor.getCourseClassId()
-            );
-            if (exists) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Giảng viên đã được phân công cho lớp học phần này");
-            }
+    @Transactional
+    public CourseClassInstructorDetails create(CourseClassInstructorRequest request) {
+        validate(request);
+        Instructor instructor = resolveInstructor(request);
+        if (repository.existsByEmployeeIdAndCourseClassId(
+                instructor.getId(), request.getCourseClassId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Giảng viên đã được phân công cho lớp học phần này");
         }
-        return repository.save(instructor);
+
+        CourseClassInstructor assignment = CourseClassInstructor.builder()
+                .employeeId(instructor.getId())
+                .courseClassId(request.getCourseClassId())
+                .role(normalizeRole(request.getRole()))
+                .teachingHours(request.getTeachingHours())
+                .isActive(request.getIsActive())
+                .build();
+        prepareForCreate(assignment);
+        CourseClassInstructor saved = repository.save(assignment);
+        return getDetailsById(saved.getId());
     }
 
-    public CourseClassInstructor update(UUID id, CourseClassInstructor request) {
-        CourseClassInstructor existing = getById(id);
-
-        if (request.getEmployeeId() != null && request.getCourseClassId() != null
-                && (!request.getEmployeeId().equals(existing.getEmployeeId())
-                || !request.getCourseClassId().equals(existing.getCourseClassId()))
-                && repository.existsByEmployeeIdAndCourseClassIdAndDeletedAtIsNull(
-                request.getEmployeeId(), request.getCourseClassId())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Giảng viên đã được phân công cho lớp học phần này");
+    @Transactional
+    public CourseClassInstructorDetails update(UUID id, CourseClassInstructorRequest request) {
+        CourseClassInstructor existing = repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Không tìm thấy thông tin phân công giảng viên"));
+        validate(request);
+        Instructor instructor = resolveInstructor(request);
+        boolean sameAssignment = instructor.getId().equals(existing.getEmployeeId())
+                && request.getCourseClassId().equals(existing.getCourseClassId());
+        if (!sameAssignment && repository.existsByEmployeeIdAndCourseClassId(
+                instructor.getId(), request.getCourseClassId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Giảng viên đã được phân công cho lớp học phần này");
         }
-        existing.setEmployeeId(request.getEmployeeId());
+
+        existing.setEmployeeId(instructor.getId());
         existing.setCourseClassId(request.getCourseClassId());
-        existing.setEmployeeName(request.getEmployeeName());
-        existing.setCourseClassName(request.getCourseClassName());
-        existing.setRole(request.getRole());
-        existing.setUpdatedBy(request.getUpdatedBy());
+        existing.setRole(normalizeRole(request.getRole()));
+        existing.setTeachingHours(request.getTeachingHours());
         if (request.getIsActive() != null) {
             existing.setIsActive(request.getIsActive());
         }
-
-        return repository.save(existing);
+        CourseClassInstructor saved = repository.save(existing);
+        return getDetailsById(saved.getId());
     }
 
-    public void updateStatus(UUID id, Boolean isActive, UUID updatedBy) {
-        CourseClassInstructor existing = getById(id);
-        existing.setIsActive(isActive);
-        existing.setUpdatedBy(updatedBy);
-        repository.save(existing);
+    private void validate(CourseClassInstructorRequest request) {
+        if (request == null || request.getCourseClassId() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Lớp học phần là bắt buộc");
+        }
+        if (!courseSectionRepository.existsById(request.getCourseClassId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Lớp học phần không tồn tại");
+        }
+
+        String code = normalize(request.getInstructorCode());
+        String name = normalize(request.getInstructorName());
+        if ((code == null) != (name == null)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Mã và tên giảng viên phải được nhập cùng nhau");
+        }
+        if (code == null && request.getEmployeeId() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Mã và tên giảng viên là bắt buộc");
+        }
+        if (code != null && code.length() > 50) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Mã giảng viên không được vượt quá 50 ký tự");
+        }
+        if (name != null && name.length() > 255) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Tên giảng viên không được vượt quá 255 ký tự");
+        }
+        if (request.getRole() != null && request.getRole().trim().length() > 100) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Vai trò không được vượt quá 100 ký tự");
+        }
+        if (request.getTeachingHours() != null && request.getTeachingHours() < 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Số tiết không được âm");
+        }
     }
 
-    public void softDelete(UUID id, UUID deletedBy) {
-        CourseClassInstructor existing = getById(id);
-        existing.setDeletedAt(LocalDateTime.now());
-        existing.setDeletedBy(deletedBy);
-        repository.save(existing);
+    private Instructor resolveInstructor(CourseClassInstructorRequest request) {
+        String code = normalize(request.getInstructorCode());
+        String name = normalize(request.getInstructorName());
+        if (code == null) {
+            return instructorRepository.findById(request.getEmployeeId())
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND, "Không tìm thấy giảng viên"));
+        }
+
+        Instructor instructor = instructorRepository.findByCodeIgnoreCase(code)
+                .orElseGet(() -> Instructor.builder().code(code).name(name).build());
+        instructor.setCode(code);
+        instructor.setName(name);
+        if (instructor.getCreatedAt() == null) {
+            instructor.setCreatedAt(java.time.LocalDateTime.now());
+        }
+        if (instructor.getIsActive() == null) {
+            instructor.setIsActive(true);
+        }
+        return instructorRepository.save(instructor);
+    }
+
+    private void prepareForCreate(CourseClassInstructor instructor) {
+        instructor.setCreatedAt(java.time.LocalDateTime.now());
+        if (instructor.getIsActive() == null) {
+            instructor.setIsActive(true);
+        }
+    }
+
+    private String normalizeRole(String role) {
+        String normalized = normalize(role);
+        return normalized == null ? DEFAULT_ROLE : normalized;
+    }
+
+    private String normalize(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    @Transactional
+    public void delete(UUID id) {
+        CourseClassInstructor existing = repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Không tìm thấy thông tin phân công giảng viên"));
+        repository.delete(existing);
     }
 }

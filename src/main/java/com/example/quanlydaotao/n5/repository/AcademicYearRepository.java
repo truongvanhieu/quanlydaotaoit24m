@@ -12,10 +12,9 @@ import java.util.UUID;
 public interface AcademicYearRepository
         extends JpaRepository<AcademicYear, UUID> {
 
-    List<AcademicYear> findByDeletedAtIsNullOrderByStartDateDesc();
+    List<AcademicYear> findAllByOrderByStartDateDesc();
 
-    List<AcademicYear> findByDeletedAtIsNullAndIsActiveOrderByStartDateDesc(
-            Boolean isActive);
+    List<AcademicYear> findByIsActiveOrderByStartDateDesc(Boolean isActive);
 
-    boolean existsByCodeAndDeletedAtIsNull(String code);
+    boolean existsByCode(String code);
 }
