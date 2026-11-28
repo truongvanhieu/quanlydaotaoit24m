@@ -844,9 +844,7 @@ function initTransferClassFeature() {
                 }
 
                 selectedStudentIds.clear();
-                if (transferModalInstance) {
-                    transferModalInstance.hide();
-                }
+                closeTransferClassModal();
                 showToast(data.message || `Đã chuyển lớp sang ${targetClassName} thành công!`, 'success');
                 const keywordInput = document.getElementById('keyword');
                 await loadStudents(keywordInput ? keywordInput.value.trim() : '');
@@ -924,9 +922,26 @@ function openTransferClassModal(studentIds) {
         targetInput.value = '';
     }
 
-    if (modalEl && window.bootstrap) {
-        transferModalInstance = window.bootstrap.Modal.getOrCreateInstance(modalEl);
-        transferModalInstance.show();
+    if (modalEl) {
+        if (window.bootstrap && window.bootstrap.Modal) {
+            transferModalInstance = window.bootstrap.Modal.getOrCreateInstance(modalEl);
+            transferModalInstance.show();
+        } else {
+            modalEl.style.display = 'block';
+            modalEl.classList.add('show');
+            modalEl.removeAttribute('aria-hidden');
+        }
+    }
+}
+
+function closeTransferClassModal() {
+    const modalEl = document.getElementById('transferClassModal');
+    if (transferModalInstance) {
+        transferModalInstance.hide();
+    } else if (modalEl) {
+        modalEl.style.display = 'none';
+        modalEl.classList.remove('show');
+        modalEl.setAttribute('aria-hidden', 'true');
     }
 }
 
