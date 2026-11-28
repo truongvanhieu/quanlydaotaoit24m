@@ -1,2 +1,15 @@
 # Maven build output
 target/
+*.class
+
+# IDE and Editor files
+.idea/
+*.iml
+.vscode/
+.agents/
+.claude/
+*.zip
+
+# System files
+.DS_Store
+Thumbs.db

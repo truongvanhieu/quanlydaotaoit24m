@@ -1,35 +1,22 @@
 package com.example.quanlydaotao.n5.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import org.hibernate.annotations.Nationalized;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "semester")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class Semester {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id", updatable = false, nullable = false)
-    private UUID id;
-
+@Table(name = "semesters")
+public class Semester extends BaseEntity {
     @Column(name = "code", length = 100)
     private String code;
 
+    @Nationalized
     @Column(name = "name", length = 255)
     private String name;
 
-    @Column(name = "school_year_id")
-    private UUID schoolYearId;
-
-    @Column(name = "school_year_name", length = 20)
+    @Nationalized
+    @Column(name = "school_year_name", length = 100)
     private String schoolYearName;
 
     @Column(name = "start_date")
@@ -38,37 +25,52 @@ public class Semester {
     @Column(name = "end_date")
     private LocalDate endDate;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "school_year_id")
+    private SchoolYear schoolYear;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Transient
+    private UUID transientSchoolYearId;
 
-    @Column(name = "created_by", updatable = false)
-    private UUID createdBy;
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
 
-    @Column(name = "updated_by")
-    private UUID updatedBy;
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    public String getSchoolYearName() {
+        if (schoolYearName != null && !schoolYearName.isBlank()) {
+            return schoolYearName;
+        }
+        return schoolYear != null ? schoolYear.getName() : null;
+    }
+    public void setSchoolYearName(String schoolYearName) { this.schoolYearName = schoolYearName; }
 
-    @Column(name = "deleted_by")
-    private UUID deletedBy;
+    public LocalDate getStartDate() { return startDate; }
+    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
 
-    @Column(name = "is_active")
-    private Boolean isActive;
+    public LocalDate getEndDate() { return endDate; }
+    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
 
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        if (this.isActive == null) {
-            this.isActive = true;
+    public SchoolYear getSchoolYear() { return schoolYear; }
+    public void setSchoolYear(SchoolYear schoolYear) {
+        this.schoolYear = schoolYear;
+        if (schoolYear != null) {
+            this.transientSchoolYearId = schoolYear.getId();
+            if (this.schoolYearName == null || this.schoolYearName.isBlank()) {
+                this.schoolYearName = schoolYear.getName();
+            }
         }
     }
 
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
+    public UUID getSchoolYearId() {
+        if (schoolYear != null && schoolYear.getId() != null) {
+            return schoolYear.getId();
+        }
+        return transientSchoolYearId;
+    }
+
+    public void setSchoolYearId(UUID schoolYearId) {
+        this.transientSchoolYearId = schoolYearId;
     }
 }

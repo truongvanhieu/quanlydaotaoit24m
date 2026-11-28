@@ -2,68 +2,74 @@ package com.example.quanlydaotao.n5.service;
 
 import com.example.quanlydaotao.n5.entity.SchoolYear;
 import com.example.quanlydaotao.n5.repository.SchoolYearRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class SchoolYearService {
+    private final SchoolYearRepository repo;
 
-    private final SchoolYearRepository repository;
+    public SchoolYearService(SchoolYearRepository repo) {
+        this.repo = repo;
+    }
 
-    public List<SchoolYear> getAll(String keyword, Boolean isActive) {
-        if (keyword != null || isActive != null) {
-            return repository.search(keyword, isActive);
+    public List<SchoolYear> findAll(Boolean isActive) {
+        return findAll(null, isActive);
+    }
+
+    public List<SchoolYear> findAll(String keyword, Boolean isActive) {
+        String kw = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
+        return repo.search(kw, isActive);
+    }
+
+    public SchoolYear findById(UUID id) {
+        return repo.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy năm học với ID: " + id));
+    }
+
+    private void validateDates(LocalDate startDate, LocalDate endDate) {
+        if (startDate != null && endDate != null && !startDate.isBefore(endDate)) {
+            throw new RuntimeException("Ngày bắt đầu phải nhỏ hơn ngày kết thúc!");
         }
-        return repository.findAllByDeletedAtIsNull();
     }
 
-    public SchoolYear getById(UUID id) {
-        return repository.findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy năm học"));
-    }
-
-    public SchoolYear create(SchoolYear schoolYear) {
-        if (schoolYear.getCode() != null && repository.existsByCodeAndDeletedAtIsNull(schoolYear.getCode())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Mã năm học đã tồn tại");
+    public SchoolYear save(SchoolYear e) {
+        if (e.getCode() == null || e.getCode().isBlank() || e.getName() == null || e.getName().isBlank()) {
+            throw new IllegalArgumentException("Mã năm học và Tên năm học không được để trống!");
         }
-        return repository.save(schoolYear);
+        validateDates(e.getStartDate(), e.getEndDate());
+        return repo.save(e);
     }
 
-    public SchoolYear update(UUID id, SchoolYear request) {
-        SchoolYear existing = getById(id);
+    public SchoolYear update(UUID id, SchoolYear updateData) {
+        SchoolYear existing = findById(id);
+        LocalDate start = updateData.getStartDate() != null ? updateData.getStartDate() : existing.getStartDate();
+        LocalDate end = updateData.getEndDate() != null ? updateData.getEndDate() : existing.getEndDate();
+        validateDates(start, end);
 
-        existing.setCode(request.getCode());
-        existing.setName(request.getName());
-        existing.setSchoolYearId(request.getSchoolYearId());
-        existing.setSchoolYearName(request.getSchoolYearName());
-        existing.setStartDate(request.getStartDate());
-        existing.setEndDate(request.getEndDate());
-        existing.setUpdatedBy(request.getUpdatedBy());
-        if (request.getIsActive() != null) {
-            existing.setIsActive(request.getIsActive());
-        }
-
-        return repository.save(existing);
+        if (updateData.getCode() != null) existing.setCode(updateData.getCode());
+        if (updateData.getName() != null) existing.setName(updateData.getName());
+        if (updateData.getDescription() != null) existing.setDescription(updateData.getDescription());
+        if (updateData.getNote() != null) existing.setNote(updateData.getNote());
+        if (updateData.getStartDate() != null) existing.setStartDate(updateData.getStartDate());
+        if (updateData.getEndDate() != null) existing.setEndDate(updateData.getEndDate());
+        if (updateData.getIsActive() != null) existing.setIsActive(updateData.getIsActive());
+        return repo.save(existing);
     }
 
-    public void updateStatus(UUID id, Boolean isActive, UUID updatedBy) {
-        SchoolYear existing = getById(id);
-        existing.setIsActive(isActive);
-        existing.setUpdatedBy(updatedBy);
-        repository.save(existing);
+    public SchoolYear toggleActive(UUID id, Boolean isActive) {
+        SchoolYear existing = findById(id);
+        existing.setIsActive(isActive != null ? isActive : !existing.getIsActive());
+        return repo.save(existing);
     }
 
-    public void softDelete(UUID id, UUID deletedBy) {
-        SchoolYear existing = getById(id);
+    public void delete(UUID id) {
+        SchoolYear existing = findById(id);
+        existing.setIsActive(false);
         existing.setDeletedAt(LocalDateTime.now());
-        existing.setDeletedBy(deletedBy);
-        repository.save(existing);
+        repo.save(existing);
     }
 }
