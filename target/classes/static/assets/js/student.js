@@ -23,6 +23,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         createBtn.style.display = 'none';
     }
 
+    const transferBtn = document.getElementById('transferClassBtn');
+    if (transferBtn) {
+        transferBtn.style.display = isAdminUser() ? '' : 'none';
+    }
+    document.querySelectorAll('.admin-only-col').forEach((el) => {
+        el.style.display = isAdminUser() ? '' : 'none';
+    });
+
     const pageList = document.getElementById('page-list');
     const pageForm = document.getElementById('page-form');
 
@@ -65,6 +73,8 @@ function initStudentPage() {
                 loadStudents('');
             });
         }
+
+        initTransferClassFeature();
     }
 
     // =========================
@@ -108,7 +118,9 @@ async function loadNextCode() {
 // =========================
 
 let allLoadedStudents = [];
+let currentlyRenderedStudents = [];
 let activeClassFilter = 'ALL';
+const selectedStudentIds = new Set();
 
 async function loadStudents(keyword = '') {
     const studentTableBody = document.getElementById('studentTableBody');
@@ -219,6 +231,9 @@ function renderStudents(students) {
     const studentTableBody = document.getElementById('studentTableBody');
     if (!studentTableBody) return;
 
+    currentlyRenderedStudents = students || [];
+    const colSpan = isAdminUser() ? 9 : 8;
+
     // Cập nhật số lượng hiển thị trên bảng hiện tại
     const tableCountBadge = document.getElementById('tableCountBadge');
     const total = students ? students.length : 0;
@@ -227,12 +242,13 @@ function renderStudents(students) {
     if (!students || students.length === 0) {
         studentTableBody.innerHTML = `
             <tr>
-                <td colspan="8" class="text-center text-muted py-5">
+                <td colspan="${colSpan}" class="text-center text-muted py-5">
                     <i class="bi bi-inbox fs-2 d-block text-secondary mb-2"></i>
                     Chưa có dữ liệu sinh viên phù hợp.
                 </td>
             </tr>
         `;
+        updateSelectionUi();
         return;
     }
 
@@ -249,9 +265,21 @@ function renderStudents(students) {
         .map((student, index) => {
             const initials = getInitials(student.fullName || student.studentCode || 'SV');
             const bgGradient = avatarGradients[index % avatarGradients.length];
+            const isChecked = selectedStudentIds.has(String(student.id));
 
             return `
                 <tr>
+                    ${isAdminUser() ? `
+                    <td class="text-center admin-only-col">
+                        <input
+                            type="checkbox"
+                            class="form-check-input student-row-checkbox"
+                            data-student-id="${escapeHtml(student.id)}"
+                            ${isChecked ? 'checked' : ''}
+                            aria-label="Chọn sinh viên ${escapeHtml(student.fullName)}"
+                        />
+                    </td>
+                    ` : ''}
                     <td class="text-center fw-bold text-secondary">
                         ${index + 1}
                     </td>
@@ -311,6 +339,16 @@ function renderStudents(students) {
                             </a>
 
                             ${isAdminUser() ? `
+                            <!-- Chuyển lớp nhanh -->
+                            <button
+                                type="button"
+                                class="action-btn text-primary"
+                                title="Chuyển lớp sinh hoạt"
+                                onclick="openTransferClassModalForStudent('${escapeHtml(student.id)}')"
+                            >
+                                <i class="bi bi-arrow-left-right"></i>
+                            </button>
+
                             <!-- Sửa -->
                             <a
                                 class="action-btn edit"
@@ -336,6 +374,21 @@ function renderStudents(students) {
             `;
         })
         .join('');
+
+    studentTableBody.querySelectorAll('.student-row-checkbox').forEach((cb) => {
+        cb.addEventListener('change', () => {
+            const id = cb.dataset.studentId;
+            if (!id) return;
+            if (cb.checked) {
+                selectedStudentIds.add(id);
+            } else {
+                selectedStudentIds.delete(id);
+            }
+            updateSelectionUi();
+        });
+    });
+
+    updateSelectionUi();
 }
 
 function getInitials(name) {
@@ -713,3 +766,171 @@ function escapeHtml(value) {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
 }
+
+// =========================
+// CHUYỂN LỚP SINH HOẠT
+// =========================
+
+let pendingTransferIds = [];
+let transferModalInstance = null;
+
+function initTransferClassFeature() {
+    const selectAllCb = document.getElementById('selectAllStudentsCheckbox');
+    const transferBtn = document.getElementById('transferClassBtn');
+    const transferForm = document.getElementById('transferClassForm');
+
+    if (selectAllCb) {
+        selectAllCb.addEventListener('change', () => {
+            currentlyRenderedStudents.forEach((s) => {
+                const id = String(s.id);
+                if (selectAllCb.checked) {
+                    selectedStudentIds.add(id);
+                } else {
+                    selectedStudentIds.delete(id);
+                }
+            });
+            document.querySelectorAll('.student-row-checkbox').forEach((cb) => {
+                cb.checked = selectAllCb.checked;
+            });
+            updateSelectionUi();
+        });
+    }
+
+    if (transferBtn) {
+        transferBtn.addEventListener('click', () => {
+            if (!isAdminUser()) return;
+            const ids = Array.from(selectedStudentIds);
+            if (ids.length === 0) {
+                showToast('Hãy tick chọn ít nhất 1 sinh viên trong bảng (hoặc bấm nút mũi tên ở dòng sinh viên) để chuyển lớp.', 'warning');
+                return;
+            }
+            openTransferClassModal(ids);
+        });
+    }
+
+    if (transferForm) {
+        transferForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const targetInput = document.getElementById('targetClassNameInput');
+            const confirmBtn = document.getElementById('confirmTransferClassBtn');
+            const targetClassName = targetInput ? targetInput.value.trim() : '';
+
+            if (!targetClassName) {
+                showToast('Vui lòng nhập hoặc chọn lớp sinh hoạt đích.', 'warning');
+                return;
+            }
+            if (!pendingTransferIds.length) {
+                showToast('Không có sinh viên nào được chọn.', 'warning');
+                return;
+            }
+
+            if (confirmBtn) {
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang chuyển...';
+            }
+
+            try {
+                const resp = await fetch(`${API_ENDPOINTS.STUDENTS}/transfer-class`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        studentIds: pendingTransferIds,
+                        targetClassName
+                    })
+                });
+                const data = await resp.json().catch(() => ({}));
+                if (!resp.ok) {
+                    throw new Error(data.message || `HTTP ${resp.status}`);
+                }
+
+                selectedStudentIds.clear();
+                if (transferModalInstance) {
+                    transferModalInstance.hide();
+                }
+                showToast(data.message || `Đã chuyển lớp sang ${targetClassName} thành công!`, 'success');
+                const keywordInput = document.getElementById('keyword');
+                await loadStudents(keywordInput ? keywordInput.value.trim() : '');
+            } catch (err) {
+                console.error('Lỗi chuyển lớp:', err);
+                showToast(err.message || 'Không thể chuyển lớp sinh viên.', 'danger');
+            } finally {
+                if (confirmBtn) {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i>Xác nhận chuyển lớp';
+                }
+            }
+        });
+    }
+}
+
+function updateSelectionUi() {
+    const transferBtn = document.getElementById('transferClassBtn');
+    const selectAllCb = document.getElementById('selectAllStudentsCheckbox');
+
+    const count = selectedStudentIds.size;
+    if (transferBtn) {
+        transferBtn.innerHTML = count > 0
+            ? `<i class="bi bi-arrow-left-right me-1"></i>Chuyển lớp (${count})`
+            : `<i class="bi bi-arrow-left-right me-1"></i>Chuyển lớp`;
+        transferBtn.classList.toggle('btn-primary', count > 0);
+        transferBtn.classList.toggle('btn-outline-primary', count === 0);
+    }
+
+    if (selectAllCb) {
+        if (!currentlyRenderedStudents.length) {
+            selectAllCb.checked = false;
+            selectAllCb.indeterminate = false;
+        } else {
+            const visibleSelected = currentlyRenderedStudents.filter((s) => selectedStudentIds.has(String(s.id))).length;
+            selectAllCb.checked = visibleSelected === currentlyRenderedStudents.length;
+            selectAllCb.indeterminate = visibleSelected > 0 && visibleSelected < currentlyRenderedStudents.length;
+        }
+    }
+}
+
+function openTransferClassModal(studentIds) {
+    pendingTransferIds = studentIds.slice();
+    const summaryEl = document.getElementById('transferStudentSummary');
+    const targetInput = document.getElementById('targetClassNameInput');
+    const datalist = document.getElementById('transferClassOptions');
+    const pillsContainer = document.getElementById('transferQuickClassPills');
+    const modalEl = document.getElementById('transferClassModal');
+
+    const selectedStudents = allLoadedStudents.filter((s) => pendingTransferIds.includes(String(s.id)));
+    if (summaryEl) {
+        const preview = selectedStudents.slice(0, 3).map((s) => `${s.fullName} (${s.studentCode})`).join(', ');
+        const extra = selectedStudents.length > 3 ? ` và ${selectedStudents.length - 3} sinh viên khác` : '';
+        summaryEl.innerHTML = `Đã chọn <strong>${selectedStudents.length}</strong> sinh viên: ${escapeHtml(preview)}${escapeHtml(extra)}`;
+    }
+
+    const existingClasses = Array.from(new Set(
+        ['IT24M', 'EE24M', 'IT24A', ...allLoadedStudents.map((s) => (s.className || '').trim()).filter(Boolean)]
+    ));
+
+    if (datalist) {
+        datalist.innerHTML = existingClasses.map((cls) => `<option value="${escapeHtml(cls)}"></option>`).join('');
+    }
+    if (pillsContainer) {
+        pillsContainer.innerHTML = existingClasses.map((cls) =>
+            `<button type="button" class="btn btn-sm btn-outline-secondary quick-class-pill" data-cls="${escapeHtml(cls)}">${escapeHtml(cls)}</button>`
+        ).join('');
+        pillsContainer.querySelectorAll('.quick-class-pill').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                if (targetInput) targetInput.value = btn.dataset.cls || '';
+            });
+        });
+    }
+    if (targetInput) {
+        targetInput.value = '';
+    }
+
+    if (modalEl && window.bootstrap) {
+        transferModalInstance = window.bootstrap.Modal.getOrCreateInstance(modalEl);
+        transferModalInstance.show();
+    }
+}
+
+window.openTransferClassModalForStudent = function (studentId) {
+    if (!isAdminUser()) return;
+    openTransferClassModal([String(studentId)]);
+};

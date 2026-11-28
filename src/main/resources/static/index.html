@@ -162,6 +162,9 @@
                                     </button>
                                 </form>
                                 <!-- Create Button -->
+                                <button id="transferClassBtn" type="button" class="btn btn-outline-primary fw-semibold shadow-sm" style="display: none;">
+                                    <i class="bi bi-arrow-left-right me-1"></i>Chuyển lớp
+                                </button>
                                 <a id="createStudentBtn" class="btn btn-success fw-semibold shadow-sm" href="index.html?page=form">
                                     <i class="bi bi-plus-circle me-1"></i>Thêm sinh viên
                                 </a>
@@ -188,6 +191,9 @@
                                 <table class="table student-table align-middle mb-0">
                                     <thead>
                                     <tr>
+                                        <th class="text-center admin-only-col" style="width: 40px; display: none;">
+                                            <input class="form-check-input" type="checkbox" id="selectAllStudentsCheckbox" title="Chọn tất cả trong danh sách hiện tại" />
+                                        </th>
                                         <th style="width: 5%;" class="text-center">STT</th>
                                         <th style="width: 12%;">IDSV</th>
                                         <th style="width: 22%;">Họ và tên</th>
@@ -364,7 +370,42 @@
     </footer>
 </div>
 
+    <!-- Modal Chuyển lớp sinh hoạt -->
+    <div class="modal fade" id="transferClassModal" tabindex="-1" aria-labelledby="transferClassModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold" id="transferClassModalLabel">
+                        <i class="bi bi-arrow-left-right me-2"></i>Chuyển lớp sinh hoạt
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <form id="transferClassForm">
+                    <div class="modal-body">
+                        <div class="alert alert-info py-2 px-3 small mb-3" id="transferStudentSummary">
+                            Đã chọn 0 sinh viên.
+                        </div>
+                        <div class="mb-3">
+                            <label for="targetClassNameInput" class="form-label fw-semibold">
+                                Chuyển sang lớp sinh hoạt <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="targetClassNameInput" list="transferClassOptions" placeholder="Chọn hoặc nhập tên lớp (VD: EE24M, IT24M...)" required />
+                            <datalist id="transferClassOptions"></datalist>
+                            <div class="mt-2 d-flex flex-wrap gap-1" id="transferQuickClassPills"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary fw-semibold" id="confirmTransferClassBtn">
+                            <i class="bi bi-check2-circle me-1"></i>Xác nhận chuyển lớp
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 <script src="/adminlte/js/adminlte.js"></script>
-<script type="module" src="/assets/js/student.js?v=2.3"></script>
+<script type="module" src="/assets/js/student.js?v=2.4"></script>
 </body>
 </html>

@@ -63,4 +63,38 @@ public class StudentController {
 
         studentService.delete(id);
     }
+
+    public static class TransferClassRequest {
+        private List<UUID> studentIds;
+        private String targetClassName;
+
+        public List<UUID> getStudentIds() {
+            return studentIds;
+        }
+
+        public void setStudentIds(List<UUID> studentIds) {
+            this.studentIds = studentIds;
+        }
+
+        public String getTargetClassName() {
+            return targetClassName;
+        }
+
+        public void setTargetClassName(String targetClassName) {
+            this.targetClassName = targetClassName;
+        }
+    }
+
+    @PostMapping("/transfer-class")
+    public java.util.Map<String, Object> transferClass(@RequestBody TransferClassRequest request) {
+        int updatedCount = studentService.transferClass(
+                request != null ? request.getStudentIds() : null,
+                request != null ? request.getTargetClassName() : null);
+        String targetClass = request.getTargetClassName().trim();
+        return java.util.Map.of(
+                "updatedCount", updatedCount,
+                "targetClassName", targetClass,
+                "message", "Đã chuyển " + updatedCount + " sinh viên sang lớp " + targetClass
+        );
+    }
 }

@@ -102,4 +102,20 @@ public class StudentService {
         }
         studentRepository.deleteById(id);
     }
+
+    public int transferClass(List<UUID> studentIds, String targetClassName) {
+        if (studentIds == null || studentIds.isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng chọn ít nhất một sinh viên để chuyển lớp.");
+        }
+        String normalizedClass = targetClassName == null ? "" : targetClassName.trim();
+        if (normalizedClass.isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng nhập hoặc chọn lớp sinh hoạt đích.");
+        }
+        List<Student> students = studentRepository.findAllById(studentIds);
+        for (Student s : students) {
+            s.setClassName(normalizedClass);
+        }
+        studentRepository.saveAll(students);
+        return students.size();
+    }
 }
