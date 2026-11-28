@@ -119,20 +119,29 @@ function closeModal(modalId) {
     }, 150);
 }
 
+let allCourseClasses = [];
+let activeCourseGroup = 'ALL';
+
 async function loadCourseClasses(selectedId = null) {
     classSelect.innerHTML = '<option value="">Đang tải lớp học phần...</option>';
     try {
-        const classes = await request(API_ENDPOINTS.GRADES + '/course-classes');
-        if (classes.length === 0) {
+        allCourseClasses = await request(API_ENDPOINTS.GRADES + '/course-classes');
+        if (!allCourseClasses.length) {
             classSelect.innerHTML = '<option value="">Chưa có lớp học phần</option>';
             document.getElementById('toggleComponentForm').disabled = true;
             showAlert('Chưa có lớp học phần hoạt động để nhập điểm.', 'warning');
             return;
         }
 
-        classSelect.innerHTML = '<option value="">-- Chọn lớp học phần --</option>' + classes
-            .map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.classCode)} — ${escapeHtml(item.courseName || '')}</option>`)
-            .join('');
+        if (selectedId) {
+            const target = allCourseClasses.find((c) => c.id === selectedId);
+            if (target && activeCourseGroup !== 'ALL' && (target.courseCode || 'Khác') !== activeCourseGroup) {
+                activeCourseGroup = 'ALL';
+            }
+        }
+
+        renderCourseGroupTabs();
+        renderCourseClassOptions(selectedId);
         document.getElementById('toggleComponentForm').disabled = false;
 
         if (selectedId) {
@@ -142,6 +151,78 @@ async function loadCourseClasses(selectedId = null) {
     } catch (error) {
         classSelect.innerHTML = '<option value="">Không thể tải lớp học phần</option>';
         showAlert(error.message, 'danger');
+    }
+}
+
+function renderCourseGroupTabs() {
+    const tabsContainer = document.getElementById('courseGroupTabs');
+    if (!tabsContainer) return;
+
+    const counts = new Map();
+    allCourseClasses.forEach((c) => {
+        const grp = (c.courseCode || 'Khác').trim();
+        counts.set(grp, (counts.get(grp) || 0) + 1);
+    });
+
+    if (activeCourseGroup !== 'ALL' && !counts.has(activeCourseGroup)) {
+        activeCourseGroup = 'ALL';
+    }
+
+    const groups = Array.from(counts.keys()).sort((a, b) => {
+        if (a === 'IT24M') return -1;
+        if (b === 'IT24M') return 1;
+        return a.localeCompare(b);
+    });
+
+    tabsContainer.innerHTML = [
+        `<button type="button" class="btn btn-sm ${activeCourseGroup === 'ALL' ? 'btn-primary' : 'btn-outline-secondary'} fw-semibold" data-course-group="ALL">
+            Tất cả <span class="badge ${activeCourseGroup === 'ALL' ? 'bg-white text-primary' : 'bg-secondary-subtle text-secondary'} ms-1">${allCourseClasses.length}</span>
+        </button>`,
+        ...groups.map((grp) => {
+            const isActive = activeCourseGroup === grp;
+            return `<button type="button" class="btn btn-sm ${isActive ? 'btn-primary' : 'btn-outline-secondary'} fw-semibold" data-course-group="${escapeHtml(grp)}">
+                Lớp ${escapeHtml(grp)} <span class="badge ${isActive ? 'bg-white text-primary' : 'bg-secondary-subtle text-secondary'} ms-1">${counts.get(grp)}</span>
+            </button>`;
+        })
+    ].join('');
+
+    tabsContainer.querySelectorAll('button[data-course-group]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+            activeCourseGroup = btn.dataset.courseGroup || 'ALL';
+            renderCourseGroupTabs();
+            renderCourseClassOptions();
+            await loadGradeBook();
+        });
+    });
+}
+
+function renderCourseClassOptions(selectedId = null) {
+    const filtered = activeCourseGroup === 'ALL'
+        ? allCourseClasses
+        : allCourseClasses.filter((c) => (c.courseCode || 'Khác').trim() === activeCourseGroup);
+
+    const grouped = new Map();
+    filtered.forEach((item) => {
+        const grp = (item.courseCode || 'Khác').trim();
+        if (!grouped.has(grp)) grouped.set(grp, []);
+        grouped.get(grp).push(item);
+    });
+
+    const groupKeys = Array.from(grouped.keys()).sort((a, b) => {
+        if (a === 'IT24M') return -1;
+        if (b === 'IT24M') return 1;
+        return a.localeCompare(b);
+    });
+
+    classSelect.innerHTML = '<option value="">-- Chọn lớp học phần --</option>' + groupKeys.map((grp) => {
+        const options = grouped.get(grp)
+            .map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.classCode)} — ${escapeHtml(item.courseName || '')}</option>`)
+            .join('');
+        return `<optgroup label="Học phần lớp ${escapeHtml(grp)}">${options}</optgroup>`;
+    }).join('');
+
+    if (selectedId) {
+        classSelect.value = selectedId;
     }
 }
 
