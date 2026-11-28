@@ -559,6 +559,16 @@ public class GradeService {
         return new CourseClassOption(id, code, courseCode, name);
     }
 
+    @Transactional
+    public void deleteCourseClass(UUID courseClassId) {
+        requireCourseClass(courseClassId);
+        jdbcTemplate.update("""
+                UPDATE courses_classes
+                SET is_active = 0, deleted_at = CURRENT_TIMESTAMP
+                WHERE id = ? AND deleted_at IS NULL
+                """, courseClassId);
+    }
+
     private void initDefaultComponents(UUID courseClassId) {
         jdbcTemplate.update("""
                 INSERT INTO grade_components (id, course_class_id, component_code, component_name, weight_percentage, min_score, max_score, is_required, input_order, is_active, created_at)

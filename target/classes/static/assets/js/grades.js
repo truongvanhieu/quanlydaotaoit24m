@@ -20,6 +20,7 @@ const modalAlert = document.getElementById('modalAlert');
 let availableStudentsCache = [];
 
 const openCreateClassModalBtn = document.getElementById('openCreateClassModalBtn');
+const deleteCourseClassBtn = document.getElementById('deleteCourseClassBtn');
 const confirmCreateClassBtn = document.getElementById('confirmCreateClassBtn');
 const createClassModalAlert = document.getElementById('createClassModalAlert');
 
@@ -54,6 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (selectAllAvailableCheck) selectAllAvailableCheck.addEventListener('change', handleToggleSelectAllAvailable);
     if (availableStudentsList) availableStudentsList.addEventListener('change', updateSelectedStudentCount);
     if (openCreateClassModalBtn) openCreateClassModalBtn.addEventListener('click', openCreateClassModal);
+    if (deleteCourseClassBtn) deleteCourseClassBtn.addEventListener('click', handleDeleteCourseClass);
     if (confirmCreateClassBtn) confirmCreateClassBtn.addEventListener('click', handleConfirmCreateClass);
 
     // Global modal close handlers
@@ -247,9 +249,12 @@ async function loadGradeBook() {
         if (statsRow) statsRow.hidden = true;
         updateExportButtons(false);
         if (addStudentBtn) addStudentBtn.disabled = true;
+        if (deleteCourseClassBtn) deleteCourseClassBtn.disabled = true;
         showAlert('Chọn lớp học phần để xem danh sách điểm.', 'info');
         return;
     }
+
+    if (deleteCourseClassBtn) deleteCourseClassBtn.disabled = false;
 
     showAlert('Đang tải bảng điểm...', 'info');
     gradeTableBody.innerHTML = emptyRow(2, 'Đang tải dữ liệu...');
@@ -412,6 +417,30 @@ async function handleConfirmAddStudent() {
         }
         confirmAddStudentBtn.disabled = false;
         if (addAllStudentsBtn) addAllStudentsBtn.disabled = false;
+    }
+}
+
+async function handleDeleteCourseClass() {
+    const courseClassId = classSelect.value;
+    if (!courseClassId) return;
+
+    const selectedOption = classSelect.options[classSelect.selectedIndex];
+    const label = selectedOption ? selectedOption.text : 'lớp học phần này';
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa lớp học phần "${label}"?\n(Lớp sẽ bị ẩn khỏi danh sách quản lý điểm.)`)) {
+        return;
+    }
+
+    try {
+        if (deleteCourseClassBtn) deleteCourseClassBtn.disabled = true;
+        await request(`${API_ENDPOINTS.GRADES}/course-classes/${encodeURIComponent(courseClassId)}`, {
+            method: 'DELETE',
+        });
+        showAlert(`Đã xóa lớp học phần "${label}" thành công!`, 'success');
+        await loadCourseClasses();
+        await loadGradeBook();
+    } catch (error) {
+        showAlert(error.message, 'danger');
+        if (deleteCourseClassBtn) deleteCourseClassBtn.disabled = false;
     }
 }
 

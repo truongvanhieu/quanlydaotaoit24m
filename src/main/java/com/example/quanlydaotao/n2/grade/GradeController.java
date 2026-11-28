@@ -35,6 +35,11 @@ public class GradeController {
         return gradeService.createCourseClass(request);
     }
 
+    @DeleteMapping("/course-classes/{id}")
+    public void deleteCourseClass(@PathVariable UUID id) {
+        gradeService.deleteCourseClass(id);
+    }
+
     @GetMapping("/components")
     public List<GradeComponentView> getComponents(@RequestParam UUID courseClassId) {
         return gradeService.getComponents(courseClassId);
