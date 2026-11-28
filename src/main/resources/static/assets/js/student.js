@@ -1,4 +1,6 @@
-import { API_ENDPOINTS } from './config.js';
+import { API_ENDPOINTS } from './config.js?v=20261106';
+
+let activeStudentRequest = null;
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -70,6 +72,13 @@ async function loadStudents(keyword = '') {
         return;
     }
 
+    if (activeStudentRequest) {
+        activeStudentRequest.abort();
+    }
+    const controller = new AbortController();
+    activeStudentRequest = controller;
+    const timeoutId = window.setTimeout(() => controller.abort(), 15000);
+
     try {
         studentTableBody.innerHTML = `
             <tr>
@@ -85,7 +94,7 @@ async function loadStudents(keyword = '') {
             ? `${API_ENDPOINTS.STUDENTS}?keyword=${encodeURIComponent(trimmedKeyword)}`
             : API_ENDPOINTS.STUDENTS;
 
-        const response = await fetch(url);
+        const response = await fetch(url, { signal: controller.signal });
 
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
@@ -93,17 +102,30 @@ async function loadStudents(keyword = '') {
 
         const students = await response.json();
 
+        if (activeStudentRequest !== controller) {
+            return;
+        }
         renderStudents(students);
     } catch (error) {
+        if (activeStudentRequest !== controller) {
+            return;
+        }
         console.error('Lỗi khi tải danh sách sinh viên:', error);
 
         studentTableBody.innerHTML = `
             <tr>
                 <td colspan="6" class="text-center text-danger py-4">
-                    Không thể tải danh sách sinh viên
+                    ${error.name === 'AbortError' ? 'Máy chủ không phản hồi sau 15 giây.' : 'Không thể tải danh sách sinh viên.'}
+                    <button type="button" class="btn btn-outline-primary btn-sm ms-2" id="retryStudentsButton">Thử lại</button>
                 </td>
             </tr>
         `;
+        document.getElementById('retryStudentsButton')?.addEventListener('click', () => loadStudents(keyword));
+    } finally {
+        window.clearTimeout(timeoutId);
+        if (activeStudentRequest === controller) {
+            activeStudentRequest = null;
+        }
     }
 }
 
@@ -167,6 +189,14 @@ function renderStudents(students) {
                                 title="Xem"
                             >
                                 <i class="bi bi-eye"></i>
+                            </a>
+
+                            <a
+                                class="btn btn-outline-primary btn-sm"
+                                href="calendar.html?audience=student&personId=${encodeURIComponent(student.studentCode)}"
+                                title="Xem và quản lý lịch học"
+                            >
+                                <i class="bi bi-calendar3 me-1"></i>Lịch
                             </a>
 
                             <!-- Sửa -->

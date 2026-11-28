@@ -30,14 +30,17 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final ScheduleRepository scheduleRepository;
     private final BuildingRepository buildingRepository;
+    private final ScheduleService scheduleService;
 
     public RoomService(
             RoomRepository roomRepository,
             ScheduleRepository scheduleRepository,
-            BuildingRepository buildingRepository) {
+            BuildingRepository buildingRepository,
+            ScheduleService scheduleService) {
         this.roomRepository = roomRepository;
         this.scheduleRepository = scheduleRepository;
         this.buildingRepository = buildingRepository;
+        this.scheduleService = scheduleService;
     }
 
     public Page<RoomResponse> list(
@@ -70,7 +73,7 @@ public class RoomService {
         find(id);
         return scheduleRepository.findByRoom_IdAndDeletedAtIsNullOrderByStartDateAscStartPeriodAsc(id)
                 .stream()
-                .map(ScheduleService::toResponse)
+                .map(scheduleService::toResponse)
                 .toList();
     }
 
@@ -93,6 +96,56 @@ public class RoomService {
         Set<UUID> occupiedRoomIds = scheduleRepository.findOccupied(
                         dayOfWeek, dateStart, dateEnd, startPeriod, endPeriod)
                 .stream()
+                .filter(schedule -> schedule.getRoom() != null)
+                .map(schedule -> schedule.getRoom().getId())
+                .collect(Collectors.toSet());
+
+        return roomRepository.search(null, null, null, null, minCapacity, true, Pageable.unpaged())
+                .stream()
+                .filter(room -> isAvailableStatus(room.getStatus()))
+                .filter(room -> !occupiedRoomIds.contains(room.getId()))
+                .map(RoomService::toResponse)
+                .toList();
+    }
+
+    public List<RoomResponse> availableForSchedule(
+            LocalDate startDate,
+            LocalDate endDate,
+            Integer dayOfWeek,
+            Integer startPeriod,
+            Integer endPeriod,
+            Integer minCapacity) {
+        if (startDate == null || endDate == null || dayOfWeek == null
+                || startPeriod == null || endPeriod == null) {
+            throw badRequest("Cần khoảng ngày, thứ và khoảng tiết học hợp lệ");
+        }
+        if (startDate.isAfter(endDate)) {
+            throw badRequest("Ngày bắt đầu phải trước hoặc bằng ngày kết thúc");
+        }
+        if (dayOfWeek < 1 || dayOfWeek > 7
+                || startPeriod < 1 || endPeriod < startPeriod || endPeriod > 15) {
+            throw badRequest("Thứ hoặc khoảng tiết học không hợp lệ");
+        }
+        if (!ScheduleService.hasWeekdayOccurrence(
+                startDate.atStartOfDay(), endDate.atTime(23, 59, 59, 999_999_900), dayOfWeek)) {
+            throw badRequest("Khoảng ngày không chứa thứ đã chọn");
+        }
+        if (minCapacity != null && minCapacity < 0) {
+            throw badRequest("Sức chứa tối thiểu không được âm");
+        }
+
+        LocalDateTime rangeStart = startDate.atStartOfDay();
+        LocalDateTime rangeEnd = endDate.atTime(23, 59, 59, 999_999_900);
+        Set<UUID> occupiedRoomIds = scheduleRepository.findOccupiedInRange(
+                        dayOfWeek, rangeStart, rangeEnd, startPeriod, endPeriod)
+                .stream()
+                .filter(schedule -> ScheduleService.overlapsOnWeekday(
+                        rangeStart,
+                        rangeEnd,
+                        schedule.getStartDate(),
+                        schedule.getEndDate(),
+                        dayOfWeek))
+                .filter(schedule -> schedule.getRoom() != null)
                 .map(schedule -> schedule.getRoom().getId())
                 .collect(Collectors.toSet());
 

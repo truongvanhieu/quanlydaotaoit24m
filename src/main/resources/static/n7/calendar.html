@@ -41,6 +41,21 @@
                     <div class="mini-days" id="miniDays"></div>
                 </section>
 
+                <section class="calendar-list personal-calendar">
+                    <h2>Thời khóa biểu cá nhân</h2>
+                    <form id="personalCalendarForm">
+                        <label for="calendarAudience">Đối tượng</label>
+                        <select id="calendarAudience" name="audience">
+                            <option value="student">Sinh viên</option>
+                            <option value="lecturer">Giảng viên</option>
+                        </select>
+                        <label for="calendarPersonId">Mã sinh viên / giảng viên hoặc UUID</label>
+                        <input id="calendarPersonId" name="personId" type="text" placeholder="Nhập mã 6 số hoặc UUID" required />
+                        <button type="submit" class="create-button">Xem thời khóa biểu</button>
+                    </form>
+                    <a class="personal-management-link" href="/course-sections.html">Quản lý lớp học phần</a>
+                </section>
+
                 <section class="calendar-list">
                     <h2>Lịch của tôi</h2>
                     <label class="calendar-toggle">
@@ -66,17 +81,33 @@
                         <h1 id="periodTitle" aria-live="polite"></h1>
                     </div>
                     <div class="toolbar-right">
+                        <button type="button" id="addScheduleButton" class="today-button" hidden>+ Thêm lịch</button>
                         <label class="search-box">
                             <i class="bi bi-search"></i>
                             <input type="search" id="eventSearch" placeholder="Tìm lịch học" aria-label="Tìm lịch học" />
                         </label>
                         <div class="view-switch" role="group" aria-label="Chế độ xem lịch">
                             <button type="button" class="view-button active" data-view="week">Tuần</button>
+                            <button type="button" class="view-button" data-view="day">Ngày</button>
                             <button type="button" class="view-button" data-view="month">Tháng</button>
+                            <button type="button" class="view-button" data-view="list">Danh sách</button>
                         </div>
+                        <button type="button" class="today-button" id="printScheduleButton">In</button>
+                        <button type="button" class="today-button" id="exportScheduleButton">Xuất Excel</button>
                     </div>
                 </div>
 
+                <div class="calendar-filters" aria-label="Bộ lọc lịch học">
+                    <label>Học kỳ<select id="filterSemester"><option value="">Tất cả học kỳ</option></select></label>
+                    <label>Năm học<input id="filterYear" type="number" min="2000" max="2100" placeholder="Năm"></label>
+                    <label>Thứ<select id="filterDay"><option value="">Tất cả thứ</option>
+                        <option value="1">Thứ Hai</option><option value="2">Thứ Ba</option>
+                        <option value="3">Thứ Tư</option><option value="4">Thứ Năm</option>
+                        <option value="5">Thứ Sáu</option><option value="6">Thứ Bảy</option>
+                        <option value="7">Chủ nhật</option></select></label>
+                    <label>Phòng<select id="filterRoom"><option value="">Tất cả phòng</option></select></label>
+                    <label>Lớp học phần<select id="filterSection"><option value="">Tất cả lớp</option></select></label>
+                </div>
                 <div id="calendarStatus" class="status-message" role="status" hidden></div>
                 <section class="calendar-surface" aria-label="Lịch học">
                     <div id="calendarView"></div>
@@ -96,12 +127,107 @@
             <p class="dialog-course-code" id="dialogSection"></p>
             <div class="dialog-detail"><i class="bi bi-calendar3"></i><span id="dialogDate"></span></div>
             <div class="dialog-detail"><i class="bi bi-clock"></i><span id="dialogPeriod"></span></div>
+            <div class="dialog-detail" id="dialogLecturerRow"><i class="bi bi-person"></i><span id="dialogLecturer"></span></div>
+            <div class="dialog-detail" id="dialogModeRow"><i class="bi bi-wifi"></i><span id="dialogMode"></span></div>
             <div class="dialog-detail"><i class="bi bi-geo-alt"></i><span id="dialogRoom"></span></div>
             <div class="dialog-detail" id="dialogStatusRow"><i class="bi bi-bookmark"></i><span id="dialogStatus"></span></div>
             <p id="dialogDescription" class="dialog-description"></p>
+            <div class="dialog-actions" id="scheduleActions" hidden>
+                <button type="button" class="today-button" id="editScheduleButton">Sửa lịch</button>
+                <button type="button" class="today-button" id="manageOccurrenceButton">Nghỉ / học bù / dạy thay</button>
+                <button type="button" class="danger-button" id="deleteScheduleButton">Xóa lịch</button>
+            </div>
         </div>
     </dialog>
 
-    <script type="module" src="/n7/assets/js/calendar.js"></script>
+    <dialog id="scheduleEditorDialog" class="schedule-editor-dialog">
+        <form id="scheduleEditorForm">
+            <div class="editor-heading">
+                <div>
+                    <p class="dialog-eyebrow">QUẢN LÝ THỜI KHÓA BIỂU</p>
+                    <h2 id="scheduleEditorTitle">Thêm lịch học</h2>
+                </div>
+                <button type="button" class="icon-button" id="closeScheduleEditor" aria-label="Đóng">×</button>
+            </div>
+            <p class="editor-note">Lịch gắn với lớp học phần dùng chung cho các sinh viên và giảng viên trong lớp.</p>
+            <label for="editorCourseSection">Lớp học phần</label>
+            <select id="editorCourseSection" required></select>
+            <label for="editorLecturer">Giảng viên</label>
+            <select id="editorLecturer"><option value="">Chưa phân công</option></select>
+            <label for="editorRoom">Phòng học</label>
+            <select id="editorRoom" required></select>
+            <div class="editor-row editor-row-days">
+                <div class="editor-days-group">
+                    <label>Thứ</label>
+                    <div class="day-checkboxes" id="editorDays">
+                        <label class="day-checkbox"><input type="checkbox" name="editorDay" value="1"><span>T2</span></label>
+                        <label class="day-checkbox"><input type="checkbox" name="editorDay" value="2"><span>T3</span></label>
+                        <label class="day-checkbox"><input type="checkbox" name="editorDay" value="3"><span>T4</span></label>
+                        <label class="day-checkbox"><input type="checkbox" name="editorDay" value="4"><span>T5</span></label>
+                        <label class="day-checkbox"><input type="checkbox" name="editorDay" value="5"><span>T6</span></label>
+                        <label class="day-checkbox"><input type="checkbox" name="editorDay" value="6"><span>T7</span></label>
+                        <label class="day-checkbox"><input type="checkbox" name="editorDay" value="7"><span>CN</span></label>
+                    </div>
+                </div>
+                <div><label for="editorShift">Ca học</label><select id="editorShift" required><option value="">Chọn ca</option></select></div>
+                <div><label for="editorStartPeriod">Tiết bắt đầu</label><input id="editorStartPeriod" type="number" min="1" max="30" value="1" required></div>
+                <div><label for="editorEndPeriod">Tiết kết thúc</label><input id="editorEndPeriod" type="number" min="1" max="30" value="3" required></div>
+            </div>
+            <div class="editor-row">
+                <div><label for="editorStartDate">Từ ngày</label><input id="editorStartDate" type="date" required></div>
+                <div><label for="editorEndDate">Đến ngày</label><input id="editorEndDate" type="date" required></div>
+            </div>
+            <p id="editorCapacityNotice" class="editor-note" hidden></p>
+            <label for="editorMode">Hình thức</label>
+            <input id="editorMode" type="text" maxlength="100" placeholder="Trực tiếp">
+            <label for="editorNote">Ghi chú</label>
+            <textarea id="editorNote" maxlength="255" rows="2"></textarea>
+            <p id="scheduleEditorError" class="editor-error" role="alert" hidden></p>
+            <div id="roomAlternatives" class="room-alternatives" hidden></div>
+            <div class="dialog-actions">
+                <button type="button" class="today-button" id="cancelScheduleEditor">Hủy</button>
+                <button type="submit" class="create-button" id="saveScheduleButton">Lưu lịch</button>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog id="occurrenceDialog" class="schedule-editor-dialog">
+        <form id="occurrenceForm">
+            <div class="editor-heading">
+                <div><p class="dialog-eyebrow">ĐIỀU CHỈNH MỘT BUỔI</p><h2>Buổi học ngoại lệ</h2></div>
+                <button type="button" class="icon-button" id="closeOccurrenceEditor" aria-label="Đóng">×</button>
+            </div>
+            <p id="occurrenceSummary" class="editor-note"></p>
+            <label for="exceptionOccurrenceDate">Ngày buổi học gốc</label>
+            <input id="exceptionOccurrenceDate" type="date" required>
+            <label for="occurrenceType">Thao tác</label>
+            <select id="occurrenceType" required>
+                <option value="CANCELLED">Nghỉ buổi học</option>
+                <option value="MAKEUP">Chuyển sang ngày học bù</option>
+                <option value="SUBSTITUTE">Phân công giảng viên dạy thay</option>
+            </select>
+            <div id="makeupFields" hidden>
+                <label for="replacementDate">Ngày học bù</label>
+                <input id="replacementDate" type="date">
+                <label for="replacementRoom">Phòng học bù</label>
+                <select id="replacementRoom"></select>
+                <p id="occurrenceCapacityNotice" class="editor-note" hidden></p>
+            </div>
+            <div id="substituteFields" hidden>
+                <label for="substituteLecturer">Giảng viên dạy thay</label>
+                <select id="substituteLecturer"></select>
+            </div>
+            <label for="occurrenceNote">Ghi chú</label>
+            <textarea id="occurrenceNote" maxlength="255" rows="2"></textarea>
+            <p id="occurrenceError" class="editor-error" role="alert" hidden></p>
+            <div class="dialog-actions">
+                <button type="button" class="today-button" id="cancelOccurrenceEditor">Hủy</button>
+                <button type="button" class="danger-button" id="deleteOccurrenceException" hidden>Xóa ngoại lệ</button>
+                <button type="submit" class="create-button">Lưu ngoại lệ</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script type="module" src="/n7/assets/js/calendar.js?v=20261128-schedule-diagnostics"></script>
 </body>
 </html>

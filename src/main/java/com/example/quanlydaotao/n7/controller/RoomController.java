@@ -56,6 +56,18 @@ public class RoomController {
         return roomService.available(date, startPeriod, endPeriod, minCapacity);
     }
 
+    @GetMapping("/available/recurring")
+    public List<RoomResponse> availableForSchedule(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam Integer dayOfWeek,
+            @RequestParam Integer startPeriod,
+            @RequestParam Integer endPeriod,
+            @RequestParam(required = false) Integer minCapacity) {
+        return roomService.availableForSchedule(
+                startDate, endDate, dayOfWeek, startPeriod, endPeriod, minCapacity);
+    }
+
     @GetMapping("/{id}")
     public RoomResponse get(@PathVariable UUID id) {
         return roomService.get(id);

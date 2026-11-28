@@ -6,6 +6,7 @@ import java.util.UUID;
 public record ScheduleResponse(
         UUID id,
         UUID courseSectionId,
+        UUID semesterId,
         String courseSectionCode,
         String courseSectionName,
         String courseCode,
@@ -17,6 +18,7 @@ public record ScheduleResponse(
         String buildingCode,
         String buildingName,
         UUID employeeId,
+        String lecturerName,
         Integer dayOfWeek,
         UUID dateId,
         UUID shiftId,

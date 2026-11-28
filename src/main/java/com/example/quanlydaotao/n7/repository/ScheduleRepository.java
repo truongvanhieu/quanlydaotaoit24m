@@ -30,24 +30,34 @@ public interface ScheduleRepository extends JpaRepository<Schedule, UUID> {
               and (:active is null or s.active = :active)
               and (:roomId is null or r.id = :roomId)
               and (:courseSectionId is null or cs.id = :courseSectionId)
+              and (:semesterId is null or cs.semesterId = :semesterId)
               and (:dayOfWeek is null or s.dayOfWeek = :dayOfWeek)
               and (:fromDate is null or s.endDate >= :fromDate)
               and (:toDate is null or s.startDate <= :toDate)
+              and (:yearStart is null or s.endDate >= :yearStart)
+              and (:yearEnd is null or s.startDate <= :yearEnd)
               and (:keyword is null
                    or lower(coalesce(cs.code, '')) like lower(concat('%', :keyword, '%'))
                    or lower(coalesce(cs.name, '')) like lower(concat('%', :keyword, '%'))
                    or lower(coalesce(c.code, '')) like lower(concat('%', :keyword, '%'))
                    or lower(coalesce(c.name, '')) like lower(concat('%', :keyword, '%'))
                    or lower(coalesce(r.roomCode, '')) like lower(concat('%', :keyword, '%'))
-                   or lower(coalesce(b.name, '')) like lower(concat('%', :keyword, '%')))
+                   or lower(coalesce(b.name, '')) like lower(concat('%', :keyword, '%'))
+                   or exists (select e.id from ScheduleEmployee e
+                              where e.id = s.employeeId and
+                               (lower(coalesce(e.fullName, '')) like lower(concat('%', :keyword, '%'))
+                                or lower(coalesce(e.code, '')) like lower(concat('%', :keyword, '%')))))
             """)
     Page<Schedule> search(
             @Param("keyword") String keyword,
             @Param("roomId") UUID roomId,
             @Param("courseSectionId") UUID courseSectionId,
+            @Param("semesterId") UUID semesterId,
             @Param("dayOfWeek") Integer dayOfWeek,
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate,
+            @Param("yearStart") LocalDateTime yearStart,
+            @Param("yearEnd") LocalDateTime yearEnd,
             @Param("active") Boolean active,
             Pageable pageable);
 
@@ -61,11 +71,44 @@ public interface ScheduleRepository extends JpaRepository<Schedule, UUID> {
               and s.endDate >= :startDate
               and s.startPeriod <= :endPeriod
               and s.endPeriod >= :startPeriod
-              and (s.room.id = :roomId or s.courseSection.id = :courseSectionId)
+              and (s.room.id = :roomId or s.courseSection.id = :courseSectionId
+                   or (:employeeId is not null and s.employeeId = :employeeId))
             """)
     List<Schedule> findPotentialConflicts(
             @Param("excludeId") UUID excludeId,
             @Param("roomId") UUID roomId,
+            @Param("courseSectionId") UUID courseSectionId,
+            @Param("employeeId") UUID employeeId,
+            @Param("dayOfWeek") Integer dayOfWeek,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("startPeriod") Integer startPeriod,
+            @Param("endPeriod") Integer endPeriod);
+
+    @Query(value = """
+            select s.* from schedules s
+            where s.deleted_at is null
+              and coalesce(s.is_active, 1) = 1
+              and (:excludeId is null or s.id <> :excludeId)
+              and s.day_of_week = :dayOfWeek
+              and s.start_date <= :endDate
+              and s.end_date >= :startDate
+              and s.start_period <= :endPeriod
+              and s.end_period >= :startPeriod
+              and exists (
+                  select 1
+                  from student_course_sections requested
+                  join student_course_sections existing on existing.student_id = requested.student_id
+                  where requested.course_section_id = :courseSectionId
+                    and existing.course_section_id = s.course_section_id
+                    and requested.deleted_at is null
+                    and existing.deleted_at is null
+                    and coalesce(requested.is_active, 1) = 1
+                    and coalesce(existing.is_active, 1) = 1
+              )
+            """, nativeQuery = true)
+    List<Schedule> findStudentEnrollmentConflicts(
+            @Param("excludeId") UUID excludeId,
             @Param("courseSectionId") UUID courseSectionId,
             @Param("dayOfWeek") Integer dayOfWeek,
             @Param("startDate") LocalDateTime startDate,
@@ -89,4 +132,42 @@ public interface ScheduleRepository extends JpaRepository<Schedule, UUID> {
             @Param("dateEnd") LocalDateTime dateEnd,
             @Param("startPeriod") Integer startPeriod,
             @Param("endPeriod") Integer endPeriod);
+
+    @Query("""
+            select s from Schedule s
+            where s.deletedAt is null
+              and s.active = true
+              and s.dayOfWeek = :dayOfWeek
+              and s.startDate <= :endDate
+              and s.endDate >= :startDate
+              and s.startPeriod <= :endPeriod
+              and s.endPeriod >= :startPeriod
+            """)
+    List<Schedule> findOccupiedInRange(
+            @Param("dayOfWeek") Integer dayOfWeek,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("startPeriod") Integer startPeriod,
+            @Param("endPeriod") Integer endPeriod);
+
+    @Query(value = """
+            select distinct s.* from schedules s
+            join student_course_sections scs on scs.course_section_id = s.course_section_id
+            where scs.student_id = :studentId and scs.deleted_at is null
+              and coalesce(scs.is_active, 1) = 1 and s.deleted_at is null
+              and coalesce(s.is_active, 1) = 1
+            """, nativeQuery = true)
+    List<Schedule> findForStudent(@Param("studentId") UUID studentId);
+
+    @Query(value = """
+            select s.* from schedules s
+            where s.deleted_at is null and coalesce(s.is_active, 1) = 1
+              and (s.employee_id = :lecturerId or s.employee_id in (
+                    select e.id from lecturers l join employees e on e.user_id = l.user_id
+                    where l.id = :lecturerId and l.user_id is not null
+                      and l.deleted_at is null and e.deleted_at is null
+              ))
+            order by s.start_date, s.start_period
+            """, nativeQuery = true)
+    List<Schedule> findForLecturer(@Param("lecturerId") UUID lecturerId);
 }
