@@ -96,6 +96,21 @@ public class Student {
 
     @PrePersist
     public void prePersist() {
+        if (this.userId == null) {
+            this.userId = UUID.randomUUID();
+        }
+        if (this.academicYearYear == null) {
+            this.academicYearYear = UUID.randomUUID();
+        }
+        if (this.departmentId == null) {
+            this.departmentId = UUID.randomUUID();
+        }
+        if (this.majorId == null) {
+            this.majorId = UUID.randomUUID();
+        }
+        if (this.trainingProgramId == null) {
+            this.trainingProgramId = UUID.randomUUID();
+        }
         if (this.createdAt == null) {
             this.createdAt = LocalDateTime.now();
         }

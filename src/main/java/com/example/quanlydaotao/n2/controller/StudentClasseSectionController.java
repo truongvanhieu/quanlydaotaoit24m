@@ -60,6 +60,7 @@ public class StudentClasseSectionController {
     @PostMapping
     @Operation(summary = "Gán sinh viên vào lớp hành chính")
     public ResponseEntity<StudentClasseSection> create(@RequestBody StudentClasseSection section) {
+        section.setId(null);
         return new ResponseEntity<>(service.save(section), HttpStatus.CREATED);
     }
 

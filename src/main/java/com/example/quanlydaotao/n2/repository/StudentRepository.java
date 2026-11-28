@@ -16,6 +16,8 @@ public interface StudentRepository extends JpaRepository<Student, UUID> {
 
     Optional<Student> findByCode(String code);
 
+    boolean existsByCode(String code);
+
     List<Student> findByStudentClassessId(UUID studentClassessId);
 
     @Query("SELECT s FROM Student s WHERE " +

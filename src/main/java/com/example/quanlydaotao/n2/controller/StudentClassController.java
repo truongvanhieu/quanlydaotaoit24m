@@ -49,6 +49,7 @@ public class StudentClassController {
     @PostMapping
     @Operation(summary = "Tạo mới lớp hành chính")
     public ResponseEntity<StudentClass> createClass(@RequestBody StudentClass studentClass) {
+        studentClass.setId(null);
         return new ResponseEntity<>(studentClassService.save(studentClass), HttpStatus.CREATED);
     }
 

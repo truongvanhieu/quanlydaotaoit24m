@@ -55,6 +55,7 @@ public class StudentStatusController {
     @PostMapping
     @Operation(summary = "Thêm mới trạng thái")
     public ResponseEntity<StudentStatus> create(@RequestBody StudentStatus status) {
+        status.setId(null);
         return new ResponseEntity<>(service.save(status), HttpStatus.CREATED);
     }
 

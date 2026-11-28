@@ -56,6 +56,9 @@ public class AdvisorClasseSection {
 
     @PrePersist
     public void prePersist() {
+        if (this.employeeId == null) {
+            this.employeeId = UUID.randomUUID();
+        }
         if (this.createdAt == null) {
             this.createdAt = LocalDateTime.now();
         }

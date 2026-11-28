@@ -58,6 +58,22 @@ public class StudentClasseSectionService {
             throw new IllegalArgumentException("Sinh viên đã thuộc lớp hành chính này");
         }
 
+        if (section.getId() == null && section.getIsActive() != false) {
+            LocalDateTime now = LocalDateTime.now();
+            repository.findByStudentId(section.getStudentId()).stream()
+                    .filter(existing -> existing.getIsActive() != false
+                            && !section.getStudentClasseId().equals(existing.getStudentClasseId()))
+                    .forEach(existing -> {
+                        existing.setStatus("transferred");
+                        if (existing.getEndDate() == null) {
+                            existing.setEndDate(now);
+                        }
+                        existing.setIsActive(false);
+                        existing.setUpdatedAt(now);
+                        repository.save(existing);
+                    });
+        }
+
         StudentClasseSection saved = repository.save(section);
         studentRepository.findById(saved.getStudentId()).ifPresent(student -> {
             student.setStudentClassessId(saved.getStudentClasseId());

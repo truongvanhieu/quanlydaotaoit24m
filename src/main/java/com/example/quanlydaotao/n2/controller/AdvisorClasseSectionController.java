@@ -60,6 +60,7 @@ public class AdvisorClasseSectionController {
     @PostMapping
     @Operation(summary = "Phân công CVHT phụ trách lớp hành chính")
     public ResponseEntity<AdvisorClasseSection> create(@RequestBody AdvisorClasseSection section) {
+        section.setId(null);
         return new ResponseEntity<>(service.save(section), HttpStatus.CREATED);
     }
 

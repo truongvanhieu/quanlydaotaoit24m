@@ -32,11 +32,11 @@ const PAGES = {
         fields: [
             { key: 'code', label: 'Mã lớp', maxLength: 100 },
             { key: 'name', label: 'Tên lớp', maxLength: 255 },
-            { key: 'academicYearId', label: 'ID niên khóa (UUID)', type: 'uuid' },
-            { key: 'departmentId', label: 'ID khoa (UUID)', type: 'uuid' },
-            { key: 'majorId', label: 'ID ngành (UUID)', type: 'uuid' },
-            { key: 'trainingProgramId', label: 'ID chương trình đào tạo (UUID)', type: 'uuid' },
-            { key: 'advisorId', label: 'ID cố vấn (UUID)', type: 'uuid' },
+            { key: 'academicYearId', label: 'ID niên khóa (tự động sinh)', type: 'uuid' },
+            { key: 'departmentId', label: 'ID khoa (tự động sinh)', type: 'uuid' },
+            { key: 'majorId', label: 'ID ngành (tự động sinh)', type: 'uuid' },
+            { key: 'trainingProgramId', label: 'ID chương trình đào tạo (tự động sinh)', type: 'uuid' },
+            { key: 'advisorId', label: 'ID cố vấn (tự động sinh)', type: 'uuid' },
             { key: 'isActive', label: 'Đang hoạt động', type: 'boolean', defaultValue: true }
         ]
     },
@@ -274,6 +274,9 @@ function renderFormFields(config) {
         }
         if (field.type === 'textarea') {
             return `<div class="col-md-12"><label class="form-label" for="${id}">${escapeHtml(field.label)}</label><textarea ${common} rows="2"></textarea></div>`;
+        }
+        if (field.type === 'uuid') {
+            return `<div class="col-md-6"><label class="form-label" for="${id}">${escapeHtml(field.label)}</label><input id="${id}" name="${field.key}" class="form-control bg-light" type="text" readonly></div>`;
         }
         const inputType = field.type === 'date' || field.type === 'datetime' ? field.type === 'date' ? 'date' : 'datetime-local' : 'text';
         return `<div class="col-md-6"><label class="form-label" for="${id}">${escapeHtml(field.label)}</label><input ${common} type="${inputType}"></div>`;
@@ -694,6 +697,13 @@ function openRecordForm(config, lookupData, record = null) {
         ? `Sửa ${config.title.toLowerCase()}`
         : `Thêm ${config.title.toLowerCase()}`;
 
+    const usedUuids = new Set();
+    (window.managementRecords || []).forEach((item) => {
+        config.fields.filter((f) => f.type === 'uuid').forEach((f) => {
+            if (item[f.key]) usedUuids.add(item[f.key]);
+        });
+    });
+
     config.fields.forEach((field) => {
         const input = document.getElementById(`record-${field.key}`);
         if (!input) {
@@ -701,6 +711,9 @@ function openRecordForm(config, lookupData, record = null) {
         }
         if (field.type === 'boolean') {
             input.checked = record ? record[field.key] !== false : Boolean(field.defaultValue);
+        } else if (field.type === 'uuid') {
+            const value = record?.[field.key];
+            input.value = value || generateUniqueUuid(usedUuids);
         } else {
             const value = record?.[field.key];
             input.value = field.type === 'datetime' && value
@@ -837,6 +850,23 @@ async function deleteRecord(id, config) {
         console.error(`Lỗi khi xóa ${config.title}:`, error);
         window.alert('Không thể xóa dữ liệu. Vui lòng thử lại.');
     }
+}
+
+function generateUniqueUuid(usedSet = new Set()) {
+    let uuid = '';
+    do {
+        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+            uuid = crypto.randomUUID();
+        } else {
+            uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+                const r = (Math.random() * 16) | 0;
+                const v = c === 'x' ? r : (r & 0x3) | 0x8;
+                return v.toString(16);
+            });
+        }
+    } while (usedSet.has(uuid));
+    usedSet.add(uuid);
+    return uuid;
 }
 
 function escapeHtml(value) {
