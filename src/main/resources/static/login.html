@@ -62,6 +62,7 @@
     </div>
     <div class="login-body">
         <div id="loginError" class="alert alert-danger d-none py-2 small" role="alert"></div>
+        <div id="loginSuccess" class="alert alert-success d-none py-2 small" role="alert"></div>
 
         <form id="loginForm">
             <div class="mb-3">
@@ -73,7 +74,12 @@
             </div>
 
             <div class="mb-3">
-                <label for="password" class="form-label fw-semibold">Mật khẩu</label>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label for="password" class="form-label fw-semibold mb-0">Mật khẩu</label>
+                    <a href="#" id="forgotPasswordLink" class="small text-decoration-none fw-semibold text-primary">
+                        <i class="bi bi-question-circle me-1"></i>Quên mật khẩu?
+                    </a>
+                </div>
                 <div class="input-group">
                     <span class="input-group-text bg-light"><i class="bi bi-lock-fill text-primary"></i></span>
                     <input type="password" id="password" class="form-control" placeholder="Nhập mật khẩu..." required>
@@ -110,6 +116,59 @@
     </div>
 </div>
 
+<!-- Modal Quên mật khẩu -->
+<div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-labelledby="forgotPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="forgotPasswordModalLabel">
+                    <i class="bi bi-key-fill me-2"></i>Khôi phục mật khẩu
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="forgotError" class="alert alert-danger d-none py-2 small"></div>
+
+                <!-- Bước 1: Nhập tên đăng nhập / IDSV -->
+                <form id="forgotStep1Form">
+                    <div class="mb-3">
+                        <label for="forgotUsername" class="form-label fw-semibold">Tên đăng nhập hoặc Mã sinh viên (IDSV)</label>
+                        <input type="text" id="forgotUsername" class="form-control" placeholder="VD: admin, giangvien hoặc 110431" required>
+                        <div class="form-text">Hệ thống sẽ cấp mã xác nhận OTP (6 số) có hiệu lực trong 10 phút.</div>
+                    </div>
+                    <button type="submit" id="requestOtpBtn" class="btn btn-primary w-100 fw-semibold">
+                        <i class="bi bi-send me-1"></i>Lấy mã OTP xác nhận
+                    </button>
+                </form>
+
+                <!-- Bước 2: Nhập OTP & Mật khẩu mới -->
+                <form id="forgotStep2Form" class="d-none">
+                    <div id="otpDemoBanner" class="alert alert-info py-2 small mb-3"></div>
+                    <div class="mb-3">
+                        <label for="forgotOtp" class="form-label fw-semibold">Mã xác nhận OTP (6 số)</label>
+                        <input type="text" id="forgotOtp" class="form-control font-monospace fw-bold" placeholder="Nhập 6 chữ số OTP..." maxlength="6" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="forgotNewPassword" class="form-label fw-semibold">Mật khẩu mới</label>
+                        <input type="password" id="forgotNewPassword" class="form-control" placeholder="Tối thiểu 4 ký tự..." minlength="4" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="forgotConfirmPassword" class="form-label fw-semibold">Xác nhận mật khẩu mới</label>
+                        <input type="password" id="forgotConfirmPassword" class="form-control" placeholder="Nhập lại mật khẩu mới..." minlength="4" required>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" id="backToStep1Btn" class="btn btn-outline-secondary">Quay lại</button>
+                        <button type="submit" id="resetPwdBtn" class="btn btn-success flex-grow-1 fw-semibold">
+                            <i class="bi bi-check2-circle me-1"></i>Đặt lại mật khẩu
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
     // Nếu đã đăng nhập sẵn thì chuyển thẳng vào trang chủ
@@ -175,6 +234,121 @@ document.addEventListener('DOMContentLoaded', async () => {
             errorBox.classList.remove('d-none');
             submitBtn.disabled = false;
             submitBtn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập hệ thống';
+        }
+    });
+
+    // =========================
+    // QUÊN MẬT KHẨU
+    // =========================
+    const forgotLink = document.getElementById('forgotPasswordLink');
+    const forgotModalEl = document.getElementById('forgotPasswordModal');
+    const forgotModal = forgotModalEl && window.bootstrap ? new window.bootstrap.Modal(forgotModalEl) : null;
+    const forgotError = document.getElementById('forgotError');
+    const step1Form = document.getElementById('forgotStep1Form');
+    const step2Form = document.getElementById('forgotStep2Form');
+    const forgotUsername = document.getElementById('forgotUsername');
+    const otpDemoBanner = document.getElementById('otpDemoBanner');
+    const forgotOtp = document.getElementById('forgotOtp');
+    const forgotNewPwd = document.getElementById('forgotNewPassword');
+    const forgotConfirmPwd = document.getElementById('forgotConfirmPassword');
+    const requestOtpBtn = document.getElementById('requestOtpBtn');
+    const resetPwdBtn = document.getElementById('resetPwdBtn');
+    const backToStep1Btn = document.getElementById('backToStep1Btn');
+    const loginSuccess = document.getElementById('loginSuccess');
+
+    let resetTargetUsername = '';
+
+    forgotLink?.addEventListener('click', (e) => {
+        e.preventDefault();
+        forgotError.classList.add('d-none');
+        step1Form.classList.remove('d-none');
+        step2Form.classList.add('d-none');
+        forgotUsername.value = usernameInput.value.trim();
+        forgotOtp.value = '';
+        forgotNewPwd.value = '';
+        forgotConfirmPwd.value = '';
+        forgotModal?.show();
+    });
+
+    backToStep1Btn?.addEventListener('click', () => {
+        forgotError.classList.add('d-none');
+        step2Form.classList.add('d-none');
+        step1Form.classList.remove('d-none');
+    });
+
+    step1Form?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        forgotError.classList.add('d-none');
+        requestOtpBtn.disabled = true;
+        requestOtpBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang kiểm tra...';
+
+        try {
+            const resp = await fetch('/api/auth/forgot-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: forgotUsername.value.trim() }),
+            });
+            const data = await resp.json().catch(() => ({}));
+            if (!resp.ok) {
+                throw new Error(data.message || data.detail || 'Không tìm thấy tài khoản.');
+            }
+            resetTargetUsername = data.username || forgotUsername.value.trim();
+            otpDemoBanner.innerHTML = `
+                <div><strong>Tài khoản:</strong> ${resetTargetUsername} (${data.fullName || ''})</div>
+                <div class="mt-1"><strong>Mã OTP (Demo):</strong> <span class="badge bg-primary fs-6 font-monospace">${data.otpDemo}</span></div>
+            `;
+            step1Form.classList.add('d-none');
+            step2Form.classList.remove('d-none');
+            forgotOtp.focus();
+        } catch (err) {
+            forgotError.textContent = err.message;
+            forgotError.classList.remove('d-none');
+        } finally {
+            requestOtpBtn.disabled = false;
+            requestOtpBtn.innerHTML = '<i class="bi bi-send me-1"></i>Lấy mã OTP xác nhận';
+        }
+    });
+
+    step2Form?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        forgotError.classList.add('d-none');
+
+        if (forgotNewPwd.value.trim() !== forgotConfirmPwd.value.trim()) {
+            forgotError.textContent = 'Mật khẩu xác nhận không khớp!';
+            forgotError.classList.remove('d-none');
+            return;
+        }
+
+        resetPwdBtn.disabled = true;
+        resetPwdBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang lưu...';
+
+        try {
+            const resp = await fetch('/api/auth/reset-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: resetTargetUsername,
+                    otp: forgotOtp.value.trim(),
+                    newPassword: forgotNewPwd.value.trim(),
+                }),
+            });
+            const data = await resp.json().catch(() => ({}));
+            if (!resp.ok) {
+                throw new Error(data.message || data.detail || 'Không thể đặt lại mật khẩu.');
+            }
+            forgotModal?.hide();
+            usernameInput.value = resetTargetUsername;
+            passwordInput.value = '';
+            errorBox.classList.add('d-none');
+            loginSuccess.textContent = data.message || 'Đặt lại mật khẩu thành công! Vui lòng đăng nhập.';
+            loginSuccess.classList.remove('d-none');
+            passwordInput.focus();
+        } catch (err) {
+            forgotError.textContent = err.message;
+            forgotError.classList.remove('d-none');
+        } finally {
+            resetPwdBtn.disabled = false;
+            resetPwdBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i>Đặt lại mật khẩu';
         }
     });
 });

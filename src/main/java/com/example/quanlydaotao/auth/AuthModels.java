@@ -13,4 +13,10 @@ public final class AuthModels {
             String role,
             String studentCode) {
     }
+
+    public record ForgotPasswordRequest(String username) {
+    }
+
+    public record ResetPasswordRequest(String username, String otp, String newPassword) {
+    }
 }

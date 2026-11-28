@@ -1,7 +1,11 @@
 package com.example.quanlydaotao.auth;
 
+import static com.example.quanlydaotao.auth.AuthModels.ForgotPasswordRequest;
 import static com.example.quanlydaotao.auth.AuthModels.LoginRequest;
+import static com.example.quanlydaotao.auth.AuthModels.ResetPasswordRequest;
 import static com.example.quanlydaotao.auth.AuthModels.UserSessionInfo;
+
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,5 +48,18 @@ public class AuthController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Chưa đăng nhập");
         }
         return user;
+    }
+
+    @PostMapping("/forgot-password")
+    public Map<String, Object> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        return authService.requestPasswordReset(request != null ? request.username() : null);
+    }
+
+    @PostMapping("/reset-password")
+    public Map<String, Object> resetPassword(@RequestBody ResetPasswordRequest request) {
+        return authService.resetPassword(
+                request != null ? request.username() : null,
+                request != null ? request.otp() : null,
+                request != null ? request.newPassword() : null);
     }
 }
