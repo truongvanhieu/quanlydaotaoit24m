@@ -1,5 +1,6 @@
 import { API_ENDPOINTS } from './config.js';
 
+<<<<<<< HEAD
 const TOKEN_KEY = 'n1.jwt';
 const USER_ID_KEY = 'n1.userId';
 let studentPermissions = new Set();
@@ -103,6 +104,8 @@ function updateStudentSessionUi() {
     }
 }
 
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 document.addEventListener('DOMContentLoaded', () => {
 
     const params = new URLSearchParams(window.location.search);
@@ -134,11 +137,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     }
 
+<<<<<<< HEAD
     initStudentPage(page);
 
 });
 
 function initStudentPage(page) {
+=======
+    initStudentPage();
+
+});
+
+function initStudentPage() {
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
     const studentTableBody = document.getElementById('studentTableBody');
     const searchForm = document.getElementById('searchForm');
     const studentForm = document.getElementById('studentForm');
@@ -147,6 +158,7 @@ function initStudentPage(page) {
     // TRANG DANH SÁCH
     // =========================
     if (studentTableBody) {
+<<<<<<< HEAD
         loadStudentPermissions().finally(() => {
             if (!requireStudentView()) {
                 return;
@@ -156,12 +168,23 @@ function initStudentPage(page) {
             }
             loadStudents();
         });
+=======
+        loadStudents();
+
+        if (searchForm) {
+            searchForm.addEventListener('submit', handleSearch);
+        }
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
     }
 
     // =========================
     // TRANG FORM THÊM / SỬA / XEM
     // =========================
+<<<<<<< HEAD
     if (studentForm && page === 'form') {
+=======
+    if (studentForm) {
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
         initStudentForm();
     }
 }
@@ -192,7 +215,11 @@ async function loadStudents(keyword = '') {
             ? `${API_ENDPOINTS.STUDENTS}?keyword=${encodeURIComponent(trimmedKeyword)}`
             : API_ENDPOINTS.STUDENTS;
 
+<<<<<<< HEAD
         const response = await fetch(url, { headers: getAuthHeaders() });
+=======
+        const response = await fetch(url);
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
@@ -268,32 +295,54 @@ function renderStudents(students) {
                         <div class="table-actions d-flex justify-content-end gap-1">
 
                             <!-- Xem -->
+<<<<<<< HEAD
                             ${studentPermissions.has('STUDENT_VIEW') ? `<a
+=======
+                            <a
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
                                 class="btn btn-info btn-sm"
                                 href="index.html?page=form&id=${encodeURIComponent(student.id)}&mode=view"
                                 title="Xem"
                             >
                                 <i class="bi bi-eye"></i>
+<<<<<<< HEAD
                             </a>` : ''}
 
                             <!-- Sửa -->
                             ${studentPermissions.has('STUDENT_UPDATE') ? `<a
+=======
+                            </a>
+
+                            <!-- Sửa -->
+                            <a
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
                                 class="btn btn-warning btn-sm"
                                 href="index.html?page=form&id=${encodeURIComponent(student.id)}&mode=edit"
                                 title="Sửa"
                             >
                                 <i class="bi bi-pencil-square"></i>
+<<<<<<< HEAD
                             </a>` : ''}
 
                             <!-- Xóa -->
                             ${studentPermissions.has('STUDENT_DELETE') ? `<button
+=======
+                            </a>
+
+                            <!-- Xóa -->
+                            <button
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
                                 type="button"
                                 class="btn btn-danger btn-sm"
                                 title="Xóa"
                                 onclick="deleteStudent('${escapeHtml(student.id)}')"
                             >
                                 <i class="bi bi-trash"></i>
+<<<<<<< HEAD
                             </button>` : ''}
+=======
+                            </button>
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 
                         </div>
                     </td>
@@ -309,9 +358,12 @@ function renderStudents(students) {
 
 function handleSearch(event) {
     event.preventDefault();
+<<<<<<< HEAD
     if (!requireStudentView()) {
         return;
     }
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 
     const keywordInput = document.getElementById('keyword');
 
@@ -339,8 +391,12 @@ window.deleteStudent = async function (id) {
         const response = await fetch(
             `${API_ENDPOINTS.STUDENTS}/${encodeURIComponent(id)}`,
             {
+<<<<<<< HEAD
                 method: 'DELETE',
                 headers: getAuthHeaders()
+=======
+                method: 'DELETE'
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
             }
         );
 
@@ -381,6 +437,7 @@ function initStudentForm() {
 
     const mode = urlParams.get('mode') || 'create';
 
+<<<<<<< HEAD
     loadStudentPermissions().then(() => {
         if (!requireStudentView()) {
             return;
@@ -406,6 +463,15 @@ function initStudentForm() {
             loadStudentDetail(id, mode);
         }
     });
+=======
+    setupFormMode(mode);
+
+    // Nếu là xem / sửa thì lấy dữ liệu từ API
+    if ((mode === 'view' || mode === 'edit') && id) {
+        loadStudentDetail(id, mode);
+    }
+
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
     studentForm.addEventListener('submit', async (event) => {
         event.preventDefault();
 
@@ -435,8 +501,11 @@ function setupFormMode(mode) {
         document.getElementById('phone'),
         document.getElementById('className')
     ];
+<<<<<<< HEAD
     const usernameGroup = document.getElementById('studentUsernameGroup');
     const passwordGroup = document.getElementById('studentPasswordGroup');
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 
     // =========================
     // CREATE
@@ -468,6 +537,7 @@ function setupFormMode(mode) {
             `;
         }
 
+<<<<<<< HEAD
         if (usernameGroup) {
             usernameGroup.style.display = '';
         }
@@ -475,6 +545,8 @@ function setupFormMode(mode) {
             passwordGroup.style.display = '';
         }
 
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
         return;
     }
 
@@ -508,6 +580,7 @@ function setupFormMode(mode) {
             `;
         }
 
+<<<<<<< HEAD
         if (usernameGroup) {
             usernameGroup.style.display = 'none';
         }
@@ -515,6 +588,8 @@ function setupFormMode(mode) {
             passwordGroup.style.display = 'none';
         }
 
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
         return;
     }
 
@@ -548,12 +623,15 @@ function setupFormMode(mode) {
                 field.readOnly = true;
             }
         });
+<<<<<<< HEAD
         if (usernameGroup) {
             usernameGroup.style.display = 'none';
         }
         if (passwordGroup) {
             passwordGroup.style.display = 'none';
         }
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
     }
 }
 
@@ -564,8 +642,12 @@ function setupFormMode(mode) {
 async function loadStudentDetail(id, mode) {
     try {
         const response = await fetch(
+<<<<<<< HEAD
             `${API_ENDPOINTS.STUDENTS}/${encodeURIComponent(id)}`,
             { headers: getAuthHeaders() }
+=======
+            `${API_ENDPOINTS.STUDENTS}/${encodeURIComponent(id)}`
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
         );
 
         if (!response.ok) {
@@ -646,7 +728,15 @@ async function saveStudent(mode, id = null) {
 
         const response = await fetch(url, {
             method: method,
+<<<<<<< HEAD
             headers: getAuthHeaders(true),
+=======
+
+            headers: {
+                'Content-Type': 'application/json'
+            },
+
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
             body: JSON.stringify(student)
         });
 
@@ -692,9 +782,13 @@ function getStudentFormData() {
         fullName: getValue('fullName'),
         email: getValue('email'),
         phone: getValue('phone'),
+<<<<<<< HEAD
         className: getValue('className'),
         username: getValue('studentUsername'),
         password: getValue('studentPassword')
+=======
+        className: getValue('className')
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
     };
 }
 
@@ -736,6 +830,7 @@ function validateStudent(student) {
         return false;
     }
 
+<<<<<<< HEAD
     const username = document.getElementById('studentUsername');
     const password = document.getElementById('studentPassword');
     if (username && username.offsetParent !== null && !student.username) {
@@ -747,6 +842,8 @@ function validateStudent(student) {
         return false;
     }
 
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
     return true;
 }
 
@@ -787,6 +884,7 @@ function escapeHtml(value) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+<<<<<<< HEAD
 }
 
 const studentLogoutButton = document.getElementById('studentLogoutButton');
@@ -825,3 +923,6 @@ if (studentLogoutButton) {
 }
 
 updateStudentSessionUi();
+=======
+}
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac

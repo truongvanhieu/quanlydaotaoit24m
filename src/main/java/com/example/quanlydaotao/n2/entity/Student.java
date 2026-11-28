@@ -8,7 +8,10 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+<<<<<<< HEAD
 import jakarta.persistence.Transient;
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 
 @Entity
 @Table(name = "students")
@@ -34,12 +37,15 @@ public class Student {
     @Column(name = "class_name")
     private String className;
 
+<<<<<<< HEAD
     @Transient
     private String username;
 
     @Transient
     private String password;
 
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
     public Student() {
     }
 
@@ -106,6 +112,7 @@ public class Student {
     public void setClassName(String className) {
         this.className = className;
     }
+<<<<<<< HEAD
 
     public String getUsername() {
         return username;
@@ -122,4 +129,6 @@ public class Student {
     public void setPassword(String password) {
         this.password = password;
     }
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 }

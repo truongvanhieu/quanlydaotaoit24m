@@ -1,7 +1,10 @@
 package com.example.quanlydaotao.n1.service;
 
 import java.time.LocalDateTime;
+<<<<<<< HEAD
 import java.util.Locale;
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -42,6 +45,7 @@ public class AuthService {
                     "Username và mật khẩu không được để trống");
         }
 
+<<<<<<< HEAD
         String identifier = request.username().trim();
         User user = (identifier.contains("@")
                 ? userRepository.findByEmailIgnoreCase(identifier.toLowerCase(Locale.ROOT))
@@ -49,6 +53,12 @@ public class AuthService {
                 .orElseThrow(() ->
                         new IllegalArgumentException(
                                 "Tên đăng nhập/email hoặc mật khẩu không đúng"));
+=======
+        User user = userRepository.findByUsername(request.username())
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Tên đăng nhập hoặc mật khẩu không đúng"));
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 
         if (Boolean.FALSE.equals(user.getIsActive())
                 || user.getDeletedAt() != null) {
@@ -59,7 +69,11 @@ public class AuthService {
         if (!passwordEncoder.matches(
                 request.password(), user.getPasswordHash())) {
             throw new IllegalArgumentException(
+<<<<<<< HEAD
                     "Tên đăng nhập/email hoặc mật khẩu không đúng");
+=======
+                    "Tên đăng nhập hoặc mật khẩu không đúng");
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
         }
 
         LocalDateTime now = LocalDateTime.now();

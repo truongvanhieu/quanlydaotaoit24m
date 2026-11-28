@@ -1,11 +1,15 @@
 package com.example.quanlydaotao.n1.service;
 
+<<<<<<< HEAD
 import java.time.LocalDateTime;
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+<<<<<<< HEAD
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -18,12 +22,20 @@ import com.example.quanlydaotao.n1.entity.UserPermission;
 import com.example.quanlydaotao.n1.repository.PermissionRepository;
 import com.example.quanlydaotao.n1.repository.UserPermissionRepository;
 import com.example.quanlydaotao.n1.repository.UserRepository;
+=======
+
+import org.springframework.stereotype.Service;
+
+import com.example.quanlydaotao.n1.dto.PermissionResponse;
+import com.example.quanlydaotao.n1.entity.Role;
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 
 @Service
 public class UserPermissionService {
 
     private final UserRoleService userRoleService;
     private final RolePermissionService rolePermissionService;
+<<<<<<< HEAD
     private final UserPermissionRepository userPermissionRepository;
     private final PermissionRepository permissionRepository;
     private final UserRepository userRepository;
@@ -49,6 +61,21 @@ public class UserPermissionService {
         }
 
         List<Role> roles = userRoleService.getRolesByUserId(userId);
+=======
+
+    public UserPermissionService(
+            UserRoleService userRoleService,
+            RolePermissionService rolePermissionService) {
+        this.userRoleService = userRoleService;
+        this.rolePermissionService = rolePermissionService;
+    }
+
+    public List<PermissionResponse> getPermissionsByUserId(UUID userId) {
+        List<Role> roles = userRoleService.getRolesByUserId(userId);
+
+        Map<UUID, PermissionResponse> permissions = new LinkedHashMap<>();
+
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
         for (Role role : roles) {
             List<PermissionResponse> rolePermissions =
                     rolePermissionService.getPermissionsByRoleId(role.getId());
@@ -60,6 +87,7 @@ public class UserPermissionService {
 
         return new ArrayList<>(permissions.values());
     }
+<<<<<<< HEAD
 
     public List<PermissionResponse> getDirectPermissionsByUserId(UUID userId) {
         List<UUID> permissionIds = userPermissionRepository
@@ -133,4 +161,6 @@ public class UserPermissionService {
         userPermission.setUpdatedAt(now);
         return userPermissionRepository.save(userPermission);
     }
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 }

@@ -17,8 +17,11 @@ public interface RolePermissionRepository
     List<RolePermission> findByPermissionIdAndIsActiveTrueAndDeletedAtIsNull(
             UUID permissionId);
 
+<<<<<<< HEAD
     long countByPermissionIdAndIsActiveTrueAndDeletedAtIsNull(UUID permissionId);
 
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
     Optional<RolePermission>
     findByRoleIdAndPermissionIdAndIsActiveTrueAndDeletedAtIsNull(
             UUID roleId, UUID permissionId);

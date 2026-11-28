@@ -3,6 +3,7 @@ package com.example.quanlydaotao.n1.controller;
 import java.util.List;
 import java.util.UUID;
 
+<<<<<<< HEAD
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +19,14 @@ import com.example.quanlydaotao.n1.dto.AssignPermissionRequest;
 import com.example.quanlydaotao.n1.dto.PermissionResponse;
 import com.example.quanlydaotao.n1.entity.UserPermission;
 import com.example.quanlydaotao.n1.security.RequirePermission;
+=======
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.quanlydaotao.n1.dto.PermissionResponse;
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 import com.example.quanlydaotao.n1.service.UserPermissionService;
 
 @RestController
@@ -36,6 +45,7 @@ public class UserPermissionController {
             @PathVariable UUID userId) {
         return userPermissionService.getPermissionsByUserId(userId);
     }
+<<<<<<< HEAD
 
     @GetMapping("/{userId}/direct-permissions")
     @RequirePermission("ROLE_MANAGE")
@@ -68,4 +78,6 @@ public class UserPermissionController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }
     }
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 }

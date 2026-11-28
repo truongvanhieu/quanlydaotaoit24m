@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+<<<<<<< HEAD
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +14,9 @@ import com.example.quanlydaotao.n1.entity.UserRole;
 import com.example.quanlydaotao.n1.repository.RoleRepository;
 import com.example.quanlydaotao.n1.repository.UserRepository;
 import com.example.quanlydaotao.n1.repository.UserRoleRepository;
+=======
+
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 import com.example.quanlydaotao.n2.entity.Student;
 import com.example.quanlydaotao.n2.repository.StudentRepository;
 
@@ -20,6 +24,7 @@ import com.example.quanlydaotao.n2.repository.StudentRepository;
 public class StudentService {
 
     private final StudentRepository studentRepository;
+<<<<<<< HEAD
     private final UserRepository userRepository;
     private final UserRoleRepository userRoleRepository;
     private final RoleRepository roleRepository;
@@ -43,11 +48,20 @@ public class StudentService {
 
     public List<Student> getAll() {
         syncStudentRoles();
+=======
+
+    public StudentService(StudentRepository studentRepository) {
+        this.studentRepository = studentRepository;
+    }
+
+    public List<Student> getAll() {
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
         return studentRepository.findAll();
     }
 
     public List<Student> search(String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) {
+<<<<<<< HEAD
             return getAll();
         }
         String value = keyword.trim();
@@ -67,6 +81,13 @@ public class StudentService {
         matchedByUsername.forEach(student -> result.put(student.getId(), student));
         matchedByStudentFields.forEach(student -> result.put(student.getId(), student));
         return result.values().stream().toList();
+=======
+            return studentRepository.findAll();
+        }
+        String value = keyword.trim();
+        return studentRepository.findByStudentCodeContainingIgnoreCaseOrFullNameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrPhoneContainingIgnoreCase(
+                value, value, value, value);
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
     }
 
     public Student getById(UUID id) {
@@ -74,6 +95,7 @@ public class StudentService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sinh viên với id: " + id));
     }
 
+<<<<<<< HEAD
     @Transactional
     public Student save(Student student) {
         Student savedStudent = studentRepository.save(student);
@@ -278,5 +300,13 @@ public class StudentService {
         }
         return java.text.Normalizer.normalize(value, java.text.Normalizer.Form.NFD)
                 .replaceAll("\\p{M}", "");
+=======
+    public Student save(Student student) {
+        return studentRepository.save(student);
+    }
+
+    public void delete(UUID id) {
+        studentRepository.deleteById(id);
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
     }
 }

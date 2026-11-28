@@ -1,5 +1,6 @@
 package com.example.quanlydaotao.n1.service;
 
+<<<<<<< HEAD
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -7,6 +8,12 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import com.example.quanlydaotao.n1.dto.RoleRequest;
+=======
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 import com.example.quanlydaotao.n1.entity.Role;
 import com.example.quanlydaotao.n1.repository.RoleRepository;
 
@@ -22,6 +29,7 @@ public class RoleService {
     public List<Role> getAllActiveRoles() {
         return roleRepository.findByIsActiveTrueAndDeletedAtIsNull();
     }
+<<<<<<< HEAD
 
     public List<Role> getRolesForManagement() {
         return roleRepository.findByDeletedAtIsNullOrderByNameAsc();
@@ -117,4 +125,6 @@ public class RoleService {
     private String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
     }
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 }

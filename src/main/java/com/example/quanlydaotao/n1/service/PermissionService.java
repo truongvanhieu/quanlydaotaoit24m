@@ -1,5 +1,6 @@
 package com.example.quanlydaotao.n1.service;
 
+<<<<<<< HEAD
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -13,11 +14,20 @@ import com.example.quanlydaotao.n1.repository.PermissionModuleRepository;
 import com.example.quanlydaotao.n1.repository.PermissionRepository;
 import com.example.quanlydaotao.n1.repository.RolePermissionRepository;
 import com.example.quanlydaotao.n1.repository.UserPermissionRepository;
+=======
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.example.quanlydaotao.n1.entity.Permission;
+import com.example.quanlydaotao.n1.repository.PermissionRepository;
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 
 @Service
 public class PermissionService {
 
     private final PermissionRepository permissionRepository;
+<<<<<<< HEAD
     private final PermissionModuleRepository permissionModuleRepository;
     private final RolePermissionRepository rolePermissionRepository;
     private final UserPermissionRepository userPermissionRepository;
@@ -31,11 +41,17 @@ public class PermissionService {
         this.permissionModuleRepository = permissionModuleRepository;
         this.rolePermissionRepository = rolePermissionRepository;
         this.userPermissionRepository = userPermissionRepository;
+=======
+
+    public PermissionService(PermissionRepository permissionRepository) {
+        this.permissionRepository = permissionRepository;
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
     }
 
     public List<Permission> getAllActivePermissions() {
         return permissionRepository.findByIsActiveTrueAndDeletedAtIsNull();
     }
+<<<<<<< HEAD
 
     public Permission createPermission(CreatePermissionRequest request) {
         if (request == null) {
@@ -134,4 +150,6 @@ public class PermissionService {
     private String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
     }
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 }

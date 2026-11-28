@@ -1,6 +1,7 @@
 package com.example.quanlydaotao.n1.controller;
 
 import java.util.List;
+<<<<<<< HEAD
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,15 @@ import com.example.quanlydaotao.n1.dto.AssignPermissionRequest;
 import com.example.quanlydaotao.n1.dto.PermissionResponse;
 import com.example.quanlydaotao.n1.entity.RolePermission;
 import com.example.quanlydaotao.n1.security.RequirePermission;
+=======
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.quanlydaotao.n1.dto.PermissionResponse;
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 import com.example.quanlydaotao.n1.service.RolePermissionService;
 
 @RestController
@@ -35,6 +45,7 @@ public class RolePermissionController {
             @PathVariable String roleCode) {
         return rolePermissionService.getPermissionsByRoleCode(roleCode);
     }
+<<<<<<< HEAD
 
     @GetMapping("/manage/{roleCode}/permissions")
     @RequirePermission("ROLE_MANAGE")
@@ -69,4 +80,6 @@ public class RolePermissionController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }
     }
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 }

@@ -5,7 +5,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+<<<<<<< HEAD
 import java.time.LocalDateTime;
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 
 import org.springframework.stereotype.Service;
 
@@ -104,6 +107,7 @@ public List<PermissionResponse> getPermissionsByRoleId(UUID roleId) {
             .toList();
 }
 
+<<<<<<< HEAD
     public RolePermission assignPermission(UUID roleId, UUID permissionId) {
         Role role = roleRepository.findById(roleId)
             .filter(candidate -> Boolean.TRUE.equals(candidate.getIsActive()))
@@ -147,4 +151,6 @@ public List<PermissionResponse> getPermissionsByRoleId(UUID roleId) {
         return rolePermissionRepository.save(rolePermission);
     }
 
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 }

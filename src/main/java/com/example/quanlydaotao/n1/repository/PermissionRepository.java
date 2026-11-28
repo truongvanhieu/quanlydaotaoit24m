@@ -13,10 +13,13 @@ public interface PermissionRepository extends JpaRepository<Permission, UUID> {
     Optional<Permission> findByCodeAndIsActiveTrue(String code);
 
     List<Permission> findByIsActiveTrueAndDeletedAtIsNull();
+<<<<<<< HEAD
 
     boolean existsByCode(String code);
 
     Optional<Permission> findByIdAndDeletedAtIsNull(UUID id);
 
     long countByModuleAndIsActiveTrueAndDeletedAtIsNull(String module);
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 }

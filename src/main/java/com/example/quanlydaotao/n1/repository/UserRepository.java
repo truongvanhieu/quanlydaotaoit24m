@@ -1,12 +1,18 @@
 package com.example.quanlydaotao.n1.repository;
 
+<<<<<<< HEAD
 import java.util.List;
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+<<<<<<< HEAD
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 
 import com.example.quanlydaotao.n1.entity.User;
 
@@ -15,6 +21,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByEmail(String email);
     Optional<User> findByUsername(String username);
     Optional<User> findByEmail(String email);
+<<<<<<< HEAD
     Optional<User> findByEmailIgnoreCase(String email);
 
     @Query("""
@@ -51,4 +58,6 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             order by u.fullName
             """)
     List<User> searchActiveUsers(@Param("keyword") String keyword);
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 }

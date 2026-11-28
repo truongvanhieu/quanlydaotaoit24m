@@ -1,6 +1,7 @@
 package com.example.quanlydaotao.n1.controller;
 
 import java.util.List;
+<<<<<<< HEAD
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,14 @@ import org.springframework.web.server.ResponseStatusException;
 import com.example.quanlydaotao.n1.dto.RoleRequest;
 import com.example.quanlydaotao.n1.entity.Role;
 import com.example.quanlydaotao.n1.security.RequirePermission;
+=======
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.quanlydaotao.n1.entity.Role;
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 import com.example.quanlydaotao.n1.service.RoleService;
 
 @RestController
@@ -34,6 +43,7 @@ public class RoleController {
     public List<Role> getAllRoles() {
         return roleService.getAllActiveRoles();
     }
+<<<<<<< HEAD
 
     @GetMapping("/manage")
     @RequirePermission("ROLE_MANAGE")
@@ -74,4 +84,6 @@ public class RoleController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }
     }
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 }

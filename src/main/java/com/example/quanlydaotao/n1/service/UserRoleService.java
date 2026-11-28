@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+<<<<<<< HEAD
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.quanlydaotao.n1.entity.Role;
@@ -16,12 +17,20 @@ import com.example.quanlydaotao.n1.repository.UserRepository;
 import com.example.quanlydaotao.n1.repository.UserRoleRepository;
 import com.example.quanlydaotao.n2.entity.Student;
 import com.example.quanlydaotao.n2.repository.StudentRepository;
+=======
+
+import com.example.quanlydaotao.n1.entity.Role;
+import com.example.quanlydaotao.n1.entity.UserRole;
+import com.example.quanlydaotao.n1.repository.RoleRepository;
+import com.example.quanlydaotao.n1.repository.UserRoleRepository;
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 
 @Service
 public class UserRoleService {
 
     private final UserRoleRepository userRoleRepository;
     private final RoleRepository roleRepository;
+<<<<<<< HEAD
     private final UserRepository userRepository;
     private final StudentRepository studentRepository;
 
@@ -34,6 +43,14 @@ public class UserRoleService {
         this.roleRepository = roleRepository;
         this.userRepository = userRepository;
         this.studentRepository = studentRepository;
+=======
+
+    public UserRoleService(
+            UserRoleRepository userRoleRepository,
+            RoleRepository roleRepository) {
+        this.userRoleRepository = userRoleRepository;
+        this.roleRepository = roleRepository;
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
     }
 
     public List<Role> getRolesByUserId(UUID userId) {
@@ -52,6 +69,7 @@ public class UserRoleService {
     }
 
     
+<<<<<<< HEAD
     @Transactional
     public UserRole assignRole(UUID userId, UUID roleId) {
         Role role = roleRepository.findById(roleId)
@@ -133,6 +151,33 @@ public class UserRoleService {
         return java.text.Normalizer.normalize(value, java.text.Normalizer.Form.NFD)
                 .replaceAll("\\p{M}", "");
     }
+=======
+public UserRole assignRole(UUID userId, UUID roleId) {
+    Optional<UserRole> existing = userRoleRepository
+            .findByUserIdAndRoleIdAndIsActiveTrueAndDeletedAtIsNull(
+                    userId, roleId);
+
+    if (existing.isPresent()) {
+        return existing.get();
+    }
+
+    Role role = roleRepository.findById(roleId)
+            .filter(r -> Boolean.TRUE.equals(r.getIsActive()))
+            .filter(r -> r.getDeletedAt() == null)
+            .orElseThrow(() ->
+                    new RuntimeException("Vai trò không tồn tại hoặc đã bị vô hiệu hóa"));
+
+    UserRole userRole = new UserRole();
+    userRole.setId(UUID.randomUUID());
+    userRole.setUserId(userId);
+    userRole.setRoleId(role.getId());
+    userRole.setIsActive(true);
+    userRole.setCreatedAt(LocalDateTime.now());
+    userRole.setUpdatedAt(LocalDateTime.now());
+
+    return userRoleRepository.save(userRole);
+}
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 
     
 public UserRole removeRole(UUID userId, UUID roleId) {

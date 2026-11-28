@@ -4,6 +4,7 @@
 
 This project aims to develop a web platform for University Training Management System supply at University Viet Nam. The platform will leverage Spring Boot Web API for the backend, Bootstrap/ReactJS for the frontend, and SQL Server for the database.
 
+<<<<<<< HEAD
 ## Running locally
 
 The application requires Java 21, a local SQL Server database named `it24m`, and a Base64-encoded `JWT_SECRET` containing at least 32 random bytes. Generate a new secret for each environment; do not commit or share it.
@@ -27,6 +28,8 @@ export JWT_SECRET="$(openssl rand -base64 32)"
 
 The secret is intentionally not given a default value: a committed JWT signing key would be shared by every installation.
 
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 ## Objectives
 
 - To design and develop a centralized system for managing academic programs, courses, and student records efficiently.

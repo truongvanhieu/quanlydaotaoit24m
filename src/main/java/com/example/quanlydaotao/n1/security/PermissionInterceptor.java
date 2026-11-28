@@ -13,7 +13,10 @@ import com.example.quanlydaotao.n1.entity.UserRole;
 import com.example.quanlydaotao.n1.repository.PermissionRepository;
 import com.example.quanlydaotao.n1.repository.RevokedTokenRepository;
 import com.example.quanlydaotao.n1.repository.RolePermissionRepository;
+<<<<<<< HEAD
 import com.example.quanlydaotao.n1.repository.UserPermissionRepository;
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 import com.example.quanlydaotao.n1.repository.UserRoleRepository;
 
 import io.jsonwebtoken.Claims;
@@ -29,21 +32,31 @@ public class PermissionInterceptor implements HandlerInterceptor {
     private final PermissionRepository permissionRepository;
     private final JwtService jwtService;
     private final RevokedTokenRepository revokedTokenRepository;
+<<<<<<< HEAD
     private final UserPermissionRepository userPermissionRepository;
 
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
     public PermissionInterceptor(
             UserRoleRepository userRoleRepository,
             RolePermissionRepository rolePermissionRepository,
             PermissionRepository permissionRepository,
             JwtService jwtService,
+<<<<<<< HEAD
             RevokedTokenRepository revokedTokenRepository,
             UserPermissionRepository userPermissionRepository) {
+=======
+            RevokedTokenRepository revokedTokenRepository) {
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
         this.userRoleRepository = userRoleRepository;
         this.rolePermissionRepository = rolePermissionRepository;
         this.permissionRepository = permissionRepository;
         this.jwtService = jwtService;
         this.revokedTokenRepository = revokedTokenRepository;
+<<<<<<< HEAD
         this.userPermissionRepository = userPermissionRepository;
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
     }
 
     @Override
@@ -111,6 +124,7 @@ if (revokedTokenRepository.existsByTokenId(tokenId)) {
 
         String permissionCode = required.value();
 
+<<<<<<< HEAD
         List<UUID> directPermissionIds = userPermissionRepository
                 .findByUserIdAndIsActiveTrueAndDeletedAtIsNull(userId)
                 .stream()
@@ -123,6 +137,8 @@ if (revokedTokenRepository.existsByTokenId(tokenId)) {
             return true;
         }
 
+=======
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
         List<UserRole> userRoles =
                 userRoleRepository
                         .findByUserIdAndIsActiveTrueAndDeletedAtIsNull(userId);

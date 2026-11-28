@@ -12,6 +12,7 @@ public interface RoleRepository extends JpaRepository<Role, UUID> {
 
     Optional<Role> findByCodeAndIsActiveTrue(String code);
 
+<<<<<<< HEAD
     Optional<Role> findByCode(String code);
 
     List<Role> findByIsActiveTrueAndDeletedAtIsNull();
@@ -23,4 +24,7 @@ public interface RoleRepository extends JpaRepository<Role, UUID> {
     boolean existsByCode(String code);
 
     boolean existsByCodeAndIdNot(String code, UUID id);
+=======
+    List<Role> findByIsActiveTrueAndDeletedAtIsNull();
+>>>>>>> 0d7aa9710788386908febc8ddaa6393808c6dcac
 }
