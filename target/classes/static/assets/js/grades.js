@@ -11,6 +11,7 @@ const weightSummary = document.getElementById('weightSummary');
 const addStudentBtn = document.getElementById('addStudentToClassBtn');
 const selectStudent = document.getElementById('selectStudent');
 const confirmAddStudentBtn = document.getElementById('confirmAddStudentBtn');
+const addAllStudentsBtn = document.getElementById('addAllStudentsBtn');
 const modalAlert = document.getElementById('modalAlert');
 
 const openCreateClassModalBtn = document.getElementById('openCreateClassModalBtn');
@@ -43,6 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (addStudentBtn) addStudentBtn.addEventListener('click', openAddStudentModal);
     if (confirmAddStudentBtn) confirmAddStudentBtn.addEventListener('click', handleConfirmAddStudent);
+    if (addAllStudentsBtn) addAllStudentsBtn.addEventListener('click', handleAddAllStudents);
     if (openCreateClassModalBtn) openCreateClassModalBtn.addEventListener('click', openCreateClassModal);
     if (confirmCreateClassBtn) confirmCreateClassBtn.addEventListener('click', handleConfirmCreateClass);
 
@@ -187,6 +189,7 @@ async function openAddStudentModal() {
     if (modalAlert) modalAlert.classList.add('d-none');
     if (selectStudent) selectStudent.innerHTML = '<option value="">Đang tải danh sách...</option>';
     if (confirmAddStudentBtn) confirmAddStudentBtn.disabled = true;
+    if (addAllStudentsBtn) addAllStudentsBtn.disabled = true;
 
     openModal('addStudentModal');
 
@@ -195,6 +198,7 @@ async function openAddStudentModal() {
         if (!students || !students.length) {
             selectStudent.innerHTML = '<option value="">Tất cả sinh viên trong trường đã có trong lớp này</option>';
             confirmAddStudentBtn.disabled = true;
+            if (addAllStudentsBtn) addAllStudentsBtn.disabled = true;
             return;
         }
 
@@ -202,12 +206,37 @@ async function openAddStudentModal() {
             .map((s) => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.studentCode)} - ${escapeHtml(s.fullName)} (${escapeHtml(s.className || 'Chưa phân lớp')})</option>`)
             .join('');
         confirmAddStudentBtn.disabled = false;
+        if (addAllStudentsBtn) addAllStudentsBtn.disabled = false;
     } catch (error) {
         if (modalAlert) {
             modalAlert.textContent = error.message;
             modalAlert.classList.remove('d-none');
         }
         if (selectStudent) selectStudent.innerHTML = '<option value="">Lỗi khi tải danh sách</option>';
+    }
+}
+
+async function handleAddAllStudents() {
+    const courseClassId = classSelect.value;
+    if (!courseClassId) return;
+
+    try {
+        if (addAllStudentsBtn) addAllStudentsBtn.disabled = true;
+        if (confirmAddStudentBtn) confirmAddStudentBtn.disabled = true;
+        const result = await request(`${API_ENDPOINTS.GRADES}/registrations/all?courseClassId=${encodeURIComponent(courseClassId)}`, {
+            method: 'POST',
+        });
+        closeModal('addStudentModal');
+        const count = result?.addedCount ?? 0;
+        showAlert(`Đã thêm tất cả ${count} sinh viên vào lớp học phần thành công!`, 'success');
+        await loadGradeBook();
+    } catch (error) {
+        if (modalAlert) {
+            modalAlert.textContent = error.message;
+            modalAlert.classList.remove('d-none');
+        }
+        if (addAllStudentsBtn) addAllStudentsBtn.disabled = false;
+        if (confirmAddStudentBtn) confirmAddStudentBtn.disabled = false;
     }
 }
 

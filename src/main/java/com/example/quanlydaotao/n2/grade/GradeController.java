@@ -89,6 +89,12 @@ public class GradeController {
         gradeService.registerStudent(request.courseClassId(), request.studentId());
     }
 
+    @PostMapping("/registrations/all")
+    public java.util.Map<String, Integer> registerAllStudents(@RequestParam UUID courseClassId) {
+        int addedCount = gradeService.registerAllAvailableStudents(courseClassId);
+        return java.util.Map.of("addedCount", addedCount);
+    }
+
     @DeleteMapping("/registrations/{id}")
     public void removeStudentFromClass(@PathVariable UUID id) {
         gradeService.removeStudentFromClass(id);

@@ -623,6 +623,26 @@ public class GradeService {
     }
 
     @Transactional
+    public int registerAllAvailableStudents(UUID courseClassId) {
+        requireCourseClass(courseClassId);
+        jdbcTemplate.update("""
+                INSERT INTO students_ (id, code, full_name, is_active)
+                SELECT s.id, s.student_code, s.full_name, 1
+                FROM students s
+                WHERE NOT EXISTS (SELECT 1 FROM students_ st WHERE st.id = s.id)
+                """);
+        return jdbcTemplate.update("""
+                INSERT INTO course_registrations (id, course_class_id, student_id, is_active, created_at)
+                SELECT NEWID(), ?, s.id, 1, CURRENT_TIMESTAMP
+                FROM students s
+                WHERE s.id NOT IN (
+                    SELECT cr.student_id FROM course_registrations cr
+                    WHERE cr.course_class_id = ? AND cr.deleted_at IS NULL
+                )
+                """, courseClassId, courseClassId);
+    }
+
+    @Transactional
     public void removeStudentFromClass(UUID registrationId) {
         jdbcTemplate.update("""
                 UPDATE course_registrations
