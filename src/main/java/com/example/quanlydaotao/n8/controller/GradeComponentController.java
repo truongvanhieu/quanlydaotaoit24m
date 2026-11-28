@@ -16,13 +16,19 @@ public class GradeComponentController {
     }
 
     @GetMapping
-    public List<GradeComponent> getAll() { return service.getAll(); }
+    public List<GradeComponent> getAll() {
+        return service.getAll();
+    }
 
     @GetMapping("/{id}")
-    public GradeComponent getById(@PathVariable UUID id) { return service.getById(id); }
+    public GradeComponent getById(@PathVariable UUID id) {
+        return service.getById(id);
+    }
 
     @PostMapping
-    public GradeComponent create(@RequestBody GradeComponent g) { return service.save(g); }
+    public GradeComponent create(@RequestBody GradeComponent g) {
+        return service.save(g);
+    }
 
     @PutMapping("/{id}")
     public GradeComponent update(@PathVariable UUID id, @RequestBody GradeComponent g) {
@@ -31,5 +37,7 @@ public class GradeComponentController {
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable UUID id) { service.delete(id); }
+    public void delete(@PathVariable UUID id) {
+        service.delete(id);
+    }
 }
