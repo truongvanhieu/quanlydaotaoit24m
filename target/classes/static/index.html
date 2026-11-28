@@ -162,9 +162,23 @@
                                     </button>
                                 </form>
                                 <!-- Create Button -->
-                                <a class="btn btn-success fw-semibold shadow-sm" href="index.html?page=form">
+                                <a id="createStudentBtn" class="btn btn-success fw-semibold shadow-sm" href="index.html?page=form">
                                     <i class="bi bi-plus-circle me-1"></i>Thêm sinh viên
                                 </a>
+                            </div>
+                        </div>
+
+                        <!-- Class Filter Tabs -->
+                        <div class="px-3 py-2 bg-light border-bottom d-flex flex-wrap align-items-center justify-content-between gap-2">
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <span class="text-muted small fw-semibold me-1">
+                                    <i class="bi bi-collection me-1"></i>Lớp sinh hoạt:
+                                </span>
+                                <div id="classFilterTabs" class="d-flex flex-wrap align-items-center gap-2">
+                                    <button type="button" class="btn btn-sm btn-primary fw-semibold" data-class-filter="ALL">Tất cả</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary fw-semibold" data-class-filter="IT24M">IT24M</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary fw-semibold" data-class-filter="EE24M">EE24M</button>
+                                </div>
                             </div>
                         </div>
 
@@ -309,7 +323,13 @@
                                         </label>
                                         <div class="input-group">
                                             <span class="input-group-text"><i class="bi bi-mortarboard-fill"></i></span>
-                                            <input type="text" id="className" name="className" class="form-control" placeholder="Ví dụ: IT24M" required />
+                                            <input type="text" id="className" name="className" class="form-control" list="classNameOptions" placeholder="Ví dụ: IT24M, EE24M..." required />
+                                            <datalist id="classNameOptions">
+                                                <option value="IT24M"></option>
+                                                <option value="EE24M"></option>
+                                                <option value="IT24A"></option>
+                                                <option value="ST23A"></option>
+                                            </datalist>
                                         </div>
                                     </div>
                                 </div>
@@ -345,6 +365,6 @@
 </div>
 
 <script src="/adminlte/js/adminlte.js"></script>
-<script type="module" src="/assets/js/student.js?v=2.1"></script>
+<script type="module" src="/assets/js/student.js?v=2.2"></script>
 </body>
 </html>

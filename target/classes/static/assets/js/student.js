@@ -88,6 +88,9 @@ async function loadNextCode() {
 // LIST STUDENTS
 // =========================
 
+let allLoadedStudents = [];
+let activeClassFilter = 'ALL';
+
 async function loadStudents(keyword = '') {
     const studentTableBody = document.getElementById('studentTableBody');
     if (!studentTableBody) return;
@@ -95,7 +98,7 @@ async function loadStudents(keyword = '') {
     try {
         studentTableBody.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center text-muted py-5">
+                <td colspan="8" class="text-center text-muted py-5">
                     <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
                     Đang tải dữ liệu sinh viên...
                 </td>
@@ -110,19 +113,83 @@ async function loadStudents(keyword = '') {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-        const students = await response.json();
-        renderStudents(students);
+        allLoadedStudents = await response.json();
+        renderClassTabs(allLoadedStudents);
+        applyClassFilterAndRender();
     } catch (error) {
         console.error('Lỗi khi tải danh sách sinh viên:', error);
         studentTableBody.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center text-danger py-5">
+                <td colspan="8" class="text-center text-danger py-5">
                     <i class="bi bi-exclamation-triangle fs-3 d-block mb-2"></i>
                     Không thể tải danh sách sinh viên. Vui lòng thử lại sau.
                 </td>
             </tr>
         `;
     }
+}
+
+function renderClassTabs(students) {
+    const tabsContainer = document.getElementById('classFilterTabs');
+    if (!tabsContainer) return;
+
+    const counts = new Map();
+    ['IT24M', 'EE24M'].forEach((cls) => counts.set(cls, 0));
+    (students || []).forEach((s) => {
+        const cls = (s.className || '').trim() || 'Chưa xếp lớp';
+        counts.set(cls, (counts.get(cls) || 0) + 1);
+    });
+
+    if (activeClassFilter !== 'ALL' && !counts.has(activeClassFilter)) {
+        activeClassFilter = 'ALL';
+    }
+
+    const totalAll = students ? students.length : 0;
+    const classNames = Array.from(counts.keys());
+
+    tabsContainer.innerHTML = [
+        `<button type="button" class="btn btn-sm ${activeClassFilter === 'ALL' ? 'btn-primary' : 'btn-outline-secondary'} fw-semibold" data-class-filter="ALL">
+            Tất cả <span class="badge ${activeClassFilter === 'ALL' ? 'bg-white text-primary' : 'bg-secondary-subtle text-secondary'} ms-1">${totalAll}</span>
+        </button>`,
+        ...classNames.map((cls) => {
+            const isActive = activeClassFilter === cls;
+            return `<button type="button" class="btn btn-sm ${isActive ? 'btn-primary' : 'btn-outline-secondary'} fw-semibold" data-class-filter="${escapeHtml(cls)}">
+                ${escapeHtml(cls)} <span class="badge ${isActive ? 'bg-white text-primary' : 'bg-secondary-subtle text-secondary'} ms-1">${counts.get(cls)}</span>
+            </button>`;
+        })
+    ].join('');
+
+    tabsContainer.querySelectorAll('button[data-class-filter]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            activeClassFilter = btn.dataset.classFilter || 'ALL';
+            renderClassTabs(allLoadedStudents);
+            applyClassFilterAndRender();
+        });
+    });
+
+    const createBtn = document.getElementById('createStudentBtn');
+    if (createBtn) {
+        createBtn.href = activeClassFilter !== 'ALL' && activeClassFilter !== 'Chưa xếp lớp'
+            ? `index.html?page=form&className=${encodeURIComponent(activeClassFilter)}`
+            : 'index.html?page=form';
+    }
+}
+
+function applyClassFilterAndRender() {
+    const filtered = activeClassFilter === 'ALL'
+        ? allLoadedStudents
+        : allLoadedStudents.filter((s) => ((s.className || '').trim() || 'Chưa xếp lớp') === activeClassFilter);
+
+    // Cập nhật thống kê tổng toàn trường
+    const statTotalStudents = document.getElementById('statTotalStudents');
+    const statTotalClasses = document.getElementById('statTotalClasses');
+    if (statTotalStudents) statTotalStudents.textContent = allLoadedStudents ? allLoadedStudents.length : 0;
+    if (statTotalClasses) {
+        const uniqueClasses = new Set((allLoadedStudents || []).map((s) => (s.className || '').trim()).filter(Boolean));
+        statTotalClasses.textContent = uniqueClasses.size || 0;
+    }
+
+    renderStudents(filtered);
 }
 
 // =========================
@@ -133,19 +200,10 @@ function renderStudents(students) {
     const studentTableBody = document.getElementById('studentTableBody');
     if (!studentTableBody) return;
 
-    // Cập nhật thống kê
-    const statTotalStudents = document.getElementById('statTotalStudents');
-    const statTotalClasses = document.getElementById('statTotalClasses');
+    // Cập nhật số lượng hiển thị trên bảng hiện tại
     const tableCountBadge = document.getElementById('tableCountBadge');
-
     const total = students ? students.length : 0;
-    if (statTotalStudents) statTotalStudents.textContent = total;
     if (tableCountBadge) tableCountBadge.textContent = `${total} sinh viên`;
-
-    if (statTotalClasses) {
-        const uniqueClasses = new Set((students || []).map((s) => (s.className || '').trim()).filter(Boolean));
-        statTotalClasses.textContent = uniqueClasses.size || 0;
-    }
 
     if (!students || students.length === 0) {
         studentTableBody.innerHTML = `
@@ -334,6 +392,11 @@ function initStudentForm() {
 
     if (mode === 'create') {
         loadNextCode();
+        const presetClass = urlParams.get('className');
+        const classInput = document.getElementById('className');
+        if (presetClass && classInput) {
+            classInput.value = presetClass;
+        }
     } else if ((mode === 'view' || mode === 'edit') && id) {
         loadStudentDetail(id, mode);
     }
