@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#14365a">
+    <title>Tài khoản | Quản lý đào tạo</title>
+    <link rel="stylesheet" href="/assets/css/n1.css">
+    <link rel="stylesheet" href="/assets/css/auth.css">
+</head>
+<body class="auth-page">
+<header class="topbar auth-topbar">
+    <div>
+        <a href="/n1.html" class="back-link">← Quay lại quản lý phân quyền</a>
+        <div class="brand">
+            <span class="brand-mark" aria-hidden="true">N1</span>
+            <div>
+                <p class="eyebrow">HỆ THỐNG QUẢN LÝ ĐÀO TẠO</p>
+                <h1>Tài khoản</h1>
+            </div>
+        </div>
+    </div>
+    <a class="button secondary" href="/">Quản lý sinh viên</a>
+</header>
+
+<main class="auth-main">
+    <section class="auth-welcome">
+        <p class="eyebrow">XIN CHÀO</p>
+        <h2>Đăng nhập để tiếp tục</h2>
+        <p>Đăng nhập và khôi phục tài khoản được tách riêng khỏi trang quản lý vai trò, quyền truy cập.</p>
+        <div id="authSession" class="auth-session" hidden>
+            <span id="authSessionText"></span>
+            <a class="button" href="/n1.html">Mở trang phân quyền</a>
+        </div>
+    </section>
+
+    <div id="authNotice" class="notice" role="status" aria-live="polite" hidden></div>
+
+    <section class="auth-grid" aria-label="Chức năng tài khoản">
+        <article id="register" class="card auth-card">
+            <div class="auth-card-title">
+                <span class="auth-icon" aria-hidden="true">↗</span>
+                <div>
+                    <h2>Đăng nhập</h2>
+                    <p>Dùng tài khoản hiện có của bạn.</p>
+                </div>
+            </div>
+            <form id="loginForm">
+                <label>Tên đăng nhập hoặc email
+                    <input name="username" type="text" required autocomplete="username" placeholder="Nhập tên đăng nhập hoặc email">
+                </label>
+                <label>Mật khẩu
+                    <input name="password" type="password" required autocomplete="current-password" placeholder="Nhập mật khẩu">
+                </label>
+                <button class="button" type="submit">Đăng nhập</button>
+            </form>
+        </article>
+
+        <article class="card auth-card">
+            <div class="auth-card-title">
+                <span class="auth-icon" aria-hidden="true">＋</span>
+                <div>
+                    <h2>Tạo tài khoản</h2>
+                    <p>Đăng ký tài khoản thông thường.</p>
+                </div>
+            </div>
+            <form id="registerForm">
+                <label>Họ và tên
+                    <input name="fullName" required maxlength="100" autocomplete="name" placeholder="Nguyễn Văn A">
+                </label>
+                <label>Tên đăng nhập
+                    <input name="username" required maxlength="100" autocomplete="username" placeholder="Tên đăng nhập">
+                </label>
+                <label>Mật khẩu
+                    <input name="password" type="password" required autocomplete="new-password" placeholder="Tạo mật khẩu">
+                </label>
+                <div class="auth-two-fields">
+                    <label>Email
+                        <input name="email" type="email" maxlength="100" autocomplete="email" placeholder="email@example.com">
+                    </label>
+                    <label>Số điện thoại
+                        <input name="phone" maxlength="20" autocomplete="tel" placeholder="Số điện thoại">
+                    </label>
+                </div>
+                <button class="button" type="submit">Đăng ký</button>
+            </form>
+        </article>
+
+        <article class="card auth-card recovery-card">
+            <div class="auth-card-title">
+                <span class="auth-icon" aria-hidden="true">↻</span>
+                <div>
+                    <h2>Khôi phục mật khẩu</h2>
+                    <p>Tạo mã khôi phục rồi đặt mật khẩu mới.</p>
+                </div>
+            </div>
+            <form id="forgotForm">
+                <label>Email tài khoản
+                    <input name="email" type="email" required autocomplete="email" placeholder="Email đã đăng ký">
+                </label>
+                <button class="button secondary" type="submit">Tạo mã khôi phục</button>
+            </form>
+            <p id="resetTokenResult" class="token-result" hidden></p>
+            <div class="form-divider"><span>Đã có mã khôi phục?</span></div>
+            <form id="resetForm">
+                <label>Mã khôi phục
+                    <input name="token" required autocomplete="one-time-code" placeholder="Dán mã khôi phục">
+                </label>
+                <label>Mật khẩu mới
+                    <input name="newPassword" type="password" minlength="8" required autocomplete="new-password" placeholder="Ít nhất 8 ký tự">
+                </label>
+                <button class="button secondary" type="submit">Đặt lại mật khẩu</button>
+            </form>
+        </article>
+    </section>
+</main>
+<script src="/assets/js/auth.js" defer></script>
+</body>
+</html>

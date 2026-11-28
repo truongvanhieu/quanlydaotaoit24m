@@ -1,0 +1,362 @@
+/* =========================
+   1. CẤU HÌNH CHUNG
+========================= */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #f3f6fa;
+  color: #24364b;
+}
+
+/* =========================
+   2. HEADER
+========================= */
+
+.header {
+  height: 80px;
+  background: #163b60;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 35px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo > span {
+  width: 43px;
+  height: 43px;
+  background: #ffffff25;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-weight: bold;
+}
+
+.logo h2 {
+  font-size: 18px;
+}
+
+.logo small {
+  color: #b8cde0;
+  font-size: 11px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 13px;
+}
+
+.header-right button {
+  padding: 9px 15px;
+  background: #ffffff20;
+  border: 1px solid #ffffff50;
+  color: white;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+/* =========================
+   3. LAYOUT
+========================= */
+
+.container {
+  display: flex;
+  max-width: 1500px;
+  margin: auto;
+  padding: 25px;
+  gap: 25px;
+}
+
+/* =========================
+   4. SIDEBAR
+========================= */
+
+.sidebar {
+  width: 230px;
+  min-width: 230px;
+  min-height: calc(100vh - 130px);
+  background: white;
+  padding: 20px 13px;
+  border: 1px solid #e1e8ef;
+  border-radius: 12px;
+}
+
+.sidebar h3 {
+  color: #93a0ad;
+  font-size: 10px;
+  margin: 5px 10px 18px;
+  letter-spacing: 1px;
+}
+
+.sidebar a {
+  display: block;
+  padding: 13px 12px;
+  margin-bottom: 5px;
+  color: #63758a;
+  text-decoration: none;
+  font-size: 13px;
+  border-radius: 8px;
+  transition: 0.2s;
+}
+
+.sidebar a:hover {
+  background: #f0f5fa;
+  color: #2868a8;
+}
+
+.sidebar a.active {
+  background: #eaf2fa;
+  color: #2868a8;
+  font-weight: bold;
+}
+
+/* =========================
+   5. MAIN CONTENT
+========================= */
+
+.main-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.page-heading {
+  margin-bottom: 22px;
+}
+
+.page-heading h1 {
+  font-size: 27px;
+  color: #193d5e;
+  margin-bottom: 8px;
+}
+
+.page-heading p {
+  color: #7c8b9b;
+  font-size: 13px;
+}
+
+.create-permission-panel {
+  margin-bottom: 22px;
+  padding: 20px;
+  background: white;
+  border: 1px solid #e2e9f0;
+  border-radius: 11px;
+}
+
+.create-permission-panel h2 {
+  margin-bottom: 15px;
+  color: #254866;
+  font-size: 15px;
+}
+
+.create-permission-panel form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+
+.create-permission-panel label {
+  display: grid;
+  gap: 7px;
+  color: #63758a;
+  font-size: 12px;
+}
+
+.create-permission-panel input,
+.create-permission-panel textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #dce4ec;
+  border-radius: 8px;
+  color: #24364b;
+  font: inherit;
+}
+
+.create-permission-panel textarea {
+  resize: vertical;
+}
+
+.create-permission-panel .description-field {
+  grid-column: span 2;
+}
+
+.create-permission-panel button {
+  min-height: 39px;
+  padding: 9px 15px;
+  border: 0;
+  border-radius: 8px;
+  background: #2868a8;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.create-permission-panel button:hover {
+  background: #1d568f;
+}
+
+/* =========================
+   6. STATISTICS
+========================= */
+
+.statistics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-bottom: 22px;
+}
+
+.stat-card {
+  background: white;
+  padding: 20px;
+  border-radius: 11px;
+  border: 1px solid #e2e9f0;
+}
+
+.stat-card span {
+  color: #8190a0;
+  font-size: 12px;
+}
+
+.stat-card h2 {
+  margin-top: 9px;
+  font-size: 27px;
+  color: #245b87;
+}
+
+/* =========================
+   7. MANAGEMENT
+========================= */
+
+.management {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.role-panel,
+.permission-panel {
+  background: white;
+  border: 1px solid #e2e9f0;
+  border-radius: 11px;
+  padding: 20px;
+}
+
+.role-panel h3,
+.permission-panel h3 {
+  font-size: 15px;
+  color: #254866;
+  margin-bottom: 17px;
+}
+
+/* =========================
+   8. PERMISSION HEADER
+========================= */
+
+.permission-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.permission-header span {
+  background: #eaf3fb;
+  color: #2868a8;
+  padding: 7px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+}
+
+/* =========================
+   9. SEARCH
+========================= */
+
+#searchPermission {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid #dce4ec;
+  border-radius: 8px;
+  outline: none;
+  font-size: 12px;
+  margin-bottom: 15px;
+}
+
+#searchPermission:focus {
+  border-color: #4289bd;
+}
+
+/* =========================
+   10. RESPONSIVE
+========================= */
+
+@media (max-width: 900px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    min-width: 0;
+    min-height: auto;
+  }
+
+  .management {
+    grid-template-columns: 1fr;
+  }
+
+  .create-permission-panel form {
+    grid-template-columns: 1fr;
+  }
+
+  .create-permission-panel .description-field {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .header {
+    padding: 0 12px;
+  }
+
+  .logo h2 {
+    font-size: 14px;
+  }
+
+  .header-right {
+    gap: 7px;
+    font-size: 10px;
+  }
+
+  .header-right button {
+    padding: 8px;
+    font-size: 10px;
+  }
+
+  .container {
+    padding: 14px;
+  }
+
+  .statistics {
+    grid-template-columns: 1fr;
+  }
+
+  .page-heading h1 {
+    font-size: 22px;
+  }
+}

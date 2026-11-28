@@ -1,0 +1,156 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Quản lý phân quyền</title>
+
+    <link rel="stylesheet" href="/assets/css/permission.css">
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="logo">
+            <span>N1</span>
+            <div>
+                <h2>Quản lý đào tạo</h2>
+                <small>Hệ thống quản trị</small>
+            </div>
+        </div>
+
+        <div class="header-right">
+            <span id="username">Quản trị viên</span>
+            <button id="logoutButton">Đăng xuất</button>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <h3>QUẢN TRỊ</h3>
+
+            <a href="/n1.html">Tổng quan N1</a>
+
+            <a href="/auth.html">Quản lý tài khoản</a>
+
+            <a href="/permission.html" class="active">
+                Quản lý phân quyền
+            </a>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+
+            <div class="page-heading">
+                <h1>Quản lý phân quyền</h1>
+                <p>Quản lý vai trò và quyền truy cập của hệ thống.</p>
+            </div>
+
+            <section class="create-permission-panel" aria-labelledby="createPermissionHeading">
+                <h2 id="createPermissionHeading">Thêm quyền mới</h2>
+                <form id="newPermissionForm">
+                    <label>
+                        Mã quyền
+                        <input
+                            type="text"
+                            name="code"
+                            maxlength="100"
+                            pattern="[A-Za-z][A-Za-z0-9_]*"
+                            placeholder="Ví dụ: COURSE_EXPORT"
+                            title="Bắt đầu bằng chữ cái; chỉ dùng chữ cái, số và dấu gạch dưới."
+                            required
+                        >
+                    </label>
+                    <label>
+                        Tên quyền
+                        <input type="text" name="name" maxlength="150" required>
+                    </label>
+                    <label>
+                        Phân hệ
+                        <input
+                            type="text"
+                            name="module"
+                            maxlength="100"
+                            pattern="[A-Za-z][A-Za-z0-9_]*"
+                            placeholder="Ví dụ: COURSES"
+                            title="Bắt đầu bằng chữ cái; chỉ dùng chữ cái, số và dấu gạch dưới."
+                            required
+                        >
+                    </label>
+                    <label class="description-field">
+                        Mô tả
+                        <textarea name="description" maxlength="255" rows="2"></textarea>
+                    </label>
+                    <button type="submit">Thêm quyền</button>
+                </form>
+            </section>
+
+            <!-- STATISTICS -->
+            <section class="statistics">
+
+                <div class="stat-card">
+                    <span>Tổng vai trò</span>
+                    <h2 id="totalRoles">0</h2>
+                </div>
+
+                <div class="stat-card">
+                    <span>Tổng quyền</span>
+                    <h2 id="totalPermissions">0</h2>
+                </div>
+
+                <div class="stat-card">
+                    <span>Quyền đã cấp</span>
+                    <h2 id="assignedPermissions">0</h2>
+                </div>
+
+            </section>
+
+            <!-- ROLE AND PERMISSION -->
+            <section class="management">
+
+                <!-- ROLE LIST -->
+                <div class="role-panel">
+                    <h3>Danh sách vai trò</h3>
+
+                    <div id="roleList">
+                        Chưa tải dữ liệu.
+                    </div>
+                </div>
+
+                <!-- PERMISSION LIST -->
+                <div class="permission-panel">
+
+                    <div class="permission-header">
+                        <h3>Danh sách quyền</h3>
+
+                        <span id="selectedRole">
+                            Chưa chọn vai trò
+                        </span>
+                    </div>
+
+                    <input
+                        type="text"
+                        id="searchPermission"
+                        placeholder="Tìm kiếm quyền..."
+                    >
+
+                    <div id="permissionList">
+                        Vui lòng chọn vai trò.
+                    </div>
+
+                </div>
+
+            </section>
+
+        </main>
+    </div>
+
+    <script src="/assets/js/permission.js"></script>
+
+</body>
+</html>

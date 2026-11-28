@@ -1,0 +1,5 @@
+# Created at 2026-11-28T14:22:28.773
+Boot Manifest-JAR contains absolute paths in classpath 'D:\java web\quanlydaotaoit24m-main_v11\quanlydaotaoit24m-main\target\test-classes'
+Hint: <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
+'other' has different root
+

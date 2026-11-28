@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>N1 - Tài khoản và phân quyền</title>
+    <link rel="stylesheet" href="/assets/css/n1.css">
+</head>
+<body>
+<header class="topbar">
+    <div>
+        <a href="/" class="back-link">← Quản lý sinh viên</a>
+        <div class="brand">
+            <span class="brand-mark" aria-hidden="true">N1</span>
+            <div>
+                <p class="eyebrow">HỆ THỐNG QUẢN LÝ ĐÀO TẠO</p>
+                <h1>Tài khoản & phân quyền</h1>
+            </div>
+        </div>
+    </div>
+    <button id="sidebarToggle" class="sidebar-toggle" type="button" aria-label="Mở điều hướng" aria-expanded="false" aria-controls="sideNavigation">
+        <span aria-hidden="true">☰</span>
+    </button>
+    <div class="session-box">
+        <span id="sessionStatus" class="session-status">Chưa đăng nhập</span>
+        <a class="button secondary" href="/auth.html">Đăng nhập / tài khoản</a>
+        <button id="logoutButton" class="button secondary" type="button" disabled>Đăng xuất</button>
+    </div>
+</header>
+
+<div class="app-shell">
+    <button id="sidebarOverlay" class="sidebar-overlay" type="button" aria-label="Đóng điều hướng" tabindex="-1"></button>
+    <aside id="sideNavigation" class="side-navigation" aria-label="Điều hướng N1">
+        <div class="sidebar-heading">
+            <span class="sidebar-label">MENU N1</span>
+            <button id="sidebarClose" class="sidebar-close" type="button" aria-label="Đóng điều hướng">×</button>
+        </div>
+        <nav class="sidebar-menu">
+            <p class="sidebar-caption">TỔNG QUAN</p>
+            <a class="sidebar-link" href="/">
+                <span class="sidebar-icon" aria-hidden="true">⌂</span>
+                <span>Sinh viên</span>
+                <span class="sidebar-arrow" aria-hidden="true">↗</span>
+            </a>
+            <a class="sidebar-link" href="/auth.html">
+                <span class="sidebar-icon" aria-hidden="true">♙</span>
+                <span>Tài khoản</span>
+                <span class="sidebar-arrow" aria-hidden="true">↗</span>
+            </a>
+            <p class="sidebar-caption">QUẢN LÝ TRUY CẬP</p>
+            <a class="sidebar-link" href="#account" data-requires-role-manage hidden>
+                <span class="sidebar-icon" aria-hidden="true">＋</span>
+                <span>Tạo người dùng</span>
+            </a>
+            <a class="sidebar-link active" href="#catalog">
+                <span class="sidebar-icon" aria-hidden="true">▦</span>
+                <span>Vai trò & quyền</span>
+            </a>
+            <a class="sidebar-link" href="#permissions-catalog">
+                <span class="sidebar-icon" aria-hidden="true">☷</span>
+                <span>Danh mục quyền</span>
+            </a>
+            <a class="sidebar-link" href="#module-catalog" data-requires-role-manage hidden>
+                <span class="sidebar-icon" aria-hidden="true">▤</span>
+                <span>Danh mục phân hệ</span>
+            </a>
+            <a class="sidebar-link" href="#assignment">
+                <span class="sidebar-icon" aria-hidden="true">◎</span>
+                <span>Gán quyền người dùng</span>
+            </a>
+            <a class="sidebar-link" href="#user-role-lookup" data-requires-role-manage hidden>
+                <span class="sidebar-icon" aria-hidden="true">↔</span>
+                <span>Gán vai trò người dùng</span>
+            </a>
+            <a class="sidebar-link" href="#permission-check">
+                <span class="sidebar-icon" aria-hidden="true">✓</span>
+                <span>Kiểm tra RBAC</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <span class="sidebar-footer-mark">N1</span>
+            <span><strong>Quản lý đào tạo</strong><small>Phân quyền truy cập</small></span>
+        </div>
+    </aside>
+
+<main class="page">
+    <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+    <section class="page-intro" aria-label="Giới thiệu">
+        <div>
+            <p class="eyebrow">KHÔNG GIAN QUẢN TRỊ</p>
+            <h2>Quản lý truy cập tập trung</h2>
+            <p>Theo dõi tài khoản, vai trò và quyền truy cập trong hệ thống.</p>
+        </div>
+        <span class="intro-tag">RBAC · N1</span>
+    </section>
+
+    <section id="account" data-requires-role-manage hidden>
+        <div class="section-heading">
+            <span class="section-index">01</span>
+            <div>
+                <h2>Tạo người dùng</h2>
+                <p>Chỉ tài khoản có quyền quản lý mới được tạo người dùng bằng chức năng quản trị.</p>
+            </div>
+        </div>
+        <article class="card create-user-card">
+            <h3>Tạo người dùng</h3>
+            <p class="muted">Tạo tài khoản người dùng mới. Sau khi tạo thành công, bạn sẽ được chuyển đến trang Sinh viên.</p>
+            <form id="createUserForm" class="grid two-columns">
+                <label>Tên đăng nhập<input name="username" required maxlength="100"></label>
+                <label>Mật khẩu<input name="password" type="password" required autocomplete="new-password"></label>
+                <label>Họ và tên<input name="fullName" required maxlength="100"></label>
+                <label>Email<input name="email" type="email" maxlength="100"></label>
+                <label>Số điện thoại<input name="phone" maxlength="20"></label>
+                <button class="button" type="submit">Tạo người dùng</button>
+            </form>
+        </article>
+    </section>
+
+    <section id="catalog">
+        <div class="section-heading">
+            <span class="section-index">02</span>
+            <div>
+                <h2>Vai trò và quyền truy cập</h2>
+                <p>Tạo vai trò, tìm kiếm và cấu hình các quyền được cấp.</p>
+            </div>
+        </div>
+        <article class="card">
+            <div class="card-heading role-toolbar">
+                <div>
+                    <h3>Danh sách vai trò</h3>
+                    <p class="muted">Quản lý vai trò và trạng thái hoạt động.</p>
+                </div>
+                <button id="addRoleButton" class="button" type="button" data-requires-role-manage data-requires-role-api hidden>＋ Thêm vai trò</button>
+            </div>
+            <div class="filters">
+                <label class="search-field">Tìm kiếm vai trò
+                    <input id="roleSearchInput" type="search" placeholder="Tên hoặc mã vai trò...">
+                </label>
+                <label>Trạng thái
+                    <select id="roleStatusFilter">
+                        <option value="all">Tất cả</option>
+                        <option value="active">Hoạt động</option>
+                        <option value="inactive">Ngừng hoạt động</option>
+                    </select>
+                </label>
+                <button id="loadRolesButton" class="button secondary" type="button" aria-label="Tải lại danh sách vai trò">↻</button>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>STT</th><th>Tên vai trò</th><th>Mã</th><th>Mô tả</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+                    <tbody id="rolesBody"><tr><td colspan="6" class="empty">Đang tải vai trò...</td></tr></tbody>
+                </table>
+            </div>
+        </article>
+
+        <article class="card">
+            <div class="card-heading">
+                <div>
+                    <h3>Phân quyền chức năng</h3>
+                    <p class="muted">Chọn một vai trò rồi bật hoặc tắt các quyền cần thiết.</p>
+                </div>
+                <label class="role-picker">Chọn vai trò
+                    <select id="roleCodeSelect" aria-label="Chọn vai trò để phân quyền">
+                        <option value="">Chọn vai trò</option>
+                    </select>
+                </label>
+            </div>
+            <div class="matrix-toolbar">
+                <span id="permissionCount" class="muted">Chọn vai trò để xem quyền</span>
+                <label class="permission-search">Tìm quyền
+                    <input id="rolePermissionSearch" type="search" placeholder="Tên, mã hoặc phân hệ...">
+                </label>
+                <button id="saveRolePermissionsButton" class="button" type="button" data-requires-role-manage hidden>Lưu quyền</button>
+            </div>
+            <div class="table-wrap">
+                <table class="permission-matrix">
+                    <thead><tr><th>Phân hệ</th><th>Chức năng / quyền</th><th>Mã quyền</th><th class="check-column">Được phép</th></tr></thead>
+                    <tbody id="rolePermissionsBody"><tr><td colspan="4" class="empty">Chọn một vai trò để xem quyền</td></tr></tbody>
+                </table>
+            </div>
+            <nav id="rolePermissionPagination" class="list-pagination" aria-label="Phân trang quyền theo vai trò"></nav>
+        </article>
+
+        <article id="module-catalog" class="card" data-requires-role-manage hidden>
+            <div class="card-heading">
+                <div>
+                    <h3>Danh mục phân hệ</h3>
+                    <p class="muted">Quản lý tên hiển thị và mã phân hệ dùng cho các quyền.</p>
+                </div>
+                <div class="catalog-actions">
+                    <button id="loadModulesButton" class="button secondary" type="button">Tải lại</button>
+                    <button id="addModuleButton" class="button" type="button">＋ Thêm phân hệ</button>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Tên phân hệ</th><th>Mã phân hệ</th><th>Mô tả</th><th>Thao tác</th></tr></thead>
+                    <tbody id="modulesBody"><tr><td colspan="4" class="empty">Đang tải danh mục phân hệ...</td></tr></tbody>
+                </table>
+            </div>
+        </article>
+
+        <article id="permissions-catalog" class="card">
+            <div class="card-heading">
+                <div>
+                    <h3>Danh mục quyền hệ thống</h3>
+                    <p class="muted">Tra cứu mã quyền, phân hệ và mô tả.</p>
+                </div>
+                <div class="catalog-actions">
+                    <label class="permission-search">Tìm quyền
+                        <input id="permissionsCatalogSearch" type="search" placeholder="Tên, mã hoặc phân hệ...">
+                    </label>
+                    <button id="loadPermissionsButton" class="button secondary" type="button">Tải lại quyền</button>
+                    <button id="addPermissionButton" class="button" type="button" data-requires-role-manage hidden>＋ Thêm quyền</button>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Tên quyền</th><th>Mã quyền</th><th>Phân hệ</th><th>Mã phân hệ</th><th>Mô tả</th><th>Thao tác</th></tr></thead>
+                    <tbody id="permissionsBody"><tr><td colspan="6" class="empty">Đang tải danh mục quyền...</td></tr></tbody>
+                </table>
+            </div>
+            <nav id="permissionsCatalogPagination" class="list-pagination" aria-label="Phân trang danh mục quyền"></nav>
+        </article>
+    </section>
+
+    <section id="assignment">
+        <div class="section-heading">
+            <span class="section-index">03</span>
+            <div>
+                <h2>Gán quyền cho người dùng</h2>
+                <p>Tìm kiếm tài khoản theo họ tên, email hoặc vai trò, sau đó cấp quyền trực tiếp cho tài khoản.</p>
+            </div>
+        </div>
+        <article class="card" data-requires-role-manage hidden>
+            <form id="userSearchForm" class="inline-form user-search-form">
+                <label class="user-id-field">Tìm kiếm người dùng
+                    <input id="userSearchInput" name="keyword" placeholder="Nhập họ tên, email, tên đăng nhập, mã sinh viên hoặc vai trò...">
+                </label>
+                <button class="button" type="submit">⌕ Tìm kiếm</button>
+            </form>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>STT</th><th>Họ và tên</th><th>Email</th><th>Vai trò hiện tại</th><th>Thao tác</th></tr></thead>
+                    <tbody id="usersBody"><tr><td colspan="5" class="empty">Đang tải danh sách người dùng...</td></tr></tbody>
+                </table>
+            </div>
+            <nav id="usersPagination" class="list-pagination" aria-label="Phân trang danh sách người dùng"></nav>
+        </article>
+
+        <article id="userDetail" class="card user-detail" data-requires-role-manage hidden>
+            <div class="card-heading user-detail-heading">
+                <div>
+                    <h3>Chi tiết và gán quyền</h3>
+                    <p id="selectedUserName" class="muted"></p>
+                </div>
+                <button id="loadUserPermissionsButton" class="button secondary" type="button">Xem quyền hiệu lực</button>
+            </div>
+            <div class="user-detail-grid">
+                <div>
+                    <h4>Quyền cấp trực tiếp</h4>
+                    <p class="muted">Các quyền từ vai trò được kế thừa và không thể thay đổi tại đây.</p>
+                    <label class="permission-search user-permission-search">Tìm quyền
+                        <input id="userPermissionSearch" type="search" placeholder="Tên, mã hoặc phân hệ...">
+                    </label>
+                    <div id="userPermissionChoices" class="role-choices"></div>
+                    <nav id="userPermissionPagination" class="list-pagination" aria-label="Phân trang quyền người dùng"></nav>
+                    <div class="form-actions">
+                        <button id="saveUserPermissionsButton" class="button" type="button">Lưu quyền</button>
+                    </div>
+                </div>
+                <div>
+                    <h4>Quyền hiệu lực của người dùng</h4>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Tên quyền</th><th>Mã</th><th>Phân hệ</th></tr></thead>
+                            <tbody id="userPermissionsBody"><tr><td colspan="3" class="empty">Chọn “Xem quyền hiệu lực” để tải</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <article id="user-role-lookup" class="card" data-requires-role-manage hidden>
+            <div class="section-heading">
+                <span class="section-index">↔</span>
+                <div>
+                    <h2>Gán vai trò cho người dùng</h2>
+                    <p>Tìm theo họ tên, email hoặc tên đăng nhập, sau đó chọn tài khoản cần cấp hoặc thu hồi vai trò.</p>
+                </div>
+            </div>
+            <form id="userLookupForm" class="inline-form">
+                <label class="user-id-field">Tìm người dùng
+                    <input id="userLookupSearch" name="keyword" required minlength="2" placeholder="Nhập họ tên, email, tên đăng nhập hoặc mã sinh viên">
+                </label>
+                <button class="button" type="submit">⌕ Tìm người dùng</button>
+            </form>
+            <label id="userLookupSelectLabel" hidden>Chọn tài khoản
+                <select id="userLookupSelect">
+                    <option value="">Chọn người dùng trong kết quả</option>
+                </select>
+            </label>
+            <div class="grid two-columns">
+                <div>
+                    <h4>Vai trò của người dùng</h4>
+                    <form id="assignRoleForm" class="inline-form">
+                        <label>Vai trò cần cấp
+                            <select id="assignRoleSelect" name="roleId" required>
+                                <option value="">Chọn vai trò</option>
+                            </select>
+                        </label>
+                        <button class="button" type="submit">Cấp vai trò</button>
+                    </form>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Tên vai trò</th><th>Mã</th><th>Thao tác</th></tr></thead>
+                            <tbody id="userRolesBody"><tr><td colspan="3" class="empty">Tìm và chọn người dùng để xem vai trò</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div>
+                    <h4>Quyền hiệu lực của người dùng</h4>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Tên quyền</th><th>Mã</th><th>Phân hệ</th><th>Mô tả</th></tr></thead>
+                            <tbody id="userPermissionsByIdBody"><tr><td colspan="4" class="empty">Tìm và chọn người dùng để xem quyền hiệu lực</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <section id="permission-check">
+        <div class="section-heading">
+            <span class="section-index">04</span>
+            <div>
+                <h2>Kiểm tra quyền RBAC</h2>
+                <p>Thử quyền nhập điểm của tài khoản đang đăng nhập.</p>
+            </div>
+        </div>
+        <article class="card">
+            <p>Gọi endpoint kiểm tra quyền <code>GRADE_INPUT</code>. Cần đăng nhập bằng tài khoản có quyền này.</p>
+            <button id="checkGradeButton" class="button" type="button">Kiểm tra quyền nhập điểm</button>
+            <output id="gradeResult" class="result" aria-live="polite"></output>
+        </article>
+    </section>
+</main>
+</div>
+<dialog id="roleDialog" class="role-dialog">
+    <form id="roleForm" method="dialog">
+        <div class="card-heading">
+            <h3 id="roleDialogTitle">Thêm vai trò</h3>
+            <button id="closeRoleDialog" class="icon-button" type="button" aria-label="Đóng">×</button>
+        </div>
+        <input id="roleIdInput" name="id" type="hidden">
+        <label>Mã vai trò
+            <input id="roleCodeInput" name="code" required maxlength="100" pattern="[A-Za-z][A-Za-z0-9_]*" placeholder="VD: GIANGVIEN">
+        </label>
+        <label>Tên vai trò
+            <input id="roleNameInput" name="name" required maxlength="100">
+        </label>
+        <label>Mô tả
+            <textarea id="roleDescriptionInput" name="description" maxlength="255" rows="3"></textarea>
+        </label>
+        <label class="checkbox-label"><input id="roleActiveInput" name="isActive" type="checkbox" checked> Đang hoạt động</label>
+        <div class="form-actions">
+            <button id="cancelRoleDialog" class="button secondary" type="button">Hủy</button>
+            <button class="button" type="submit">Lưu vai trò</button>
+        </div>
+    </form>
+</dialog>
+<dialog id="permissionDialog" class="role-dialog permission-dialog">
+    <form id="permissionForm">
+        <div class="card-heading">
+            <div>
+                <h3>Thêm chức năng mới</h3>
+                <p class="muted">Tạo quyền để có thể cấp cho vai trò hoặc người dùng.</p>
+            </div>
+            <button id="closePermissionDialog" class="icon-button" type="button" aria-label="Đóng">×</button>
+        </div>
+        <div class="permission-form-grid">
+            <label>Mã quyền
+                <input id="permissionCodeInput" name="code" required maxlength="100" pattern="[A-Za-z][A-Za-z0-9_]*" placeholder="VD: COURSE_EXPORT" autocomplete="off">
+            </label>
+            <label>Tên chức năng
+                <input id="permissionNameInput" name="name" required maxlength="150" placeholder="VD: Xuất danh sách học phần">
+            </label>
+            <label>Phân hệ
+                <select id="permissionModuleInput" name="module" required>
+                    <option value="">Chọn phân hệ</option>
+                </select>
+                <small class="field-hint">Mã phân hệ: <strong id="moduleCodePreview">Chưa chọn phân hệ</strong></small>
+            </label>
+            <label class="wide-field">Mô tả
+                <textarea id="permissionDescriptionInput" name="description" maxlength="255" rows="3" placeholder="Mô tả ngắn chức năng này dùng để làm gì"></textarea>
+            </label>
+        </div>
+        <p id="permissionFormError" class="form-error" role="alert" hidden></p>
+        <div class="form-actions">
+            <button id="cancelPermissionDialog" class="button secondary" type="button">Hủy</button>
+            <button class="button" type="submit">Tạo quyền</button>
+        </div>
+    </form>
+</dialog>
+<dialog id="moduleDialog" class="role-dialog permission-dialog">
+    <form id="moduleForm">
+        <div class="card-heading">
+            <div>
+                <h3 id="moduleDialogTitle">Thêm phân hệ</h3>
+                <p class="muted">Phân hệ gom nhóm các quyền theo chức năng của hệ thống.</p>
+            </div>
+            <button id="closeModuleDialog" class="icon-button" type="button" aria-label="Đóng">×</button>
+        </div>
+        <input id="moduleIdInput" type="hidden">
+        <div class="permission-form-grid">
+            <label>Mã phân hệ
+                <input id="moduleCodeInput" name="code" required maxlength="100" pattern="[A-Za-z][A-Za-z0-9_]*" placeholder="VD: LIBRARY" autocomplete="off">
+            </label>
+            <label>Tên phân hệ
+                <input id="moduleNameInput" name="name" required maxlength="150" placeholder="VD: Thư viện">
+            </label>
+            <label class="wide-field">Mô tả
+                <textarea id="moduleDescriptionInput" name="description" maxlength="255" rows="3" placeholder="Mô tả phạm vi chức năng của phân hệ"></textarea>
+            </label>
+        </div>
+        <p id="moduleFormError" class="form-error" role="alert" hidden></p>
+        <div class="form-actions">
+            <button id="cancelModuleDialog" class="button secondary" type="button">Hủy</button>
+            <button class="button" type="submit">Lưu phân hệ</button>
+        </div>
+    </form>
+</dialog>
+<script src="/assets/js/n1.js" defer></script>
+</body>
+</html>
